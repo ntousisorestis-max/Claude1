@@ -113,7 +113,7 @@
         { text: "A single article or resource hub", cat: "content" },
         { text: "One form in, one useful result out", cat: "tool" },
         { text: "A place to post, and a way to browse posts", cat: "community" },
-        { text: "A single page that showcases one thing well", cat: "portfolio" },
+        { text: "A single screen that showcases one thing well", cat: "portfolio" },
       ],
     },
     {
@@ -130,43 +130,43 @@
   const RESULTS = {
     content: {
       title: "Content & Teaching",
-      sub: "You're drawn to explaining things well — a site that teaches, curates, or documents.",
+      sub: "You're drawn to explaining things well — an app that teaches, curates, or guides.",
       examples: [
-        "A focused blog on one specific problem you've personally solved",
-        "A curated newsletter for a niche you already follow closely",
-        "A documentation or how-to hub for a tool, hobby, or process you know well",
+        "A micro-lesson app that teaches one skill in daily 5-minute bites",
+        "A curated digest app for a niche you already follow closely",
+        "A reference or how-to app for a tool, hobby, or process you know well",
       ],
-      next: "Next step: pick ONE topic narrow enough that you could write 10 posts about it without repeating yourself.",
+      next: "Next step: pick ONE skill or topic narrow enough that you could write 10 lessons about it without repeating yourself.",
     },
     tool: {
       title: "Tool & Utility",
       sub: "You like solving one annoying problem cleanly and giving people back their time.",
       examples: [
-        "A calculator or converter for a specific, recurring calculation",
-        "A generator (resume, README, contract, checklist) for a task people redo often",
-        "A small dashboard that pulls together data you currently check manually",
+        "A calculator or converter app for a specific, recurring task",
+        "A generator app (workout plan, meal plan, checklist) for something people redo often",
+        "A small dashboard app that pulls together data you currently check manually across several places",
       ],
-      next: "Next step: find the one repetitive task you or people around you do by hand, and sketch just the input form and the result screen.",
+      next: "Next step: find the one repetitive task you or people around you do by hand, and sketch just the input screen and the result screen.",
     },
     community: {
       title: "Community & Marketplace",
       sub: "You like connecting people around a shared interest, need, or trade.",
       examples: [
-        "A directory for a niche (local services, tools, resources)",
-        "A marketplace pairing buyers and sellers in a specific category",
-        "A forum or hub for a community you're already part of",
+        "A directory app for a niche (local services, tools, resources)",
+        "A marketplace app pairing buyers and sellers in a specific category",
+        "A group app for a community you're already part of",
       ],
       next: "Next step: validate demand with a simple, manually-curated list before building any posting or matching features.",
     },
     portfolio: {
       title: "Portfolio & Business",
-      sub: "You want the site to represent you, build credibility, and open doors.",
+      sub: "You want the app to represent you, build credibility, and open doors.",
       examples: [
-        "A personal portfolio built around a few strong case studies",
-        "A landing page for a specific service or freelance offer",
-        "A one-product page for something you sell",
+        "A portfolio app built around a few strong case studies",
+        "A booking or service app for a specific freelance offer",
+        "A simple storefront app for one product you sell",
       ],
-      next: "Next step: write one sentence — who it's for and what they get — before you design a single pixel.",
+      next: "Next step: write one sentence — who it's for and what they get — before you design a single screen.",
     },
   };
 
@@ -312,7 +312,7 @@
 
   document.getElementById("download-worksheet").addEventListener("click", () => {
     const data = store.get();
-    const lines = ["MY WEBSITE IDEA WORKSHEET", "=".repeat(30), ""];
+    const lines = ["MY APP IDEA WORKSHEET", "=".repeat(30), ""];
     WORKSHEET_FIELDS.forEach((f) => {
       if (data[f.key] && String(data[f.key]).trim().length > 0) {
         lines.push(f.label + ":", String(data[f.key]), "");
@@ -324,7 +324,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "website-idea-worksheet.txt";
+    a.download = "app-idea-worksheet.txt";
     document.body.appendChild(a);
     a.click();
     a.remove();
