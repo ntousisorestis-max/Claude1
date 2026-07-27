@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find Your Website Idea — A Practical Learning Guide</title>
+<meta name="description" content="A hands-on guide that walks you through a proven method for figuring out what website you should actually build.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <span class="logo">💡 Idea&nbsp;Lab</span>
+    <nav class="progress-nav" aria-label="Your progress">
+      <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress-bar-value">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <span id="progress-label">0% through the guide</span>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">A practical, interactive guide</p>
+      <h1>Find the Website<br>You Should Build</h1>
+      <p class="lead">
+        You don't need a "better idea." You need a method. This guide walks you through the same
+        five steps, in order, that turn a vague "I want to build something" into a specific,
+        buildable website — and ends with a tool that gives you a concrete direction based on your answers.
+      </p>
+      <a href="#lesson-1" class="btn btn-primary">Start the guide ↓</a>
+      <a href="#idea-finder" class="btn btn-ghost">Skip to the Idea Finder</a>
+    </div>
+  </section>
+
+  <section class="lessons" aria-label="Lessons">
+    <div class="wrap">
+
+      <article class="lesson" id="lesson-1" data-lesson="1">
+        <div class="lesson-num">01</div>
+        <div class="lesson-body">
+          <h2>Start with problems, not "ideas"</h2>
+          <p>
+            Scrolling lists of "100 website ideas" is the slowest way to find yours — every idea on
+            those lists is generic because it was written for everyone. Instead, look backward at your
+            own last few weeks. What did you get annoyed at? What did you Google, then Google again a
+            different way because the first result was bad? What do you or people around you currently
+            solve with a messy spreadsheet, a group chat, or a sticky note?
+          </p>
+          <p>
+            A website idea is just a solution to one of <em>those</em> things, wearing a URL.
+          </p>
+          <div class="exercise">
+            <label for="ex1">Try it: write down 2–3 things that mildly annoyed you this month.</label>
+            <textarea id="ex1" data-store="ex1" rows="3" placeholder="e.g. couldn't find a simple way to split a group bill fairly, spent an hour comparing flight prices across tabs..."></textarea>
+          </div>
+        </div>
+      </article>
+
+      <article class="lesson" id="lesson-2" data-lesson="2">
+        <div class="lesson-num">02</div>
+        <div class="lesson-body">
+          <h2>Mine what you already know</h2>
+          <p>
+            You don't need a completely novel idea — average execution on something you understand
+            beats a brilliant idea in a niche you know nothing about. The sweet spot is the overlap
+            between three lists: what you're skilled at, what you're genuinely interested in, and a
+            group of people whose day-to-day you understand well (because you're one of them).
+          </p>
+          <div class="exercise exercise-grid">
+            <div>
+              <label for="ex2a">Skills</label>
+              <textarea id="ex2a" data-store="ex2a" rows="3" placeholder="things you're good at"></textarea>
+            </div>
+            <div>
+              <label for="ex2b">Interests</label>
+              <textarea id="ex2b" data-store="ex2b" rows="3" placeholder="topics you actually enjoy"></textarea>
+            </div>
+            <div>
+              <label for="ex2c">People you understand</label>
+              <textarea id="ex2c" data-store="ex2c" rows="3" placeholder="a group you belong to"></textarea>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="lesson" id="lesson-3" data-lesson="3">
+        <div class="lesson-num">03</div>
+        <div class="lesson-body">
+          <h2>Shrink it before you validate it</h2>
+          <p>
+            The most common idea-killer isn't a bad idea — it's an idea that's too big to start.
+            Before you validate or build anything, cut it down to the smallest version that still
+            delivers the core value. A useful test: can you describe it as "one input in, one useful
+            result out"? If not, it's still too big.
+          </p>
+          <div class="exercise">
+            <label for="ex3">Try it: describe the smallest version of your idea in one sentence.</label>
+            <textarea id="ex3" data-store="ex3" rows="2" placeholder="e.g. you paste your grocery list and it tells you which nearby store is cheapest overall"></textarea>
+          </div>
+        </div>
+      </article>
+
+      <article class="lesson" id="lesson-4" data-lesson="4">
+        <div class="lesson-num">04</div>
+        <div class="lesson-body">
+          <h2>Validate with conversations, not code</h2>
+          <p>
+            Before writing a line of code, talk to 5–10 people who'd actually be the user. Ask about
+            their <em>current</em> behavior and pain — not whether they'd use your website (people are
+            bad at predicting their own future behavior, and polite about it). The strongest signal
+            isn't enthusiasm, it's evidence: are they already duct-taping together a workaround
+            (a spreadsheet, a shared doc, a group chat) to deal with this? That means they'll pay with
+            time or money for a real solution.
+          </p>
+          <ul class="checklist" data-store-group="ex4">
+            <li><label><input type="checkbox" data-store="ex4a"> I listed 5+ real people I could ask this week</label></li>
+            <li><label><input type="checkbox" data-store="ex4b"> I have 3 questions about their current behavior, not my idea</label></li>
+            <li><label><input type="checkbox" data-store="ex4c"> I'm looking for an existing workaround, not just opinions</label></li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="lesson" id="lesson-5" data-lesson="5">
+        <div class="lesson-num">05</div>
+        <div class="lesson-body">
+          <h2>Pick the shape, then the stack</h2>
+          <p>
+            Almost every website idea is one of four shapes: <strong>Content</strong> (you teach or
+            inform), <strong>Tool</strong> (you solve one task), <strong>Community</strong>
+            (you connect people), or <strong>Portfolio/Business</strong> (you represent yourself or
+            sell something). Once you know the shape, decisions about tech, design, and features get
+            far easier — you're no longer choosing from infinite options, just the handful that fit
+            that shape.
+          </p>
+          <p>The Idea Finder below asks a few quick questions and tells you which shape fits you best, with concrete examples.</p>
+          <a href="#idea-finder" class="btn btn-primary">Open the Idea Finder ↓</a>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <section class="idea-finder" id="idea-finder">
+    <div class="wrap">
+      <p class="eyebrow">Put it into practice</p>
+      <h2>The Idea Finder</h2>
+      <p class="lead">Answer six quick questions. No right answers — just go with your gut.</p>
+
+      <form id="quiz-form">
+        <div id="quiz-questions"></div>
+        <div class="quiz-actions">
+          <button type="submit" class="btn btn-primary" id="quiz-submit">See my result</button>
+          <button type="button" class="btn btn-ghost" id="quiz-reset">Reset quiz</button>
+        </div>
+      </form>
+
+      <div id="quiz-result" class="quiz-result" hidden></div>
+    </div>
+  </section>
+
+  <section class="worksheet" id="worksheet">
+    <div class="wrap">
+      <p class="eyebrow">Your capstone</p>
+      <h2>Your Idea Worksheet</h2>
+      <p class="lead">Everything you typed above, in one place. Save it before you start building.</p>
+      <div class="worksheet-card" id="worksheet-card">
+        <p class="worksheet-empty" id="worksheet-empty">Fill in the exercises above and your answers will appear here automatically.</p>
+        <dl id="worksheet-content" hidden></dl>
+      </div>
+      <div class="quiz-actions">
+        <button type="button" class="btn btn-primary" id="download-worksheet">Download as text file</button>
+        <button type="button" class="btn btn-ghost" id="clear-worksheet">Clear all my answers</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>Built as a learning guide. Nothing you type here leaves your browser — it's all saved locally.</p>
+  </div>
+</footer>
+
+<script src="assets/script.js"></script>
+</body>
+</html>
