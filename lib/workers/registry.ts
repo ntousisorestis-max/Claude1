@@ -31,7 +31,7 @@ export const AI_WORKER_DEFINITIONS: Record<WorkerId, AIWorkerDefinition> = {
     purpose: "Turns a short note into a polished email or message you can send in one click.",
     status: "simulated",
     icon: "PenLine",
-    relevantCategories: ["customer_communication", "reviews_reputation"],
+    relevantCategories: ["customer_communication", "reviews_reputation", "email_overload"],
     samplePrompt: "Tell the Tuesday 2pm group their table is confirmed.",
     sampleOutput:
       "Hi! Just confirming your table for 4 this Tuesday at 2:00 PM. We're looking forward to having you — see you then!",

@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 
 import type { ModuleId } from "@/types";
+import { EmailAutomationHub } from "@/components/dynamic-modules/EmailAutomationHub";
 import { DashboardModule } from "./dashboard/dashboard-module";
 import { TasksModule } from "./tasks/tasks-module";
 import { CalendarModule } from "./calendar/calendar-module";
@@ -17,6 +18,7 @@ export const MODULE_COMPONENTS: Record<ModuleId, ComponentType> = {
   tasks: TasksModule,
   calendar: CalendarModule,
   customers: CustomersModule,
+  email: EmailAutomationHub,
   notes: NotesModule,
   reminders: RemindersModule,
   documents: DocumentsModule,

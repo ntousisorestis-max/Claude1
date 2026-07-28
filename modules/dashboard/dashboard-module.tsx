@@ -1,6 +1,6 @@
 "use client";
 
-import { BellRing, CalendarCheck, ListChecks, ListTodo } from "lucide-react";
+import { BellRing, CalendarCheck, Inbox, ListChecks, ListTodo } from "lucide-react";
 
 import { AI_WORKER_DEFINITIONS } from "@/lib/workers/registry";
 import { useDiagnosticStore } from "@/lib/store/diagnostic-store";
@@ -24,7 +24,7 @@ export function DashboardModule() {
   const businessName = useDiagnosticStore((s) => s.businessName);
   const report = useDiagnosticStore((s) => s.report);
   const workspacePlan = useDiagnosticStore((s) => s.workspacePlan);
-  const { tasks, reminders, appointments, checklist } = useWorkspaceStore();
+  const { tasks, reminders, appointments, checklist, emails } = useWorkspaceStore();
 
   const moduleIds = workspacePlan?.moduleIds ?? [];
   const today = new Date();
@@ -35,7 +35,14 @@ export function DashboardModule() {
   const dailyChecklist = checklist.filter((c) => c.frequency === "daily");
   const checklistDone = dailyChecklist.filter((c) => c.done).length;
 
+  const openEmails = emails.filter((e) => !e.replied).length;
+
   const stats = [
+    moduleIds.includes("email") && {
+      icon: Inbox,
+      label: "Emails waiting",
+      value: openEmails,
+    },
     moduleIds.includes("tasks") && {
       icon: ListTodo,
       label: "Tasks due today",

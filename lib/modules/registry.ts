@@ -26,6 +26,12 @@ export const MODULE_DEFINITIONS: Record<ModuleId, ModuleDefinition> = {
     tagline: "Every customer, remembered",
     icon: "Users",
   },
+  email: {
+    id: "email",
+    name: "Email Hub",
+    tagline: "Replies drafted for you — you just approve",
+    icon: "Inbox",
+  },
   notes: {
     id: "notes",
     name: "Notes",
@@ -67,6 +73,7 @@ export const MODULE_DEFINITIONS: Record<ModuleId, ModuleDefinition> = {
 
 export const MODULE_ORDER: ModuleId[] = [
   "dashboard",
+  "email",
   "tasks",
   "calendar",
   "customers",

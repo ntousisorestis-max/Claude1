@@ -4,6 +4,7 @@ export type PainCategory =
   | "invoicing"
   | "scheduling"
   | "customer_communication"
+  | "email_overload"
   | "employee_management"
   | "inventory"
   | "reviews_reputation"

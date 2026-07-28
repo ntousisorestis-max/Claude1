@@ -33,6 +33,7 @@ enum PainCategory {
   invoicing
   scheduling
   customer_communication
+  email_overload
   employee_management
   inventory
   reviews_reputation
@@ -51,6 +52,7 @@ enum ModuleId {
   tasks
   calendar
   customers
+  email
   notes
   reminders
   documents

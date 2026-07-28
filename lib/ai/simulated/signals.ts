@@ -77,6 +77,25 @@ export const PAIN_SIGNALS: Record<PainCategory, PainSignalDefinition> = {
     businessTypeAffinity: { plumber: 2, electrician: 2, cleaning: 2 },
     baseHoursLostPerWeek: 6,
   },
+  email_overload: {
+    category: "email_overload",
+    keywords: ["email", "e-mail", "inbox", "unread", "newsletter", "reply to everyone"],
+    contextLabel: "email",
+    title: "The inbox never stops",
+    description:
+      "Emails pile up faster than you can answer them, and leads or customers wait too long for a reply.",
+    prompt: (matched) =>
+      matched
+        ? "You mentioned email. What's the hardest part about keeping up with it?"
+        : "How does email fit into your day — what's the hardest part about keeping up?",
+    options: [
+      { id: "too_many_emails", label: "There are just too many to keep up with", severity: "high" },
+      { id: "same_questions", label: "I answer the same questions over and over", severity: "medium" },
+      { id: "leads_go_cold", label: "Leads go cold before I get back to them", severity: "high" },
+    ],
+    businessTypeAffinity: { retail: 1, dentist: 1, gym: 1, other: 1 },
+    baseHoursLostPerWeek: 5,
+  },
   employee_management: {
     category: "employee_management",
     keywords: ["employee", "staff", "my team", "forgets", "forget to", "training", "shift"],

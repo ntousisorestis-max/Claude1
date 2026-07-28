@@ -3,6 +3,7 @@ export type ModuleId =
   | "tasks"
   | "calendar"
   | "customers"
+  | "email"
   | "notes"
   | "reminders"
   | "documents"

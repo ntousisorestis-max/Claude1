@@ -60,8 +60,8 @@ export class OpenAIProvider implements AIProvider {
 Identify 3 to 5 root-cause problems worth asking about. For each, write one adaptive follow-up
 question with 3 short multiple-choice options (plus we'll always add "Other" ourselves, so don't
 include it). Respond as JSON: {"questions": FollowUpQuestion[]} where each item has
-id, category (one of: invoicing, scheduling, customer_communication, employee_management,
-inventory, reviews_reputation, owner_overload, record_keeping), context (short phrase or null),
+id, category (one of: invoicing, scheduling, customer_communication, email_overload,
+employee_management, inventory, reviews_reputation, owner_overload, record_keeping), context (short phrase or null),
 prompt, options (array of {id, label}), allowOther: true.`,
       workdayDescription
     );
@@ -82,7 +82,7 @@ a Business Health Report as JSON matching this shape exactly: { generatedAt (ISO
 businessType: "${businessType}", summary, healthScore (0-100), hoursLostPerWeek, revenueOpportunity:
 {low, high} (weekly USD), bottlenecks: [{id, category, title, description, severity: low|medium|high,
 hoursLostPerWeek}], priorityOrder (bottleneck ids, most urgent first), recommendedSolution,
-recommendedModuleIds (subset of: dashboard, tasks, calendar, customers, notes, reminders, documents,
+recommendedModuleIds (subset of: dashboard, tasks, calendar, customers, email, notes, reminders, documents,
 checklist, reports, settings — always include dashboard and settings), recommendedWorkerIds (subset of:
 customer-follow-up, invoice-assistant, email-drafter, document-summarizer, quote-generator). Be specific
 and grounded in what the owner actually said.`,

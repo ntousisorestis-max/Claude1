@@ -79,6 +79,30 @@ export interface Appointment {
   notes?: string;
 }
 
+export type EmailCategory = "lead" | "support" | "billing";
+
+export interface EmailMessage {
+  id: string;
+  fromName: string;
+  fromEmail: string;
+  subject: string;
+  body: string;
+  category: EmailCategory;
+  receivedAgo: string;
+  replied: boolean;
+  /** Keys into the draft builders in lib/mock-data/email-data.ts. */
+  draftId: string;
+}
+
+export type DraftVariant = "default" | "shorter" | "formal" | "discount";
+
+/** What the owner teaches the assistant about their business — drafts are grounded in this. */
+export interface BusinessKnowledgeBase {
+  pricing: string;
+  hours: string;
+  notes: string;
+}
+
 export interface WorkspaceData {
   tasks: TaskItem[];
   customers: Customer[];
@@ -87,4 +111,5 @@ export interface WorkspaceData {
   documents: DocumentItem[];
   checklist: ChecklistItem[];
   appointments: Appointment[];
+  emails: EmailMessage[];
 }

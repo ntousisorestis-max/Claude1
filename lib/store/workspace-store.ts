@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 
 import type {
   Appointment,
+  BusinessKnowledgeBase,
   BusinessType,
   ChecklistFrequency,
   Customer,
@@ -13,6 +14,7 @@ import type {
   WorkspaceData,
 } from "@/types";
 import { buildSeedWorkspaceData } from "@/lib/modules/seed-data";
+import { DEFAULT_KNOWLEDGE_BASE, SEED_EMAILS } from "@/lib/mock-data/email-data";
 
 function generateId(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
@@ -26,6 +28,7 @@ const emptyWorkspaceData: WorkspaceData = {
   documents: [],
   checklist: [],
   appointments: [],
+  emails: [],
 };
 
 interface WorkspaceState extends WorkspaceData {
@@ -60,6 +63,10 @@ interface WorkspaceState extends WorkspaceData {
 
   addAppointment: (data: Omit<Appointment, "id">) => void;
   removeAppointment: (id: string) => void;
+
+  knowledgeBase: BusinessKnowledgeBase;
+  markEmailReplied: (id: string) => void;
+  updateKnowledgeBase: (data: Partial<BusinessKnowledgeBase>) => void;
 }
 
 export const useWorkspaceStore = create<WorkspaceState>()(
@@ -67,11 +74,19 @@ export const useWorkspaceStore = create<WorkspaceState>()(
     (set) => ({
       ...emptyWorkspaceData,
       seeded: false,
+      knowledgeBase: DEFAULT_KNOWLEDGE_BASE,
 
       seedIfEmpty: (businessType) =>
-        set((state) => (state.seeded ? state : { ...buildSeedWorkspaceData(businessType), seeded: true })),
+        set((state) => {
+          if (!state.seeded) return { ...buildSeedWorkspaceData(businessType), seeded: true };
+          // Workspaces seeded before the Email Hub existed have no emails —
+          // backfill just that slice so the module isn't empty for them.
+          if (state.emails.length === 0) return { emails: SEED_EMAILS.map((e) => ({ ...e })) };
+          return state;
+        }),
 
-      resetWorkspace: () => set({ ...emptyWorkspaceData, seeded: false }),
+      resetWorkspace: () =>
+        set({ ...emptyWorkspaceData, seeded: false, knowledgeBase: DEFAULT_KNOWLEDGE_BASE }),
 
       addTask: (title, priority, dueDate) =>
         set((state) => ({
@@ -158,6 +173,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         })),
       removeAppointment: (id) =>
         set((state) => ({ appointments: state.appointments.filter((a) => a.id !== id) })),
+
+      markEmailReplied: (id) =>
+        set((state) => ({
+          emails: state.emails.map((e) => (e.id === id ? { ...e, replied: true } : e)),
+        })),
+      updateKnowledgeBase: (data) =>
+        set((state) => ({ knowledgeBase: { ...state.knowledgeBase, ...data } })),
     }),
     { name: "fixmybusiness-workspace" }
   )

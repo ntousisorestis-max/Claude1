@@ -6,6 +6,10 @@ const CATEGORY_TO_MODULES: Record<Bottleneck["category"], ModuleId[]> = {
   invoicing: ["documents", "reminders", "reports"],
   scheduling: ["calendar", "reminders"],
   customer_communication: ["customers", "reminders"],
+  // The Email Automation Hub itself is added by lib/app-generator.ts, which
+  // guarantees inclusion whenever this category is diagnosed; these are the
+  // supporting modules that score alongside it.
+  email_overload: ["customers", "reminders"],
   employee_management: ["tasks", "checklist"],
   inventory: ["tasks", "documents"],
   reviews_reputation: ["customers", "reports"],

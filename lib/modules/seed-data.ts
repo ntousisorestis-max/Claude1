@@ -9,6 +9,7 @@ import type {
   TaskItem,
   WorkspaceData,
 } from "@/types";
+import { SEED_EMAILS } from "@/lib/mock-data/email-data";
 
 interface SeedConfig {
   customers: string[];
@@ -207,5 +208,7 @@ export function buildSeedWorkspaceData(businessType: BusinessType): WorkspaceDat
     durationMinutes: 60,
   }));
 
-  return { tasks, customers, notes, reminders, documents, checklist, appointments };
+  const emails = SEED_EMAILS.map((email) => ({ ...email }));
+
+  return { tasks, customers, notes, reminders, documents, checklist, appointments, emails };
 }

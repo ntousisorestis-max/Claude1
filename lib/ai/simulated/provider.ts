@@ -2,8 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import type { Bottleneck, FollowUpQuestion, ModuleId, Severity } from "@/types";
 import { getModule } from "@/lib/modules/registry";
-import { recommendModules } from "@/lib/modules/recommend";
-import { recommendWorkers } from "@/lib/workers/recommend";
+import { generateWorkspace } from "@/lib/app-generator";
 
 import type {
   AIProvider,
@@ -120,8 +119,7 @@ export class SimulatedAIProvider implements AIProvider {
       high: Math.round((totalHours * HOURLY_VALUE * 1.3) / 10) * 10,
     };
 
-    const { moduleIds } = recommendModules(businessType, bottlenecks);
-    const workerIds = recommendWorkers(businessType, bottlenecks);
+    const { moduleIds, workerIds } = generateWorkspace(businessType, bottlenecks);
 
     return {
       generatedAt: new Date().toISOString(),
@@ -139,7 +137,7 @@ export class SimulatedAIProvider implements AIProvider {
   }
 
   async generateWorkspacePlan({ businessType, businessName, report }: GenerateWorkspacePlanInput) {
-    const { moduleIds, rationale } = recommendModules(businessType, report.bottlenecks);
+    const { moduleIds, rationale } = generateWorkspace(businessType, report.bottlenecks);
 
     return {
       businessType,
