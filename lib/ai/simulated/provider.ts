@@ -57,9 +57,12 @@ export class SimulatedAIProvider implements AIProvider {
     workdayDescription,
   }: GenerateFollowUpQuestionsInput): Promise<FollowUpQuestion[]> {
     const detected = detectCategories(businessType, workdayDescription);
-    const qualifying = detected.filter((d) => d.score >= 2);
-    const count = clamp(qualifying.length || 3, 3, 5);
-    const chosen = detected.slice(0, count);
+    // Only ask about problems the owner actually described. Padding the
+    // question count with business-type guesses made the consultant feel
+    // like it wasn't listening ("you said emails, why are you asking about
+    // staff?") — guesses are now used only when nothing matched at all.
+    const matched = detected.filter((d) => d.matched);
+    const chosen = matched.length > 0 ? matched.slice(0, 5) : detected.slice(0, 3);
 
     return chosen.map((d) => {
       const signal = PAIN_SIGNALS[d.category];
