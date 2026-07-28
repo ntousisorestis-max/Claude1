@@ -1,0 +1,298 @@
+// FixMyBusiness data model.
+//
+// This schema is the intended production persistence layer. The V1 MVP UI
+// runs on local/demo state (see lib/store) so it works without a database
+// connection. Wiring API routes to this schema is the main extension point
+// for a real backend — see services/ for the repository interfaces that
+// future routes should implement against these models.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum BusinessType {
+  restaurant
+  cafe
+  salon
+  construction
+  plumber
+  electrician
+  dentist
+  gym
+  retail
+  cleaning
+  other
+}
+
+enum PainCategory {
+  invoicing
+  scheduling
+  customer_communication
+  email_overload
+  employee_management
+  inventory
+  reviews_reputation
+  owner_overload
+  record_keeping
+}
+
+enum Severity {
+  low
+  medium
+  high
+}
+
+enum ModuleId {
+  dashboard
+  tasks
+  calendar
+  customers
+  email
+  notes
+  reminders
+  documents
+  checklist
+  reports
+  settings
+}
+
+enum WorkerId {
+  customer_follow_up
+  invoice_assistant
+  email_drafter
+  document_summarizer
+  quote_generator
+}
+
+enum WorkerStatus {
+  simulated
+  coming_soon
+  active
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  businesses Business[]
+}
+
+model Business {
+  id           String       @id @default(cuid())
+  ownerId      String
+  owner        User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name         String
+  businessType BusinessType
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  diagnosticSessions DiagnosticSession[]
+  reports            BusinessReport[]
+  workspace          Workspace?
+
+  // Future integration placeholders — populated once each provider is wired up.
+  integrations Integration[]
+
+  @@index([ownerId])
+}
+
+/// One row per completed (or in-progress) diagnostic conversation.
+model DiagnosticSession {
+  id                 String   @id @default(cuid())
+  businessId         String
+  business           Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  workdayDescription String
+  followUpAnswers    Json // FollowUpAnswer[]
+  createdAt          DateTime @default(now())
+
+  report BusinessReport?
+
+  @@index([businessId])
+}
+
+model BusinessReport {
+  id                  String            @id @default(cuid())
+  businessId          String
+  business            Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  sessionId           String            @unique
+  session             DiagnosticSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  summary             String
+  healthScore         Int
+  hoursLostPerWeek    Float
+  revenueOpportunityLow  Float
+  revenueOpportunityHigh Float
+  recommendedSolution String
+  bottlenecks         Bottleneck[]
+  createdAt           DateTime          @default(now())
+
+  @@index([businessId])
+}
+
+model Bottleneck {
+  id               String         @id @default(cuid())
+  reportId         String
+  report           BusinessReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  category         PainCategory
+  title            String
+  description      String
+  severity         Severity
+  hoursLostPerWeek Float
+  priorityRank     Int
+
+  @@index([reportId])
+}
+
+model Workspace {
+  id         String   @id @default(cuid())
+  businessId String   @unique
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  modules ModuleInstance[]
+  workers AIWorkerInstance[]
+  tasks       Task[]
+  customers   Customer[]
+  notes       Note[]
+  reminders   Reminder[]
+  documents   Document[]
+  checklist   ChecklistItem[]
+  appointments Appointment[]
+}
+
+model ModuleInstance {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  moduleId    ModuleId
+  rationale   String?
+  enabled     Boolean   @default(true)
+
+  @@unique([workspaceId, moduleId])
+}
+
+/// V1 workers are simulated — this row tracks which cards are shown and,
+/// once real automation ships, will carry status + provider config.
+model AIWorkerInstance {
+  id          String       @id @default(cuid())
+  workspaceId String
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workerId    WorkerId
+  status      WorkerStatus @default(simulated)
+
+  @@unique([workspaceId, workerId])
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  title       String
+  done        Boolean   @default(false)
+  priority    Severity  @default(medium)
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([workspaceId])
+}
+
+model Customer {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  name        String
+  phone       String?
+  email       String?
+  notes       String?
+  tags        String[]
+  lastContact DateTime?
+
+  reminders Reminder[]
+
+  @@index([workspaceId])
+}
+
+model Note {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  title       String
+  body        String
+  pinned      Boolean   @default(false)
+  updatedAt   DateTime  @updatedAt
+
+  @@index([workspaceId])
+}
+
+model Reminder {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  title       String
+  dueDate     DateTime
+  done        Boolean   @default(false)
+  customerId  String?
+  customer    Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+}
+
+model Document {
+  id          String         @id @default(cuid())
+  workspaceId String
+  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  title       String
+  type        String
+  status      String
+  amount      Float?
+  date        DateTime
+
+  @@index([workspaceId])
+}
+
+model ChecklistItem {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  title       String
+  done        Boolean   @default(false)
+  frequency   String    @default("daily")
+
+  @@index([workspaceId])
+}
+
+model Appointment {
+  id              String    @id @default(cuid())
+  workspaceId     String
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  title           String
+  customerName    String?
+  startsAt        DateTime
+  durationMinutes Int       @default(30)
+  notes           String?
+
+  @@index([workspaceId])
+}
+
+/// Placeholder row for future third-party connections (WhatsApp, Stripe,
+/// Google Calendar, QuickBooks, Slack, Microsoft 365). `config` is a JSON
+/// blob whose shape is defined per-provider in services/integrations/*.
+model Integration {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  provider   String
+  connected  Boolean  @default(false)
+  config     Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([businessId, provider])
+}
