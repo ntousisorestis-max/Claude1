@@ -52,7 +52,10 @@ module.exports = {
   output: {
     path: path.resolve(appDirectory, 'dist'),
     filename: 'bundle.[contenthash].js',
-    publicPath: '/',
+    // Relative, not '/', so the built bundle works from any path — opened
+    // straight off disk, or hosted under a subdirectory like GitHub Pages'
+    // /<repo>/ rather than a domain root.
+    publicPath: './',
     clean: true,
   },
 
@@ -92,9 +95,13 @@ module.exports = {
   ],
 
   devServer: {
-    historyApiFallback: true,
     port: 3000,
     open: false,
+    // Bind to every interface so a phone on the same Wi-Fi can load it from
+    // http://<your-computer's-LAN-IP>:3000 — the quickest way to hold the real
+    // app in your hand without an App Store or a developer account.
+    host: '0.0.0.0',
+    allowedHosts: 'all',
     static: { directory: path.resolve(appDirectory, 'public') },
   },
 };
