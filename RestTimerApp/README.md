@@ -15,8 +15,38 @@ blocking needs — including things only you can do on your Apple Developer acco
 
 ## Running it
 
-Bare React Native 0.86. Phase 1 has no iOS-only code, so **Android is enough to
-try the whole loop** — no Mac required.
+Bare React Native 0.86. Phase 1 has no iOS-only code, so **the web build is
+enough to try the whole loop** — no Mac, no Android SDK, no Apple account.
+
+### Web — no Mac, no Android SDK, no Apple account
+
+The fastest way to actually run this. It's the **real app** — same `App.tsx`,
+screens, reducer and animations — with `react-native-web` mapping the RN
+primitives onto the DOM.
+
+```sh
+npm install
+npm run web          # dev server on http://localhost:3000
+npm run build:web    # production bundle into dist/
+```
+
+**What web can't tell you.** No real app blocking, no OS-scheduled
+notifications, no haptics — browsers can't do any of them, and Phase 2's whole
+premise is iOS-only. Treat it as a way to feel the UX and prove the code runs,
+not as a shippable product.
+
+Two pieces are swapped at build time, both by webpack's `.web.*` resolution
+rather than by edits to shared code:
+
+- `src/notifications.web.ts` — honest no-ops. A browser has no equivalent of an
+  OS alarm that survives the tab being backgrounded, which is the entire point
+  of the native version, so it doesn't pretend with a `setTimeout`.
+- Haptics need no stub: `src/haptics.ts` already checks `Platform.OS`, which is
+  `'web'` here, so it no-ops on its own.
+
+Blocking also degrades correctly on its own — `getBlocker()` only returns the
+Screen Time blocker on iOS with the native module present, so web gets
+`MockBlocker` and the simulated shield.
 
 ### Android (Windows or Linux)
 
@@ -101,9 +131,14 @@ npm run ios
 ```sh
 npm test            # reducer + full-loop integration tests (iOS resolution)
 npm run test:android # same suite, Platform.OS === 'android'
+npm run build:web    # also a real compile check for the shared code
 npx tsc --noEmit
 npm run lint
 ```
+
+**Nothing native has ever been compiled yet** — no `Podfile.lock`, no Gradle
+build. The web bundle builds and runs; iOS and Android are unproven until
+someone with the toolchain runs them. See [Known risks](#known-risks).
 
 ## Design rules
 
@@ -175,6 +210,22 @@ Phase 1 can't intercept another app, so lock state shows as a chip reading
 locked the chip is tappable (marked `TAP TO SEE`) and opens the full-screen
 shield you'd hit when opening TikTok. In Phase 2 that affordance disappears —
 iOS draws the real shield.
+
+## Known risks
+
+Unverified because no native build has run yet:
+
+- **Notifee vs the New Architecture.** RN 0.86 runs the New Architecture, and
+  since RN 0.82 you *cannot turn it off* — the Gradle plugin errors if you try.
+  `@notifee/react-native@9.1.8` ships no `codegenConfig`, so it's a legacy
+  module relying on RN's interop layer. That usually works; there's no fallback
+  switch if it doesn't. If the first native build breaks here, the options are
+  a newer notifee, a different notification library, or dropping the backup
+  alert (the loop itself doesn't depend on it).
+- **SDK levels.** Notifee declares `compileSdk 34` against this project's 36.
+  It reads from `rootProject.ext`, so it should inherit — but it's untested.
+- **iOS deployment target.** Notifee's podspec says 10.0 against the project's
+  15.1. Harmless, may warn during `pod install`.
 
 ## Layout
 

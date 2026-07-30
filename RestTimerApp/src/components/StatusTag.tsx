@@ -104,6 +104,7 @@ export function StatusTag({
             </Text>
             <Pressable
               accessibilityRole="button"
+              accessibilityLabel="Back to workout"
               onPress={() => setPreview(false)}
               style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
               <Text style={styles.backText}>Back to workout</Text>
