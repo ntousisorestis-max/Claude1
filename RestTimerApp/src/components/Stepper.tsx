@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, tabular, TAP_TARGET, type } from '../theme';
+import { colors, radius, tabular, TAP_TARGET, type } from '../theme';
 
 type Props = {
   label: string;
@@ -12,10 +12,7 @@ type Props = {
   unit?: string;
 };
 
-/**
- * Borderless: the number carries the weight, the controls sit either side of
- * it. Boxing every field is what made the old setup screen read as busy.
- */
+/** Round keys either side of an oversized numeral. The number is the graphic. */
 export function Stepper({
   label,
   value,
@@ -27,7 +24,7 @@ export function Stepper({
 }: Props) {
   return (
     <View style={styles.row}>
-      <StepKey
+      <Key
         symbol="−"
         accessibilityLabel={`Decrease ${label}`}
         onPress={() => onChange(value - step)}
@@ -37,7 +34,7 @@ export function Stepper({
         <Text style={styles.number}>{value}</Text>
         {unit ? <Text style={styles.unit}>{unit}</Text> : null}
       </View>
-      <StepKey
+      <Key
         symbol="+"
         accessibilityLabel={`Increase ${label}`}
         onPress={() => onChange(value + step)}
@@ -47,7 +44,7 @@ export function Stepper({
   );
 }
 
-function StepKey({
+function Key({
   symbol,
   onPress,
   disabled,
@@ -76,16 +73,18 @@ function StepKey({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   key: {
     width: TAP_TARGET,
     height: TAP_TARGET,
+    borderRadius: radius.pill,
+    backgroundColor: colors.inkSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  symbol: { fontSize: 30, fontWeight: '400', color: colors.muted },
-  pressed: { opacity: 0.5 },
-  disabled: { opacity: 0.2 },
+  symbol: { fontSize: 30, fontWeight: '700', color: colors.lime },
+  pressed: { opacity: 0.8, transform: [{ scale: 0.96 }] },
+  disabled: { opacity: 0.25 },
   value: {
     flex: 1,
     flexDirection: 'row',
@@ -95,10 +94,10 @@ const styles = StyleSheet.create({
   },
   number: {
     ...tabular,
-    fontSize: 44,
-    fontWeight: '700',
-    letterSpacing: -1.5,
-    color: colors.chalk,
+    fontSize: 54,
+    fontWeight: '900',
+    letterSpacing: -2.5,
+    color: colors.white,
   },
-  unit: { ...type.label, color: colors.faint },
+  unit: { ...type.tag, color: colors.faintOnDark },
 });

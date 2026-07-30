@@ -2,7 +2,7 @@ import React from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { BigButton } from '../components/BigButton';
 import { SetTicks } from '../components/SetTicks';
-import { StatusRail } from '../components/StatusRail';
+import { StatusTag } from '../components/StatusTag';
 import { useWorkout } from '../state/WorkoutContext';
 import { colors, pad2, spacing, tabular, type } from '../theme';
 
@@ -14,20 +14,20 @@ export function ActiveSetScreen() {
   } = useWorkout();
 
   const confirmEnd = () =>
-    Alert.alert('End workout?', 'Your apps will be unlocked.', [
-      { text: 'Keep going', style: 'cancel' },
-      { text: 'End workout', style: 'destructive', onPress: endWorkout },
+    Alert.alert('bail on this workout?', 'your apps unlock right away.', [
+      { text: 'nah, keep going', style: 'cancel' },
+      { text: 'bail', style: 'destructive', onPress: endWorkout },
     ]);
 
   return (
     <View style={styles.screen}>
-      <StatusRail selectedAppIds={config.selectedAppIds} />
+      <StatusTag selectedAppIds={config.selectedAppIds} />
 
       <View style={styles.head}>
         <Text style={styles.exercise} numberOfLines={2}>
           {config.exerciseName}
         </Text>
-        {/* Terse for the eye, spelled out for screen readers. */}
+        {/* Punchy for the eye, spelled out for screen readers. */}
         <View
           style={styles.counter}
           accessibilityLabel={`Set ${currentSet} of ${config.totalSets}`}>
@@ -41,9 +41,9 @@ export function ActiveSetScreen() {
         />
       </View>
 
-      <BigButton label="Done with Set" onPress={finishSet} slab />
+      <BigButton label="SET DONE" a11yLabel="Done with Set" onPress={finishSet} slab />
 
-      <BigButton label="End Workout" onPress={confirmEnd} variant="quit" />
+      <BigButton label="BAIL" a11yLabel="End Workout" onPress={confirmEnd} variant="bail" />
     </View>
   );
 }
@@ -52,13 +52,13 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
-    gap: spacing.lg,
+    gap: spacing.md,
   },
-  head: { gap: spacing.md, paddingTop: spacing.md },
-  exercise: { ...type.title, fontSize: 32, color: colors.chalk },
+  head: { gap: spacing.md, paddingTop: spacing.sm },
+  exercise: { ...type.display, color: colors.white },
   counter: { flexDirection: 'row', alignItems: 'baseline' },
-  current: { ...type.display, ...tabular, color: colors.chalk },
-  total: { ...type.display, ...tabular, fontSize: 38, color: colors.faint },
+  current: { ...type.mega, ...tabular, color: colors.lime },
+  total: { ...type.mega, ...tabular, fontSize: 46, letterSpacing: -2, color: colors.inkLine },
 });

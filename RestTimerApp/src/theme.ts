@@ -1,29 +1,35 @@
 /**
- * Steel graphite ground, chalk actions.
+ * Acid lime on black, and the screen flips when you're free.
  *
- * The rule that holds the design together: **hue means lock state, nothing
- * else.** Amber is shielded, green is free, and no other element is allowed to
- * borrow either. Buttons and emphasis are chalk white, so the one thing you
- * need to read across a gym is the only coloured thing on screen.
+ * The rule from the last pass survives, just louder: **colour is lock state.**
+ * Locked screens are near-black with lime on top. The instant your apps unlock,
+ * the whole screen floods lime and the type goes black. Lights off, lights on —
+ * you can read it from the other end of the gym without focusing.
+ *
+ * Violet is the only other colour and it never grounds a screen; it's reserved
+ * for the payoff on the finish screen.
  */
 export const colors = {
-  /** Grounds — cool graphite, not a default near-black. */
-  bg: '#0D0F10',
-  surface: '#15181A',
-  surfaceAlt: '#1D2124',
-  hairline: '#272C30',
+  /** Locked ground. */
+  ink: '#0B0B0F',
+  inkSoft: '#14141B',
+  inkLine: '#272733',
 
-  /** Type. */
-  chalk: '#EEF2F3',
-  muted: '#8A9298',
-  faint: '#5D666C',
+  /** Free ground, and the hero colour on dark. */
+  lime: '#D9FF3D',
+  limeDim: '#A8C82A',
 
-  /** State — the only hues in the app. */
-  locked: '#F2A93B',
-  free: '#58C98A',
+  /** Payoff only. Never a ground. */
+  violet: '#7C4DFF',
 
-  /** Reserved for leaving a workout early. */
-  quit: '#E06B6B',
+  white: '#FFFFFF',
+  mutedOnDark: '#8B8B9A',
+  faintOnDark: '#55555F',
+  /** Type on a lime ground. */
+  mutedOnLime: 'rgba(11, 11, 15, 0.62)',
+  faintOnLime: 'rgba(11, 11, 15, 0.42)',
+
+  bail: '#FF5C5C',
 } as const;
 
 export const spacing = {
@@ -34,26 +40,26 @@ export const spacing = {
   xl: 34,
 } as const;
 
-/** Squarer than the usual pill — this should read like equipment, not a card. */
+/** Soft everywhere, pill where it's tappable. */
 export const radius = {
-  sm: 6,
-  md: 10,
-  lg: 16,
+  sm: 10,
+  md: 16,
+  lg: 26,
+  pill: 999,
 } as const;
 
 export const HAIRLINE = 1;
+export const TAP_TARGET = 60;
 
-/** Minimum comfortable tap target, mid-workout. */
-export const TAP_TARGET = 56;
-
-/** One scale, used everywhere. */
+/** Big, tight, heavy. The numbers are the graphics. */
 export const type = {
-  display: { fontSize: 68, fontWeight: '700', letterSpacing: -2.5 },
-  title: { fontSize: 30, fontWeight: '700', letterSpacing: -0.7 },
-  action: { fontSize: 19, fontWeight: '700', letterSpacing: 0.2 },
-  body: { fontSize: 16, fontWeight: '500', letterSpacing: 0 },
-  /** Uppercase micro-labels. Tracking does the work, not weight. */
-  label: { fontSize: 11, fontWeight: '600', letterSpacing: 1.6 },
+  mega: { fontSize: 92, fontWeight: '900', letterSpacing: -5 },
+  display: { fontSize: 44, fontWeight: '900', letterSpacing: -1.8 },
+  title: { fontSize: 30, fontWeight: '800', letterSpacing: -0.9 },
+  action: { fontSize: 20, fontWeight: '800', letterSpacing: 0.4 },
+  body: { fontSize: 16, fontWeight: '600', letterSpacing: -0.1 },
+  /** Sticker-chip / micro-label text. */
+  tag: { fontSize: 12, fontWeight: '800', letterSpacing: 1.3 },
 } as const;
 
 /** Digits must not jitter as they count down. */
@@ -66,7 +72,7 @@ export function formatMMSS(totalSeconds: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-/** "3" -> "03". Set counters read as instrument digits. */
+/** "3" -> "03". */
 export function pad2(n: number): string {
   return String(Math.max(0, n)).padStart(2, '0');
 }

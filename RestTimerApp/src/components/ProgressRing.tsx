@@ -9,15 +9,18 @@ type Props = {
   size?: number;
   strokeWidth?: number;
   color?: string;
+  /** The unfilled remainder — must be set when drawing on a lime ground. */
+  trackColor?: string;
   children?: React.ReactNode;
 };
 
-/** Thin stroke, butt cap — an instrument dial, not a fitness-app donut. */
+/** Fat stroke, round cap. It should read as a chunky graphic, not a hairline. */
 export function ProgressRing({
   progress,
-  size = 268,
-  strokeWidth = 5,
-  color = colors.free,
+  size = 264,
+  strokeWidth = 14,
+  color = colors.lime,
+  trackColor = colors.inkLine,
   children,
 }: Props) {
   const radius = (size - strokeWidth) / 2;
@@ -31,7 +34,7 @@ export function ProgressRing({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={colors.hairline}
+          stroke={trackColor}
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -41,6 +44,7 @@ export function ProgressRing({
           r={radius}
           stroke={color}
           strokeWidth={strokeWidth}
+          strokeLinecap="round"
           fill="none"
           strokeDasharray={circumference}
           strokeDashoffset={circumference * (1 - clamped)}

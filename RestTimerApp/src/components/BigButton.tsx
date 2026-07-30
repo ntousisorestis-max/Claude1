@@ -1,27 +1,30 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, ViewStyle } from 'react-native';
-import { colors, HAIRLINE, radius, spacing, TAP_TARGET, type } from '../theme';
+import { colors, radius, spacing, TAP_TARGET, type } from '../theme';
 
-type Variant = 'chalk' | 'outline' | 'quiet' | 'quit';
+type Variant = 'lime' | 'ink' | 'outlineOnLime' | 'quiet' | 'bail';
 
 type Props = {
+  /** What's printed on the button. Shouty is fine. */
   label: string;
+  /**
+   * What a screen reader says, when the printed label is too punchy to be
+   * clear on its own ("LOCK IN" -> "Start workout").
+   */
+  a11yLabel?: string;
   onPress: () => void;
   variant?: Variant;
-  /** Fills the available space — the mid-workout "Done with Set" slab. */
+  /** Fills the space — the mid-workout slab you hit without looking. */
   slab?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
 };
 
-/**
- * Actions are chalk, never coloured — hue in this app is reserved for lock
- * state, so a green button would read as "unlocked" at a glance.
- */
 export function BigButton({
   label,
+  a11yLabel,
   onPress,
-  variant = 'chalk',
+  variant = 'lime',
   slab = false,
   disabled = false,
   style,
@@ -29,7 +32,7 @@ export function BigButton({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={a11yLabel ?? label}
       accessibilityState={{ disabled }}
       onPress={onPress}
       disabled={disabled}
@@ -44,12 +47,14 @@ export function BigButton({
       <Text
         style={[
           styles.label,
-          variant === 'chalk' && styles.labelChalk,
+          variant === 'lime' && styles.labelOnLime,
+          variant === 'ink' && styles.labelOnInk,
+          variant === 'outlineOnLime' && styles.labelOnLime,
           variant === 'quiet' && styles.labelQuiet,
-          variant === 'quit' && styles.labelQuit,
+          variant === 'bail' && styles.labelBail,
           slab && styles.labelSlab,
         ]}>
-        {slab ? label.toUpperCase() : label}
+        {label}
       </Text>
     </Pressable>
   );
@@ -58,27 +63,30 @@ export function BigButton({
 const styles = StyleSheet.create({
   base: {
     minHeight: TAP_TARGET,
-    borderRadius: radius.md,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
   slab: { flex: 1, borderRadius: radius.lg },
-  chalk: { backgroundColor: colors.chalk },
-  outline: {
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    backgroundColor: colors.surface,
+  lime: { backgroundColor: colors.lime },
+  ink: { backgroundColor: colors.ink },
+  outlineOnLime: {
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: 'transparent',
   },
   quiet: { backgroundColor: 'transparent' },
-  quit: { backgroundColor: 'transparent' },
-  pressed: { opacity: 0.6 },
-  disabled: { opacity: 0.25 },
+  bail: { backgroundColor: 'transparent' },
+  // Squash on press — the whole UI should feel physical.
+  pressed: { opacity: 0.85, transform: [{ scale: 0.975 }] },
+  disabled: { opacity: 0.3 },
 
-  label: { ...type.action, color: colors.chalk },
-  labelChalk: { color: colors.bg },
-  labelQuiet: { ...type.label, color: colors.muted },
-  labelQuit: { ...type.label, color: colors.quit },
-  labelSlab: { fontSize: 30, fontWeight: '700', letterSpacing: 1.5 },
+  label: { ...type.action, color: colors.white },
+  labelOnLime: { color: colors.ink },
+  labelOnInk: { color: colors.lime },
+  labelQuiet: { ...type.tag, color: colors.mutedOnDark },
+  labelBail: { ...type.tag, color: colors.bail },
+  labelSlab: { fontSize: 40, fontWeight: '900', letterSpacing: -1.2 },
 });

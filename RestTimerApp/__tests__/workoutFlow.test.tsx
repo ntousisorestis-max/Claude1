@@ -59,10 +59,10 @@ describe('full workout loop', () => {
     const root = tree.root;
 
     // --- Setup ---------------------------------------------------------
-    expect(hasText(root, 'New workout')).toBe(true);
+    expect(hasText(root, 'lock in')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(false);
 
-    type(root, 'Bench press', 'Squat');
+    type(root, 'bench press', 'Squat');
     press(root, 'Decrease Sets'); // 3 -> 2 sets, to keep the test short
     press(root, 'Start Workout');
 
@@ -74,7 +74,7 @@ describe('full workout loop', () => {
     press(root, 'Done with Set');
 
     // --- Rest: apps unlocked, countdown running ------------------------
-    expect(hasText(root, 'Scroll away.')).toBe(true);
+    expect(hasText(root, 'scroll time')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(false);
     expect(hasText(root, '01:00')).toBe(true);
 
@@ -93,12 +93,12 @@ describe('full workout loop', () => {
 
     // --- Last set: complete, unlocked for good -------------------------
     press(root, 'Done with Set');
-    expect(hasText(root, 'Workout complete.')).toBe(true);
+    expect(hasText(root, 'that’s a W')).toBe(true);
     expect(hasText(root, '2 of 2')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(false);
 
     press(root, 'New Workout');
-    expect(hasText(root, 'New workout')).toBe(true);
+    expect(hasText(root, 'lock in')).toBe(true);
   });
 
   it('re-locks immediately when rest is skipped', async () => {
@@ -108,7 +108,7 @@ describe('full workout loop', () => {
     });
     const root = tree.root;
 
-    type(root, 'Bench press', 'Rows');
+    type(root, 'bench press', 'Rows');
     press(root, 'Start Workout');
     press(root, 'Done with Set');
     expect(MockBlocker.isLocked()).toBe(false);

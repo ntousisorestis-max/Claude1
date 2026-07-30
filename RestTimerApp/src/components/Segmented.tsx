@@ -1,8 +1,8 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, HAIRLINE, radius, tabular, type } from '../theme';
+import { colors, radius, tabular, type } from '../theme';
 
-/** Quick-select row. One hairline frame, one filled cell — no boxes-in-boxes. */
+/** Quick-select pills. The chosen one goes solid lime. */
 export function Segmented({
   options,
   value,
@@ -17,8 +17,8 @@ export function Segmented({
   label: string;
 }) {
   return (
-    <View style={styles.frame}>
-      {options.map((option, i) => {
+    <View style={styles.row}>
+      {options.map(option => {
         const selected = option === value;
         return (
           <Pressable
@@ -29,7 +29,6 @@ export function Segmented({
             onPress={() => onChange(option)}
             style={({ pressed }) => [
               styles.cell,
-              i > 0 && styles.divided,
               selected && styles.selected,
               pressed && styles.pressed,
             ]}>
@@ -44,17 +43,17 @@ export function Segmented({
 }
 
 const styles = StyleSheet.create({
-  frame: {
-    flexDirection: 'row',
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    borderRadius: radius.md,
-    overflow: 'hidden',
+  row: { flexDirection: 'row', gap: 8 },
+  cell: {
+    flex: 1,
+    height: 50,
+    borderRadius: radius.pill,
+    backgroundColor: colors.inkSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  cell: { flex: 1, height: 46, alignItems: 'center', justifyContent: 'center' },
-  divided: { borderLeftWidth: HAIRLINE, borderLeftColor: colors.hairline },
-  selected: { backgroundColor: colors.surfaceAlt },
-  pressed: { opacity: 0.6 },
-  text: { ...type.body, ...tabular, color: colors.faint },
-  textSelected: { color: colors.chalk, fontWeight: '700' },
+  selected: { backgroundColor: colors.lime },
+  pressed: { opacity: 0.85, transform: [{ scale: 0.97 }] },
+  text: { ...type.body, ...tabular, fontWeight: '800', color: colors.mutedOnDark },
+  textSelected: { color: colors.ink },
 });

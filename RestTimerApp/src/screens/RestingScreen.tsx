@@ -3,11 +3,12 @@ import { StyleSheet, Text, View } from 'react-native';
 import { BigButton } from '../components/BigButton';
 import { ProgressRing } from '../components/ProgressRing';
 import { SetTicks } from '../components/SetTicks';
-import { StatusRail } from '../components/StatusRail';
+import { StatusTag } from '../components/StatusTag';
 import { useCountdown } from '../hooks/useCountdown';
 import { useWorkout } from '../state/WorkoutContext';
 import { colors, formatMMSS, spacing, tabular, type } from '../theme';
 
+/** The one flooded screen: your apps are open, and you can see that from across the room. */
 export function RestingScreen() {
   const {
     state: { config, currentSet, setsCompleted, restEndsAt },
@@ -20,17 +21,20 @@ export function RestingScreen() {
 
   return (
     <View style={styles.screen}>
-      <StatusRail selectedAppIds={config.selectedAppIds} />
+      <StatusTag selectedAppIds={config.selectedAppIds} onLime />
 
       <View style={styles.head}>
-        <Text style={styles.title}>Rest</Text>
-        <Text style={styles.sub}>Scroll away.</Text>
+        <Text style={styles.title}>scroll time</Text>
+        <Text style={styles.sub}>go be delulu for a sec</Text>
       </View>
 
       <View style={styles.dial}>
-        <ProgressRing progress={secondsLeft / config.restSeconds}>
+        <ProgressRing
+          progress={secondsLeft / config.restSeconds}
+          color={colors.ink}
+          trackColor="rgba(11,11,15,0.15)">
           <Text style={styles.clock}>{formatMMSS(secondsLeft)}</Text>
-          <Text style={styles.until}>UNTIL LOCK</Text>
+          <Text style={styles.until}>TILL IT LOCKS</Text>
         </ProgressRing>
       </View>
 
@@ -39,8 +43,14 @@ export function RestingScreen() {
           total={config.totalSets}
           completed={setsCompleted}
           current={currentSet + 1}
+          onLime
         />
-        <BigButton label="Skip Rest" onPress={endRest} variant="outline" />
+        <BigButton
+          label="back to it"
+          a11yLabel="Skip Rest"
+          onPress={endRest}
+          variant="outlineOnLime"
+        />
       </View>
     </View>
   );
@@ -50,20 +60,15 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
     gap: spacing.md,
   },
-  head: { gap: 2, paddingTop: spacing.md },
-  title: { ...type.title, fontSize: 32, color: colors.chalk },
-  sub: { ...type.body, color: colors.muted },
+  head: { paddingTop: spacing.sm },
+  title: { ...type.display, fontSize: 50, color: colors.ink },
+  sub: { ...type.body, color: colors.mutedOnLime },
   dial: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  clock: {
-    ...type.display,
-    ...tabular,
-    fontSize: 76,
-    color: colors.chalk,
-  },
-  until: { ...type.label, color: colors.faint, marginTop: spacing.xs },
+  clock: { ...type.mega, ...tabular, fontSize: 80, color: colors.ink },
+  until: { ...type.tag, color: colors.mutedOnLime, marginTop: spacing.xs },
   foot: { gap: spacing.md },
 });

@@ -17,6 +17,10 @@ import { RestingScreen } from './src/screens/RestingScreen';
 import { SetupScreen } from './src/screens/SetupScreen';
 import { useWorkout, WorkoutProvider } from './src/state/WorkoutContext';
 import { colors } from './src/theme';
+import type { Phase } from './src/state/types';
+
+/** Free phases flood lime; locked phases stay dark. */
+const isFree = (phase: Phase) => phase === 'resting' || phase === 'complete';
 
 /** The workout phase is the navigation — no router needed for four screens. */
 function CurrentScreen() {
@@ -34,23 +38,41 @@ function CurrentScreen() {
   }
 }
 
+/**
+ * Carries the phase's ground colour all the way out to the safe-area insets, so
+ * a flooded screen floods edge to edge instead of leaving dark bands top and
+ * bottom.
+ */
+function Ground() {
+  const { state } = useWorkout();
+  const free = isFree(state.phase);
+  const ground = free ? colors.lime : colors.ink;
+
+  return (
+    <View style={[styles.root, { backgroundColor: ground }]}>
+      <StatusBar
+        barStyle={free ? 'dark-content' : 'light-content'}
+        backgroundColor={ground}
+      />
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        <CurrentScreen />
+      </SafeAreaView>
+    </View>
+  );
+}
+
 function App() {
   return (
     <SafeAreaProvider>
-      <View style={styles.root}>
-        <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
-        <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-          <WorkoutProvider>
-            <CurrentScreen />
-          </WorkoutProvider>
-        </SafeAreaView>
-      </View>
+      <WorkoutProvider>
+        <Ground />
+      </WorkoutProvider>
     </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
+  root: { flex: 1 },
   safe: { flex: 1 },
 });
 

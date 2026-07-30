@@ -21,7 +21,7 @@ import {
   MIN_SETS,
   REST_PRESETS,
 } from '../state/workoutReducer';
-import { colors, HAIRLINE, radius, spacing, type } from '../theme';
+import { colors, radius, spacing, type } from '../theme';
 
 export function SetupScreen() {
   const {
@@ -42,24 +42,24 @@ export function SetupScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled">
-        <Text style={styles.masthead}>New workout</Text>
+        <Text style={styles.masthead}>
+          lock in<Text style={styles.dot}>.</Text>
+        </Text>
 
-        {/* Sections are separated by hairlines, not stacked boxes. */}
-        <View style={styles.section}>
-          <Text style={styles.label}>EXERCISE</Text>
+        <View style={styles.block}>
+          <Text style={styles.label}>WHAT ARE WE DOING</Text>
           <TextInput
             value={config.exerciseName}
             onChangeText={setExerciseName}
-            placeholder="Bench press"
-            placeholderTextColor={colors.faint}
+            placeholder="bench press"
+            placeholderTextColor={colors.faintOnDark}
             style={styles.input}
             returnKeyType="done"
-            autoCapitalize="words"
           />
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>SETS</Text>
+        <View style={styles.block}>
+          <Text style={styles.label}>HOW MANY SETS</Text>
           <Stepper
             label="Sets"
             value={config.totalSets}
@@ -69,8 +69,8 @@ export function SetupScreen() {
           />
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>REST BETWEEN SETS</Text>
+        <View style={styles.block}>
+          <Text style={styles.label}>SCROLL TIME BETWEEN SETS</Text>
           <Stepper
             label="Rest"
             value={config.restSeconds}
@@ -78,7 +78,7 @@ export function SetupScreen() {
             step={5}
             min={MIN_REST_SECONDS}
             max={MAX_REST_SECONDS}
-            unit="SECONDS"
+            unit="SEC"
           />
           <Segmented
             label="Rest"
@@ -89,8 +89,8 @@ export function SetupScreen() {
           />
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>BLOCK DURING SETS</Text>
+        <View style={styles.block}>
+          <Text style={styles.label}>KILL THESE WHILE I LIFT</Text>
           <View style={styles.apps}>
             {BLOCKABLE_APPS.map(app => {
               const checked = config.selectedAppIds.includes(app.id);
@@ -101,34 +101,32 @@ export function SetupScreen() {
                   accessibilityState={{ checked }}
                   accessibilityLabel={app.name}
                   onPress={() => toggleApp(app.id)}
-                  style={({ pressed }) => [styles.app, pressed && styles.pressed]}>
-                  <View style={[styles.monogram, { borderColor: app.tint }]}>
-                    <Text style={[styles.monogramText, { color: app.tint }]}>
-                      {app.name.slice(0, 1)}
-                    </Text>
-                  </View>
-                  <Text style={[styles.appName, !checked && styles.appNameOff]}>
+                  style={({ pressed }) => [
+                    styles.app,
+                    checked && styles.appOn,
+                    pressed && styles.pressed,
+                  ]}>
+                  <View style={[styles.dotMark, { backgroundColor: app.tint }]} />
+                  <Text style={[styles.appName, checked && styles.appNameOn]}>
                     {app.name}
                   </Text>
-                  <View style={[styles.mark, checked && styles.markOn]}>
-                    {checked ? <Text style={styles.tick}>✓</Text> : null}
-                  </View>
                 </Pressable>
               );
             })}
           </View>
           <Text style={styles.note}>
-            Placeholder for now — nothing is really blocked until Phase 2.
+            placeholder for now — nothing actually gets blocked until Phase 2
           </Text>
         </View>
 
         <BigButton
-          label="Start Workout"
+          label="LOCK IN"
+          a11yLabel="Start Workout"
           onPress={startWorkout}
           disabled={!canStart}
         />
         {!canStart ? (
-          <Text style={styles.hint}>Name the exercise to start.</Text>
+          <Text style={styles.hint}>name the exercise first</Text>
         ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
@@ -139,64 +137,40 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.sm,
     paddingBottom: spacing.xl,
+    gap: spacing.lg,
   },
-  masthead: {
-    ...type.title,
-    color: colors.chalk,
-    marginBottom: spacing.lg,
-  },
-  section: {
-    borderTopWidth: HAIRLINE,
-    borderTopColor: colors.hairline,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
-    gap: spacing.sm,
-  },
-  label: { ...type.label, color: colors.faint },
+  masthead: { ...type.display, fontSize: 52, color: colors.white },
+  dot: { color: colors.lime },
+  block: { gap: spacing.sm },
+  label: { ...type.tag, color: colors.faintOnDark },
   input: {
     ...type.title,
-    fontSize: 26,
-    color: colors.chalk,
-    paddingVertical: spacing.sm,
+    fontSize: 30,
+    color: colors.white,
+    backgroundColor: colors.inkSoft,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
   },
-  apps: { marginTop: spacing.xs },
+  apps: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   app: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
-    height: 54,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: radius.pill,
+    backgroundColor: colors.inkSoft,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
-  monogram: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.sm,
-    borderWidth: HAIRLINE,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  monogramText: { fontSize: 15, fontWeight: '700' },
-  appName: { ...type.body, flex: 1, color: colors.chalk },
-  appNameOff: { color: colors.faint },
-  mark: {
-    width: 22,
-    height: 22,
-    borderRadius: radius.sm,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  markOn: { backgroundColor: colors.chalk, borderColor: colors.chalk },
-  tick: { color: colors.bg, fontSize: 14, fontWeight: '700' },
-  note: { ...type.body, fontSize: 13, color: colors.faint },
-  pressed: { opacity: 0.55 },
-  hint: {
-    ...type.body,
-    fontSize: 13,
-    color: colors.faint,
-    textAlign: 'center',
-    marginTop: spacing.sm,
-  },
+  appOn: { borderColor: colors.lime },
+  dotMark: { width: 10, height: 10, borderRadius: 5 },
+  appName: { ...type.body, fontWeight: '700', color: colors.faintOnDark },
+  appNameOn: { color: colors.white },
+  note: { ...type.body, fontSize: 13, color: colors.faintOnDark },
+  pressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
+  hint: { ...type.body, fontSize: 13, color: colors.faintOnDark, textAlign: 'center' },
 });

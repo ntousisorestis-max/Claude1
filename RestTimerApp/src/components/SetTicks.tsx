@@ -1,20 +1,21 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { colors } from '../theme';
+import { colors, radius } from '../theme';
 
 /**
- * One tick per set, filled as they're banked — the workout read at a glance,
- * without counting words. Chalk for done, hairline for remaining; the tick you
- * are on is half-height so "doing" is distinct from "done".
+ * One chunky block per set, filled as they're banked. The whole workout at a
+ * glance, no counting words.
  */
 export function SetTicks({
   total,
   completed,
   current,
+  onLime = false,
 }: {
   total: number;
   completed: number;
   current: number;
+  onLime?: boolean;
 }) {
   return (
     <View
@@ -28,7 +29,12 @@ export function SetTicks({
         return (
           <View
             key={index}
-            style={[styles.tick, done && styles.done, active && styles.active]}
+            style={[
+              styles.tick,
+              onLime ? styles.emptyOnLime : styles.emptyOnInk,
+              done && (onLime ? styles.doneOnLime : styles.doneOnInk),
+              active && (onLime ? styles.activeOnLime : styles.activeOnInk),
+            ]}
           />
         );
       })}
@@ -37,13 +43,12 @@ export function SetTicks({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 5, alignItems: 'flex-end', height: 12 },
-  tick: {
-    flex: 1,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: colors.hairline,
-  },
-  done: { height: 12, backgroundColor: colors.chalk },
-  active: { height: 7, backgroundColor: colors.muted },
+  row: { flexDirection: 'row', gap: 6 },
+  tick: { flex: 1, height: 10, borderRadius: radius.pill },
+  emptyOnInk: { backgroundColor: colors.inkLine },
+  emptyOnLime: { backgroundColor: 'rgba(11,11,15,0.16)' },
+  doneOnInk: { backgroundColor: colors.lime },
+  doneOnLime: { backgroundColor: colors.ink },
+  activeOnInk: { backgroundColor: colors.limeDim },
+  activeOnLime: { backgroundColor: 'rgba(11,11,15,0.5)' },
 });
