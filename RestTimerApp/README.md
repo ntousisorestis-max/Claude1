@@ -57,7 +57,38 @@ the debugging prompt, confirm `adb devices` lists it, then `npm run android`.
 This is quicker than a cold emulator boot and gives you real notification
 behaviour, which the emulator fakes.
 
-### iOS (macOS only)
+### iOS on a real iPhone, without a Mac (EAS Build)
+
+EAS builds iOS in the cloud, so no Mac is needed. The repo is already configured:
+`eas.json` defines the profiles, and the bundle identifier is set to
+`com.ntousisorestis.resttimer` (change it in Xcode/`project.pbxproj` if you want
+a different one — do it *before* the first build, since it's what gets registered
+with Apple).
+
+**Prerequisite, and it isn't free: the Apple Developer Program, $99/year.**
+Installing on a physical iPhone needs an ad-hoc provisioning profile with your
+device's UDID, and Apple only issues those to paid members. The Expo account is
+free; this isn't. You'll need the same membership for Phase 2 anyway — the
+`family-controls` entitlement can only be requested from a paid account.
+
+Once you're enrolled:
+
+```sh
+npm install -g eas-cli
+eas login                      # free Expo account, created at expo.dev
+eas build:configure            # links the project, adds a projectId
+eas build --platform ios --profile device
+```
+
+The build asks for your Apple ID, then registers the device and generates
+credentials for you. When it finishes, EAS gives you a URL and QR code — open it
+on the iPhone, install, then trust the profile under
+*Settings → General → VPN & Device Management*.
+
+Note: this app lives in a subdirectory of its git repo, so run every `eas`
+command from `RestTimerApp/`, not the repo root.
+
+### iOS on a Mac
 
 ```sh
 npm install
