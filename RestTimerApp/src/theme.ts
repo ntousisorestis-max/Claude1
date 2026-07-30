@@ -29,7 +29,7 @@ export const colors = {
   mutedOnLime: 'rgba(11, 11, 15, 0.62)',
   faintOnLime: 'rgba(11, 11, 15, 0.42)',
 
-  bail: '#FF5C5C',
+  danger: '#FF5C5C',
 } as const;
 
 export const spacing = {

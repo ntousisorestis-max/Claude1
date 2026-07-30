@@ -24,11 +24,14 @@ export function CompleteScreen() {
           both the fade and the travel. */}
       <View style={styles.body}>
         <Animated.View style={[styles.hero, enterHero]}>
-          <Text style={styles.badge}>{finishedAll ? '🔥' : '🫡'}</Text>
+          <Text style={styles.badge}>{finishedAll ? '🔥' : '👍'}</Text>
           <Text style={styles.headline}>
-            {finishedAll ? 'that’s a W' : 'called it early'}
+            {finishedAll ? 'Workout complete' : 'Workout ended'}
           </Text>
-          <Text style={styles.sub}>phone’s all yours</Text>
+          <Text style={styles.sub}>
+            Your apps are unlocked. Nothing is blocked until you start another
+            workout.
+          </Text>
 
           <SetTicks
             total={config.totalSets}
@@ -39,13 +42,16 @@ export function CompleteScreen() {
         </Animated.View>
 
         <Animated.View style={[styles.card, enterCard]}>
-          <Row label="WHAT" value={config.exerciseName || '—'} />
-          <Row label="SETS" value={`${setsCompleted} of ${config.totalSets}`} />
-          <Row label="SCROLLED FOR" value={formatMMSS(totalRestSeconds)} />
+          <Row label="EXERCISE" value={config.exerciseName || '—'} />
+          <Row
+            label="SETS COMPLETED"
+            value={`${setsCompleted} of ${config.totalSets}`}
+          />
+          <Row label="TIME SPENT RESTING" value={formatMMSS(totalRestSeconds)} />
         </Animated.View>
       </View>
 
-      <BigButton label="go again" a11yLabel="New Workout" onPress={newWorkout} variant="ink" />
+      <BigButton label="New workout" onPress={newWorkout} variant="ink" />
     </View>
   );
 }
@@ -70,9 +76,9 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   body: { flex: 1, justifyContent: 'center', gap: spacing.md },
-  hero: { gap: spacing.md },
-  badge: { fontSize: 64 },
-  headline: { ...type.mega, fontSize: 62, color: colors.ink },
+  hero: { gap: spacing.sm },
+  badge: { fontSize: 56 },
+  headline: { ...type.mega, fontSize: 52, color: colors.ink },
   sub: { ...type.body, color: colors.mutedOnLime, marginBottom: spacing.sm },
   card: {
     backgroundColor: colors.ink,
@@ -81,7 +87,12 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     marginTop: spacing.sm,
   },
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.md },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
   rowLabel: { ...type.tag, color: colors.faintOnDark },
   rowValue: {
     ...type.body,

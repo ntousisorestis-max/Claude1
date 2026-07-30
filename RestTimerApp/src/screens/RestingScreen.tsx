@@ -13,7 +13,7 @@ import { colors, formatMMSS, spacing, tabular, type } from '../theme';
 /** Under this many seconds left, the clock starts ticking visibly. */
 const URGENT_AT = 5;
 
-/** The one flooded screen: your apps are open, and you can see that from across the room. */
+/** The flooded screen: your apps are open, and you can see that across the room. */
 export function RestingScreen() {
   const {
     state: { config, currentSet, setsCompleted, restEndsAt },
@@ -26,13 +26,17 @@ export function RestingScreen() {
   const enter = useEnter();
   const beat = useHeartbeat(secondsLeft);
 
+  const nextSet = currentSet + 1;
+
   return (
     <View style={styles.screen}>
       <StatusTag selectedAppIds={config.selectedAppIds} onLime />
 
       <Animated.View style={[styles.head, enter]}>
-        <Text style={styles.title}>scroll time</Text>
-        <Text style={styles.sub}>go be delulu for a sec</Text>
+        <Text style={styles.title}>Rest</Text>
+        <Text style={styles.sub}>
+          Scroll all you like. Your apps lock again when this hits zero.
+        </Text>
       </Animated.View>
 
       <View style={styles.dial}>
@@ -44,21 +48,23 @@ export function RestingScreen() {
             {formatMMSS(secondsLeft)}
           </Animated.Text>
           <Text style={styles.until}>
-            {secondsLeft <= URGENT_AT ? 'LOCKING UP' : 'TILL IT LOCKS'}
+            {secondsLeft <= URGENT_AT ? 'LOCKING NOW' : 'REST REMAINING'}
           </Text>
         </ProgressRing>
       </View>
 
       <View style={styles.foot}>
+        <Text style={styles.next}>
+          Up next: set {nextSet} of {config.totalSets}
+        </Text>
         <SetTicks
           total={config.totalSets}
           completed={setsCompleted}
-          current={currentSet + 1}
+          current={nextSet}
           onLime
         />
         <BigButton
-          label="back to it"
-          a11yLabel="Skip Rest"
+          label="Skip rest"
           onPress={endRest}
           variant="outlineOnLime"
         />
@@ -103,11 +109,12 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     gap: spacing.md,
   },
-  head: { paddingTop: spacing.sm },
-  title: { ...type.display, fontSize: 50, color: colors.ink },
+  head: { paddingTop: spacing.sm, gap: 2 },
+  title: { ...type.display, fontSize: 46, color: colors.ink },
   sub: { ...type.body, color: colors.mutedOnLime },
   dial: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   clock: { ...type.mega, ...tabular, fontSize: 80, color: colors.ink },
   until: { ...type.tag, color: colors.mutedOnLime, marginTop: spacing.xs },
-  foot: { gap: spacing.md },
+  foot: { gap: spacing.sm },
+  next: { ...type.body, fontWeight: '700', color: colors.ink },
 });

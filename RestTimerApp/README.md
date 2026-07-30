@@ -4,9 +4,9 @@ A gym rest-timer that blocks your scrolling apps while you're doing a set, unloc
 them for the rest period, and re-locks them when the countdown hits zero.
 
 ```
-Setup ──Start──▶ Active Set ──Done with Set──▶ Resting ──0:00 / Skip──▶ Active Set
-                  black · locked               lime · free            black · locked
-                       └────────── last set ──────────▶ Complete (lime · free)
+Setup ──Start──▶ Active Set ──Done with set──▶ Resting ──0:00 / Skip──▶ Active Set
+              apps blocked (black)          apps unlocked (lime)     apps blocked
+                    └───────────── last set ─────────────▶ Complete (unlocked)
 ```
 
 **This is Phase 1: the block is simulated.** The full loop works, but no app is
@@ -105,23 +105,28 @@ npx tsc --noEmit
 npm run lint
 ```
 
-## Design rule
+## Design rules
 
-**Colour means lock state, and it's the whole screen.** Locked phases are
-near-black with acid lime on top; the moment your apps unlock, the ground floods
-lime and the type goes black. Lights off, lights on — legible from across a gym
-without reading a word. The flood is applied at the root so it covers the
-safe-area insets too, rather than leaving dark bands. Violet is the only other
-colour and never grounds a screen.
+**1. Say it in words first, then repeat it in colour.** Every screen states the
+lock status plainly — "2 apps blocked", "apps unlocked" — and each in-workout
+screen adds a line saying what happens next. The background colour then repeats
+it: black while apps are blocked, flooding lime the moment they unlock. Colour
+is the fast confirmation, never the only signal, so the app still works if you
+can't tell the two apart.
 
-Type is oversized and heavy, everything tappable is a pill, and set counts are
-instrument digits (`01/03`) with a chunky tick per set.
+The flood is applied at the root so it covers the safe-area insets too, rather
+than leaving dark bands.
 
-**The slang is a paint job, and it stops at the accessibility layer.** Buttons
-print `LOCK IN` and `SET DONE` but announce "Start workout" and "Done with set"
-via `BigButton`'s `a11yLabel`. Anything load-bearing — timers, set counts, the
-summary — stays literal. "go be delulu for a sec" is a joke on the rest screen;
-`00:42` is not.
+**2. Every button says exactly what it does.** "Start workout", "Done with set",
+"Skip rest", "End workout". Printed text and screen-reader text are the same
+string — nothing to decode, nothing to keep in sync.
+
+**3. The setup screen explains the premise before you tap anything.** Three
+lines at the top, because an app whose whole point is taking your phone away
+can't assume you already know that.
+
+Type is oversized and heavy, everything tappable is a pill, and each set gets a
+tick that fills as you bank it.
 
 ## Motion
 
@@ -144,15 +149,15 @@ Two rules kept it from getting silly:
   state change when the OS setting is on.
 
 The extrusion also reserves its layout space regardless of `disabled`, so the
-`LOCK IN` button doesn't resize the moment you type an exercise name.
+Start button doesn't resize the moment you type an exercise name.
 
 ## Trying the simulated block
 
-Phase 1 can't intercept another app, so lock state shows as the screen's own
-colour, backed by a chip reading **PHONE LOCKED** /
-**PHONE UNLOCKED**. While locked the chip is tappable (marked `TAP`) and opens
-the full-screen shield you'd hit when opening TikTok. In Phase 2 that affordance
-disappears — iOS draws the real shield.
+Phase 1 can't intercept another app, so lock state shows as a chip reading
+**2 APPS BLOCKED** / **APPS UNLOCKED**, backed by the screen's own colour. While
+locked the chip is tappable (marked `TAP TO SEE`) and opens the full-screen
+shield you'd hit when opening TikTok. In Phase 2 that affordance disappears —
+iOS draws the real shield.
 
 ## Layout
 

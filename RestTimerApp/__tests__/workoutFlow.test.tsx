@@ -38,7 +38,7 @@ const texts = (root: ReactTestInstance): string[] =>
 const hasText = (root: ReactTestInstance, needle: string) =>
   texts(root).some(t => t.includes(needle));
 
-/** Terse visuals (e.g. "01/03") carry the full sentence as an a11y label. */
+/** The set counter is split across several Texts but grouped under one label. */
 const hasLabel = (root: ReactTestInstance, label: string) =>
   root.findAll(n => n.props?.accessibilityLabel === label).length > 0;
 
@@ -59,22 +59,22 @@ describe('full workout loop', () => {
     const root = tree.root;
 
     // --- Setup ---------------------------------------------------------
-    expect(hasText(root, 'lock in')).toBe(true);
+    expect(hasText(root, 'New workout')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(false);
 
-    type(root, 'bench press', 'Squat');
+    type(root, 'Bench press', 'Squat');
     press(root, 'Decrease Sets'); // 3 -> 2 sets, to keep the test short
-    press(root, 'Start Workout');
+    press(root, 'Start workout');
 
     // --- Set 1: apps blocked -------------------------------------------
     expect(hasText(root, 'Squat')).toBe(true);
     expect(hasLabel(root, 'Set 1 of 2')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(true);
 
-    press(root, 'Done with Set');
+    press(root, 'Done with set');
 
     // --- Rest: apps unlocked, countdown running ------------------------
-    expect(hasText(root, 'scroll time')).toBe(true);
+    expect(hasText(root, 'lock again when this hits zero')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(false);
     expect(hasText(root, '01:00')).toBe(true);
 
@@ -92,13 +92,13 @@ describe('full workout loop', () => {
     expect(MockBlocker.isLocked()).toBe(true);
 
     // --- Last set: complete, unlocked for good -------------------------
-    press(root, 'Done with Set');
-    expect(hasText(root, 'that’s a W')).toBe(true);
+    press(root, 'Done with set');
+    expect(hasText(root, 'Workout complete')).toBe(true);
     expect(hasText(root, '2 of 2')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(false);
 
-    press(root, 'New Workout');
-    expect(hasText(root, 'lock in')).toBe(true);
+    press(root, 'New workout');
+    expect(hasText(root, 'New workout')).toBe(true);
   });
 
   it('re-locks immediately when rest is skipped', async () => {
@@ -108,12 +108,12 @@ describe('full workout loop', () => {
     });
     const root = tree.root;
 
-    type(root, 'bench press', 'Rows');
-    press(root, 'Start Workout');
-    press(root, 'Done with Set');
+    type(root, 'Bench press', 'Rows');
+    press(root, 'Start workout');
+    press(root, 'Done with set');
     expect(MockBlocker.isLocked()).toBe(false);
 
-    press(root, 'Skip Rest');
+    press(root, 'Skip rest');
     expect(MockBlocker.isLocked()).toBe(true);
     expect(hasLabel(root, 'Set 2 of 3')).toBe(true);
   });

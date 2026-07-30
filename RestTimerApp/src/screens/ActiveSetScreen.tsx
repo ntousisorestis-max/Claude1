@@ -5,7 +5,7 @@ import { SetTicks } from '../components/SetTicks';
 import { StatusTag } from '../components/StatusTag';
 import { useEnter } from '../hooks/useEnter';
 import { useWorkout } from '../state/WorkoutContext';
-import { colors, pad2, spacing, tabular, type } from '../theme';
+import { colors, spacing, tabular, type } from '../theme';
 
 export function ActiveSetScreen() {
   const {
@@ -18,9 +18,9 @@ export function ActiveSetScreen() {
   const enterSlab = useEnter(70);
 
   const confirmEnd = () =>
-    Alert.alert('bail on this workout?', 'your apps unlock right away.', [
-      { text: 'nah, keep going', style: 'cancel' },
-      { text: 'bail', style: 'destructive', onPress: endWorkout },
+    Alert.alert('End this workout?', 'Your apps will unlock right away.', [
+      { text: 'Keep going', style: 'cancel' },
+      { text: 'End workout', style: 'destructive', onPress: endWorkout },
     ]);
 
   return (
@@ -31,25 +31,32 @@ export function ActiveSetScreen() {
         <Text style={styles.exercise} numberOfLines={2}>
           {config.exerciseName}
         </Text>
-        {/* Punchy for the eye, spelled out for screen readers. */}
-        <View
-          style={styles.counter}
-          accessibilityLabel={`Set ${currentSet} of ${config.totalSets}`}>
-          <Text style={styles.current}>{pad2(currentSet)}</Text>
-          <Text style={styles.total}>/{pad2(config.totalSets)}</Text>
+
+        {/* Big for glancing at mid-set, worded so it needs no decoding. */}
+        <View accessibilityLabel={`Set ${currentSet} of ${config.totalSets}`}>
+          <Text style={styles.setLabel}>SET</Text>
+          <View style={styles.counter}>
+            <Text style={styles.current}>{currentSet}</Text>
+            <Text style={styles.total}> of {config.totalSets}</Text>
+          </View>
         </View>
+
         <SetTicks
           total={config.totalSets}
           completed={setsCompleted}
           current={currentSet}
         />
+
+        <Text style={styles.explain}>
+          Your apps stay blocked until you finish this set.
+        </Text>
       </Animated.View>
 
       <Animated.View style={[styles.slabWrap, enterSlab]}>
-        <BigButton label="SET DONE" a11yLabel="Done with Set" onPress={finishSet} slab />
+        <BigButton label="Done with set" onPress={finishSet} slab />
       </Animated.View>
 
-      <BigButton label="BAIL" a11yLabel="End Workout" onPress={confirmEnd} variant="bail" />
+      <BigButton label="End workout" onPress={confirmEnd} variant="danger" />
     </View>
   );
 }
@@ -62,10 +69,17 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     gap: spacing.md,
   },
-  head: { gap: spacing.md, paddingTop: spacing.sm },
+  head: { gap: spacing.sm, paddingTop: spacing.sm },
   slabWrap: { flex: 1 },
   exercise: { ...type.display, color: colors.white },
+  setLabel: { ...type.tag, color: colors.faintOnDark, marginBottom: -spacing.xs },
   counter: { flexDirection: 'row', alignItems: 'baseline' },
   current: { ...type.mega, ...tabular, color: colors.lime },
-  total: { ...type.mega, ...tabular, fontSize: 46, letterSpacing: -2, color: colors.inkLine },
+  total: {
+    ...type.display,
+    ...tabular,
+    fontSize: 34,
+    color: colors.mutedOnDark,
+  },
+  explain: { ...type.body, color: colors.mutedOnDark, marginTop: spacing.xs },
 });

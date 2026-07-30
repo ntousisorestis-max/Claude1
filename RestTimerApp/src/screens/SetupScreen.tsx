@@ -25,6 +25,17 @@ import {
 } from '../state/workoutReducer';
 import { colors, radius, spacing, type } from '../theme';
 
+/**
+ * Spelled out in three steps, because the whole premise — an app that
+ * deliberately takes your phone away — needs explaining before someone taps
+ * Start for the first time.
+ */
+const HOW_IT_WORKS = [
+  'While you lift, your chosen apps are blocked.',
+  'Finish a set and they unlock for your rest.',
+  'When rest runs out, they lock again.',
+];
+
 export function SetupScreen() {
   const {
     state: { config },
@@ -45,19 +56,29 @@ export function SetupScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled">
-        <Animated.Text style={[styles.masthead, enter]}>
-          lock in<Text style={styles.dot}>.</Text>
-        </Animated.Text>
+        <Animated.View style={enter}>
+          <Text style={styles.masthead}>New workout</Text>
+
+          <View style={styles.steps}>
+            {HOW_IT_WORKS.map((step, i) => (
+              <View key={step} style={styles.step}>
+                <Text style={styles.stepNumber}>{i + 1}</Text>
+                <Text style={styles.stepText}>{step}</Text>
+              </View>
+            ))}
+          </View>
+        </Animated.View>
 
         <View style={styles.block}>
-          <Text style={styles.label}>WHAT ARE WE DOING</Text>
+          <Text style={styles.label}>EXERCISE</Text>
           <TextInput
             value={config.exerciseName}
             onChangeText={setExerciseName}
-            placeholder="bench press"
+            placeholder="Bench press"
             placeholderTextColor={colors.faintOnDark}
             style={styles.input}
             returnKeyType="done"
+            autoCapitalize="words"
           />
         </View>
 
@@ -73,7 +94,7 @@ export function SetupScreen() {
         </View>
 
         <View style={styles.block}>
-          <Text style={styles.label}>SCROLL TIME BETWEEN SETS</Text>
+          <Text style={styles.label}>REST BETWEEN SETS</Text>
           <Stepper
             label="Rest"
             value={config.restSeconds}
@@ -81,7 +102,7 @@ export function SetupScreen() {
             step={5}
             min={MIN_REST_SECONDS}
             max={MAX_REST_SECONDS}
-            unit="SEC"
+            unit="SECONDS"
           />
           <Segmented
             label="Rest"
@@ -93,7 +114,8 @@ export function SetupScreen() {
         </View>
 
         <View style={styles.block}>
-          <Text style={styles.label}>KILL THESE WHILE I LIFT</Text>
+          <Text style={styles.label}>APPS TO BLOCK</Text>
+          <Text style={styles.help}>Tap the apps you want locked while you lift.</Text>
           <View style={styles.apps}>
             {BLOCKABLE_APPS.map(app => {
               const checked = config.selectedAppIds.includes(app.id);
@@ -118,18 +140,17 @@ export function SetupScreen() {
             })}
           </View>
           <Text style={styles.note}>
-            placeholder for now — nothing actually gets blocked until Phase 2
+            Preview only for now — no apps are actually blocked yet.
           </Text>
         </View>
 
         <BigButton
-          label="LOCK IN"
-          a11yLabel="Start Workout"
+          label="Start workout"
           onPress={startWorkout}
           disabled={!canStart}
         />
         {!canStart ? (
-          <Text style={styles.hint}>name the exercise first</Text>
+          <Text style={styles.hint}>Enter an exercise name to start.</Text>
         ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
@@ -144,10 +165,19 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
     gap: spacing.lg,
   },
-  masthead: { ...type.display, fontSize: 52, color: colors.white },
-  dot: { color: colors.lime },
+  masthead: { ...type.display, fontSize: 46, color: colors.white },
+  steps: { gap: spacing.sm, marginTop: spacing.md },
+  step: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
+  stepNumber: {
+    ...type.tag,
+    color: colors.lime,
+    width: 16,
+    lineHeight: 22,
+  },
+  stepText: { ...type.body, flex: 1, color: colors.mutedOnDark, lineHeight: 22 },
   block: { gap: spacing.sm },
   label: { ...type.tag, color: colors.faintOnDark },
+  help: { ...type.body, fontSize: 14, color: colors.mutedOnDark },
   input: {
     ...type.title,
     fontSize: 30,

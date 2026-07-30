@@ -3,16 +3,12 @@ import { Animated, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-na
 import { useReduceMotion } from '../hooks/useReduceMotion';
 import { colors, radius, spacing, TAP_TARGET, type } from '../theme';
 
-type Variant = 'lime' | 'ink' | 'outlineOnLime' | 'quiet' | 'bail';
+type Variant = 'lime' | 'ink' | 'outlineOnLime' | 'quiet' | 'danger';
 
 type Props = {
-  /** What's printed on the button. Shouty is fine. */
+  /** Button text. Say exactly what the tap does — this is also what a
+   * screen reader announces. */
   label: string;
-  /**
-   * What a screen reader says, when the printed label is too punchy to be
-   * clear on its own ("LOCK IN" -> "Start workout").
-   */
-  a11yLabel?: string;
   onPress: () => void;
   variant?: Variant;
   /** Fills the space — the mid-workout slab you hit without looking. */
@@ -31,7 +27,7 @@ const EXTRUDED: Record<Variant, string | null> = {
   ink: 'rgba(11,11,15,0.32)',
   outlineOnLime: null,
   quiet: null,
-  bail: null,
+  danger: null,
 };
 
 /**
@@ -41,7 +37,6 @@ const EXTRUDED: Record<Variant, string | null> = {
  */
 export function BigButton({
   label,
-  a11yLabel,
   onPress,
   variant = 'lime',
   slab = false,
@@ -83,7 +78,7 @@ export function BigButton({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={a11yLabel ?? label}
+      accessibilityLabel={label}
       accessibilityState={{ disabled }}
       onPress={onPress}
       onPressIn={() => settle(1)}
@@ -126,7 +121,7 @@ export function BigButton({
             variant === 'ink' && styles.labelOnInk,
             variant === 'outlineOnLime' && styles.labelOnLime,
             variant === 'quiet' && styles.labelQuiet,
-            variant === 'bail' && styles.labelBail,
+            variant === 'danger' && styles.labelDanger,
             slab && styles.labelSlab,
           ]}>
           {label}
@@ -160,12 +155,12 @@ const styles = StyleSheet.create({
   ink: { backgroundColor: colors.ink },
   outlineOnLime: { borderWidth: 2, borderColor: colors.ink },
   quiet: {},
-  bail: {},
+  danger: {},
 
   label: { ...type.action, color: colors.white },
   labelOnLime: { color: colors.ink },
   labelOnInk: { color: colors.lime },
   labelQuiet: { ...type.tag, color: colors.mutedOnDark },
-  labelBail: { ...type.tag, color: colors.bail },
-  labelSlab: { fontSize: 40, fontWeight: '900', letterSpacing: -1.2 },
+  labelDanger: { ...type.tag, color: colors.danger },
+  labelSlab: { fontSize: 34, fontWeight: '900', letterSpacing: -1 },
 });

@@ -36,8 +36,8 @@ export function StatusTag({
 
   const apps = BLOCKABLE_APPS.filter(a => selectedAppIds.includes(a.id));
   const text = locked
-    ? `PHONE LOCKED · ${apps.length} APP${apps.length === 1 ? '' : 'S'}`
-    : 'PHONE UNLOCKED';
+    ? `${apps.length} APP${apps.length === 1 ? '' : 'S'} BLOCKED`
+    : 'APPS UNLOCKED';
 
   return (
     <>
@@ -58,7 +58,9 @@ export function StatusTag({
         <Text style={[styles.chipText, onLime ? styles.textOnLime : styles.textOnInk]}>
           {text}
         </Text>
-        {isMock && locked ? <Text style={styles.peek}>TAP</Text> : null}
+        {isMock && locked ? (
+          <Text style={styles.peek}>TAP TO SEE</Text>
+        ) : null}
       </Pressable>
 
       <Modal
@@ -75,8 +77,10 @@ export function StatusTag({
           ]}>
           <View style={styles.shieldTop}>
             <Text style={styles.shieldLock}>🔒</Text>
-            <Text style={styles.shieldTitle}>not yet.</Text>
-            <Text style={styles.shieldSub}>finish the set, then scroll.</Text>
+            <Text style={styles.shieldTitle}>Blocked</Text>
+            <Text style={styles.shieldSub}>
+              Finish your set, then these unlock for your rest:
+            </Text>
           </View>
 
           <View style={styles.shieldApps}>
@@ -88,19 +92,21 @@ export function StatusTag({
                 </View>
               ))
             ) : (
-              <Text style={styles.shieldSub}>no apps selected</Text>
+              <Text style={styles.shieldSub}>No apps selected</Text>
             )}
           </View>
 
           <View style={styles.shieldFoot}>
             <Text style={styles.shieldNote}>
-              Simulated. In Phase 2, iOS draws this over the real app.
+              This is a preview of the block screen. Nothing is really blocked
+              yet — that arrives in Phase 2, when iOS draws this over the app
+              itself.
             </Text>
             <Pressable
               accessibilityRole="button"
               onPress={() => setPreview(false)}
               style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
-              <Text style={styles.backText}>back to the set</Text>
+              <Text style={styles.backText}>Back to workout</Text>
             </Pressable>
           </View>
         </View>
@@ -136,7 +142,7 @@ const styles = StyleSheet.create({
   },
   shieldTop: { flex: 1, justifyContent: 'center', gap: spacing.sm },
   shieldLock: { fontSize: 72, marginBottom: spacing.sm },
-  shieldTitle: { ...type.mega, fontSize: 76, color: colors.lime },
+  shieldTitle: { ...type.mega, fontSize: 68, color: colors.lime },
   shieldSub: { ...type.title, fontSize: 22, color: colors.mutedOnDark },
   shieldApps: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   pill: {
