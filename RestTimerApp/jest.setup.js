@@ -24,4 +24,11 @@ jest.mock('@notifee/react-native', () => ({
   AndroidImportance: { HIGH: 4 },
   AuthorizationStatus: { AUTHORIZED: 1 },
   TriggerType: { TIMESTAMP: 0 },
+  AlarmType: {
+    SET: 0,
+    SET_AND_ALLOW_WHILE_IDLE: 1,
+    SET_EXACT: 2,
+    SET_EXACT_AND_ALLOW_WHILE_IDLE: 3,
+    SET_ALARM_CLOCK: 4,
+  },
 }));

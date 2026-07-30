@@ -15,25 +15,61 @@ blocking needs — including things only you can do on your Apple Developer acco
 
 ## Running it
 
-Bare React Native 0.86, so you need the [RN environment
-setup](https://reactnative.dev/docs/set-up-your-environment) (Xcode for iOS,
-Android Studio + JDK 17 for Android).
+Bare React Native 0.86. Phase 1 has no iOS-only code, so **Android is enough to
+try the whole loop** — no Mac required.
+
+### Android (Windows or Linux)
+
+1. **Install [Android Studio](https://developer.android.com/studio).** Pick the
+   standard setup; it bundles the SDK, platform-tools, and an emulator.
+2. **Install the SDK bits.** Android Studio → *More Actions* → *SDK Manager*:
+   - *SDK Platforms* tab: **Android 16 (API 36)** — matches `compileSdk 36`.
+   - *SDK Tools* tab: **Android SDK Build-Tools 36.0.0**, **Platform-Tools**, and
+     **Android Emulator**.
+3. **Install JDK 17** (Android Studio ships one; `java -version` should be 17+).
+4. **Point the tools at the SDK.**
+   - Windows (PowerShell, permanent):
+     ```powershell
+     setx ANDROID_HOME "$env:LOCALAPPDATA\Android\Sdk"
+     ```
+     Then add `%ANDROID_HOME%\platform-tools` to your `Path` and reopen the terminal.
+   - Linux (`~/.bashrc`):
+     ```sh
+     export ANDROID_HOME=$HOME/Android/Sdk
+     export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator
+     ```
+   Verify with `adb --version`.
+5. **Create an emulator.** Android Studio → *Device Manager* → *Create Device* →
+   Pixel 7 → API 36 image → Finish. Start it with the ▶ button.
+   *Linux:* the emulator needs KVM — `ls /dev/kvm` must exist, and your user
+   must be in the `kvm` group (`sudo adduser $USER kvm`, then log out and back in).
+   *Windows:* enable the *Windows Hypervisor Platform* feature, or install Intel
+   HAXM/AMD equivalent when Android Studio offers it.
+6. **Run it:**
+   ```sh
+   npm install
+   npm run android
+   ```
+
+**Faster alternative — a real phone.** Skip the emulator entirely: enable
+*Developer options* → *USB debugging* on your Android phone, plug it in, accept
+the debugging prompt, confirm `adb devices` lists it, then `npm run android`.
+This is quicker than a cold emulator boot and gives you real notification
+behaviour, which the emulator fakes.
+
+### iOS (macOS only)
 
 ```sh
 npm install
-
-# iOS (macOS only)
 bundle install && bundle exec pod install --project-directory=ios
 npm run ios
-
-# Android
-npm run android
 ```
 
-Checks:
+### Checks
 
 ```sh
-npm test          # reducer + full-loop integration tests
+npm test            # reducer + full-loop integration tests (iOS resolution)
+npm run test:android # same suite, Platform.OS === 'android'
 npx tsc --noEmit
 npm run lint
 ```
@@ -74,6 +110,31 @@ Two details worth knowing before you change things:
   passed while the app was suspended, the re-lock fires on the next foreground.
 - **The rest-over notification is scheduled with the OS**, not fired by a JS
   timer, for the same reason.
+
+## Android notes
+
+Phase 1 is fully cross-platform — nothing in the loop is iOS-only, and the suite
+passes under Android module resolution (`npm run test:android`). Specifics:
+
+- **The lock pill and simulated shield work identically on Android.** They're
+  plain RN views, not a Screen Time feature. Only *real* blocking is iOS-first.
+- **Rest-over notifications use AlarmManager, not WorkManager.** Notifee's
+  default for timestamp triggers is WorkManager, which the OS batches — hopeless
+  for a 30–120s rest. See `notifications.ts`. Delivery is inexact but
+  Doze-exempt, which is accurate enough while the screen is on. If you later
+  want to-the-second delivery, that means `SCHEDULE_EXACT_ALARM` /
+  `USE_EXACT_ALARM`, which Android 14+ restricts and Play Store reviews against
+  an "alarm or timer app" justification.
+- **Android 13+ asks for notification permission at runtime.** The prompt fires
+  on *Start Workout*. Decline it and the loop still works — you just lose the
+  backup alert.
+- **targetSdk 36 forces edge-to-edge**, so the simulated-shield modal insets
+  itself manually; without that its buttons would sit under the gesture bar.
+- **`StatusBar backgroundColor` is a no-op on Android 15+** (edge-to-edge). The
+  root view's background covers that area instead, so it looks right anyway.
+
+Not handled yet, equally on both platforms: the screen can sleep mid-set (no
+keep-awake), and the hardware back button doesn't intercept an active workout.
 
 ## State & persistence
 

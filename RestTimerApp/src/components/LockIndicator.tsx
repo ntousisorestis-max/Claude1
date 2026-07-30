@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { blocker } from '../blocking';
 import { BLOCKABLE_APPS } from '../state/workoutReducer';
 import { colors, radius, spacing } from '../theme';
@@ -17,6 +18,8 @@ export function LockIndicator({ selectedAppIds }: { selectedAppIds: string[] }) 
   const [locked, setLocked] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
   const isMock = blocker.kind === 'mock';
+  // Android targets SDK 36, so modals draw edge to edge behind the system bars.
+  const insets = useSafeAreaInsets();
 
   useEffect(() => blocker.subscribe(setLocked), []);
 
@@ -56,7 +59,11 @@ export function LockIndicator({ selectedAppIds }: { selectedAppIds: string[] }) 
         animationType="fade"
         transparent={false}
         onRequestClose={() => setShowOverlay(false)}>
-        <View style={styles.overlay}>
+        <View
+          style={[
+            styles.overlay,
+            { paddingTop: insets.top + spacing.xl, paddingBottom: insets.bottom + spacing.xl },
+          ]}>
           <Text style={styles.overlayIcon}>🔒</Text>
           <Text style={styles.overlayTitle}>Blocked until your set is done</Text>
           <Text style={styles.overlayBody}>
@@ -108,7 +115,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: spacing.xl,
+    paddingHorizontal: spacing.xl,
     gap: spacing.md,
   },
   overlayIcon: { fontSize: 72 },

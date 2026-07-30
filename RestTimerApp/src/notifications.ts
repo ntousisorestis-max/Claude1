@@ -1,4 +1,5 @@
 import notifee, {
+  AlarmType,
   AndroidImportance,
   AuthorizationStatus,
   TimestampTrigger,
@@ -51,6 +52,13 @@ export async function scheduleRestOverNotification(
     const trigger: TimestampTrigger = {
       type: TriggerType.TIMESTAMP,
       timestamp: Math.max(Date.now() + 1000, endsAt),
+      // Android only. Notifee defaults triggers to WorkManager, which the OS
+      // batches — far too loose for a 30-120s rest. AlarmManager with
+      // ALLOW_WHILE_IDLE also escapes Doze, and needs no extra permission.
+      // (SET_EXACT_* would be tighter but pulls in SCHEDULE_EXACT_ALARM, which
+      // Android 14+ no longer grants freely. Inexact is fine here: the user is
+      // actively scrolling, so the device isn't dozing.)
+      alarmManager: { type: AlarmType.SET_AND_ALLOW_WHILE_IDLE },
     };
     await notifee.createTriggerNotification(
       {
