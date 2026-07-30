@@ -1,8 +1,9 @@
 import React from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, Animated, StyleSheet, Text, View } from 'react-native';
 import { BigButton } from '../components/BigButton';
 import { SetTicks } from '../components/SetTicks';
 import { StatusTag } from '../components/StatusTag';
+import { useEnter } from '../hooks/useEnter';
 import { useWorkout } from '../state/WorkoutContext';
 import { colors, pad2, spacing, tabular, type } from '../theme';
 
@@ -12,6 +13,9 @@ export function ActiveSetScreen() {
     finishSet,
     endWorkout,
   } = useWorkout();
+
+  const enterHead = useEnter();
+  const enterSlab = useEnter(70);
 
   const confirmEnd = () =>
     Alert.alert('bail on this workout?', 'your apps unlock right away.', [
@@ -23,7 +27,7 @@ export function ActiveSetScreen() {
     <View style={styles.screen}>
       <StatusTag selectedAppIds={config.selectedAppIds} />
 
-      <View style={styles.head}>
+      <Animated.View style={[styles.head, enterHead]}>
         <Text style={styles.exercise} numberOfLines={2}>
           {config.exerciseName}
         </Text>
@@ -39,9 +43,11 @@ export function ActiveSetScreen() {
           completed={setsCompleted}
           current={currentSet}
         />
-      </View>
+      </Animated.View>
 
-      <BigButton label="SET DONE" a11yLabel="Done with Set" onPress={finishSet} slab />
+      <Animated.View style={[styles.slabWrap, enterSlab]}>
+        <BigButton label="SET DONE" a11yLabel="Done with Set" onPress={finishSet} slab />
+      </Animated.View>
 
       <BigButton label="BAIL" a11yLabel="End Workout" onPress={confirmEnd} variant="bail" />
     </View>
@@ -57,6 +63,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   head: { gap: spacing.md, paddingTop: spacing.sm },
+  slabWrap: { flex: 1 },
   exercise: { ...type.display, color: colors.white },
   counter: { flexDirection: 'row', alignItems: 'baseline' },
   current: { ...type.mega, ...tabular, color: colors.lime },

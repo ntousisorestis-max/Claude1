@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Animated,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -12,6 +13,7 @@ import {
 import { BigButton } from '../components/BigButton';
 import { Segmented } from '../components/Segmented';
 import { Stepper } from '../components/Stepper';
+import { useEnter } from '../hooks/useEnter';
 import { useWorkout } from '../state/WorkoutContext';
 import {
   BLOCKABLE_APPS,
@@ -34,6 +36,7 @@ export function SetupScreen() {
   } = useWorkout();
 
   const canStart = config.exerciseName.trim().length > 0;
+  const enter = useEnter();
 
   return (
     <KeyboardAvoidingView
@@ -42,9 +45,9 @@ export function SetupScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled">
-        <Text style={styles.masthead}>
+        <Animated.Text style={[styles.masthead, enter]}>
           lock in<Text style={styles.dot}>.</Text>
-        </Text>
+        </Animated.Text>
 
         <View style={styles.block}>
           <Text style={styles.label}>WHAT ARE WE DOING</Text>

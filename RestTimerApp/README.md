@@ -123,6 +123,29 @@ via `BigButton`'s `a11yLabel`. Anything load-bearing — timers, set counts, the
 summary — stays literal. "go be delulu for a sec" is a joke on the rest screen;
 `00:42` is not.
 
+## Motion
+
+Four animations, all RN `Animated` on the native driver, no library:
+
+| | what | why |
+|---|---|---|
+| **Press** | face springs down onto its shadow, back with overshoot | buttons are extruded blocks; a tap should feel like it landed |
+| **Flip** | lime sheet fades over the dark root — 420ms open, 220ms shut | unlocking is the reward, so it blooms; re-locking snaps |
+| **Enter** | content fades and rises 14px on every phase change | the screen arrives instead of appearing |
+| **Heartbeat** | clock pulses once per second under 5s left | urgency, without a sound |
+
+Two rules kept it from getting silly:
+
+- **Nothing loops and nothing idles.** The heartbeat is driven off the second
+  *changing*, not a repeating animation, so it lines up exactly with the digits
+  and can't outlive the screen. This also keeps the test suite deterministic —
+  an infinite `Animated.loop` under fake timers is a flake waiting to happen.
+- **Every animation checks `useReduceMotion()`** and collapses to an instant
+  state change when the OS setting is on.
+
+The extrusion also reserves its layout space regardless of `disabled`, so the
+`LOCK IN` button doesn't resize the moment you type an exercise name.
+
 ## Trying the simulated block
 
 Phase 1 can't intercept another app, so lock state shows as the screen's own
@@ -149,6 +172,8 @@ src/
   components/                BigButton, Stepper, Segmented, ProgressRing,
                              SetTicks, StatusTag
   hooks/useCountdown.ts      wall-clock countdown
+  hooks/useEnter.ts          screen entry animation
+  hooks/useReduceMotion.ts   OS reduce-motion setting
   notifications.ts           OS-scheduled "rest over" alert
   theme.ts                   palette, type scale, spacing
 ```

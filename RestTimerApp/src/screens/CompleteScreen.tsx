@@ -1,7 +1,8 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import { BigButton } from '../components/BigButton';
 import { SetTicks } from '../components/SetTicks';
+import { useEnter } from '../hooks/useEnter';
 import { useWorkout } from '../state/WorkoutContext';
 import { colors, formatMMSS, radius, spacing, tabular, type } from '../theme';
 
@@ -12,29 +13,36 @@ export function CompleteScreen() {
     newWorkout,
   } = useWorkout();
 
+  const enterHero = useEnter();
+  const enterCard = useEnter(90);
+
   const finishedAll = setsCompleted >= config.totalSets;
 
   return (
     <View style={styles.screen}>
+      {/* Siblings, not nested — stacking two entry animations would compound
+          both the fade and the travel. */}
       <View style={styles.body}>
-        <Text style={styles.badge}>{finishedAll ? '🔥' : '🫡'}</Text>
-        <Text style={styles.headline}>
-          {finishedAll ? 'that’s a W' : 'called it early'}
-        </Text>
-        <Text style={styles.sub}>phone’s all yours</Text>
+        <Animated.View style={[styles.hero, enterHero]}>
+          <Text style={styles.badge}>{finishedAll ? '🔥' : '🫡'}</Text>
+          <Text style={styles.headline}>
+            {finishedAll ? 'that’s a W' : 'called it early'}
+          </Text>
+          <Text style={styles.sub}>phone’s all yours</Text>
 
-        <SetTicks
-          total={config.totalSets}
-          completed={setsCompleted}
-          current={0}
-          onLime
-        />
+          <SetTicks
+            total={config.totalSets}
+            completed={setsCompleted}
+            current={0}
+            onLime
+          />
+        </Animated.View>
 
-        <View style={styles.card}>
+        <Animated.View style={[styles.card, enterCard]}>
           <Row label="WHAT" value={config.exerciseName || '—'} />
           <Row label="SETS" value={`${setsCompleted} of ${config.totalSets}`} />
           <Row label="SCROLLED FOR" value={formatMMSS(totalRestSeconds)} />
-        </View>
+        </Animated.View>
       </View>
 
       <BigButton label="go again" a11yLabel="New Workout" onPress={newWorkout} variant="ink" />
@@ -62,6 +70,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   body: { flex: 1, justifyContent: 'center', gap: spacing.md },
+  hero: { gap: spacing.md },
   badge: { fontSize: 64 },
   headline: { ...type.mega, fontSize: 62, color: colors.ink },
   sub: { ...type.body, color: colors.mutedOnLime, marginBottom: spacing.sm },

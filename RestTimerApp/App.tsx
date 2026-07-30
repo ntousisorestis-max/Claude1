@@ -8,9 +8,10 @@
  * @format
  */
 
-import React from 'react';
-import { StatusBar, StyleSheet, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Easing, StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { useReduceMotion } from './src/hooks/useReduceMotion';
 import { ActiveSetScreen } from './src/screens/ActiveSetScreen';
 import { CompleteScreen } from './src/screens/CompleteScreen';
 import { RestingScreen } from './src/screens/RestingScreen';
@@ -39,20 +40,44 @@ function CurrentScreen() {
 }
 
 /**
- * Carries the phase's ground colour all the way out to the safe-area insets, so
- * a flooded screen floods edge to edge instead of leaving dark bands top and
- * bottom.
+ * The lock/unlock flip.
+ *
+ * A lime sheet sits over a permanently dark root and fades in and out — the
+ * ground colour is the app's loudest signal, so it wipes rather than cuts. It
+ * lives outside the safe area so the flood reaches the very edges of the
+ * display, and it never takes touches.
  */
 function Ground() {
   const { state } = useWorkout();
+  const reduceMotion = useReduceMotion();
   const free = isFree(state.phase);
-  const ground = free ? colors.lime : colors.ink;
+  const flood = useRef(new Animated.Value(free ? 1 : 0)).current;
+
+  useEffect(() => {
+    if (reduceMotion) {
+      flood.setValue(free ? 1 : 0);
+      return;
+    }
+    const animation = Animated.timing(flood, {
+      toValue: free ? 1 : 0,
+      // Unlocking is a reward, so it blooms; re-locking snaps shut.
+      duration: free ? 420 : 220,
+      easing: free ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+      useNativeDriver: true,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [free, flood, reduceMotion]);
 
   return (
-    <View style={[styles.root, { backgroundColor: ground }]}>
+    <View style={styles.root}>
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.flood, { opacity: flood }]}
+      />
       <StatusBar
         barStyle={free ? 'dark-content' : 'light-content'}
-        backgroundColor={ground}
+        backgroundColor={free ? colors.lime : colors.ink}
       />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <CurrentScreen />
@@ -72,7 +97,15 @@ function App() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
+  root: { flex: 1, backgroundColor: colors.ink },
+  flood: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colors.lime,
+  },
   safe: { flex: 1 },
 });
 
