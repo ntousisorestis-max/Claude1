@@ -6,6 +6,7 @@ import React, {
   useReducer,
 } from 'react';
 import { blocker } from '../blocking';
+import { lockedShut, setBanked, workoutDone } from '../haptics';
 import {
   cancelRestOverNotification,
   requestNotificationPermission,
@@ -49,6 +50,14 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.appsLocked]);
 
+  // Buzz once when the workout finishes. Driven off the phase rather than the
+  // action, so ending early and finishing the last set both get it.
+  useEffect(() => {
+    if (state.phase === 'complete') {
+      workoutDone();
+    }
+  }, [state.phase]);
+
   // Backup alert for rest ending while the user is inside a scrolling app.
   useEffect(() => {
     if (state.phase === 'resting' && state.restEndsAt != null) {
@@ -73,8 +82,14 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         requestNotificationPermission();
         dispatch({ type: 'START_WORKOUT' });
       },
-      finishSet: () => dispatch({ type: 'FINISH_SET', now: Date.now() }),
-      endRest: () => dispatch({ type: 'END_REST', now: Date.now() }),
+      finishSet: () => {
+        setBanked();
+        dispatch({ type: 'FINISH_SET', now: Date.now() });
+      },
+      endRest: () => {
+        lockedShut();
+        dispatch({ type: 'END_REST', now: Date.now() });
+      },
       endWorkout: () => dispatch({ type: 'END_WORKOUT' }),
       newWorkout: () => dispatch({ type: 'NEW_WORKOUT' }),
     }),

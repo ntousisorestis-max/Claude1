@@ -3,6 +3,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Backup "rest is over" alert (Android 13+ asks the user at runtime). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Short haptic taps when a set is banked and when the lock snaps shut. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
       android:name=".MainApplication"

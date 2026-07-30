@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Animated,
   KeyboardAvoidingView,
@@ -14,6 +14,7 @@ import { BigButton } from '../components/BigButton';
 import { Segmented } from '../components/Segmented';
 import { Stepper } from '../components/Stepper';
 import { useEnter } from '../hooks/useEnter';
+import { useReduceMotion } from '../hooks/useReduceMotion';
 import { useWorkout } from '../state/WorkoutContext';
 import {
   BLOCKABLE_APPS,
@@ -117,27 +118,15 @@ export function SetupScreen() {
           <Text style={styles.label}>APPS TO BLOCK</Text>
           <Text style={styles.help}>Tap the apps you want locked while you lift.</Text>
           <View style={styles.apps}>
-            {BLOCKABLE_APPS.map(app => {
-              const checked = config.selectedAppIds.includes(app.id);
-              return (
-                <Pressable
-                  key={app.id}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked }}
-                  accessibilityLabel={app.name}
-                  onPress={() => toggleApp(app.id)}
-                  style={({ pressed }) => [
-                    styles.app,
-                    checked && styles.appOn,
-                    pressed && styles.pressed,
-                  ]}>
-                  <View style={[styles.dotMark, { backgroundColor: app.tint }]} />
-                  <Text style={[styles.appName, checked && styles.appNameOn]}>
-                    {app.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
+            {BLOCKABLE_APPS.map(app => (
+              <AppPill
+                key={app.id}
+                name={app.name}
+                tint={app.tint}
+                checked={config.selectedAppIds.includes(app.id)}
+                onPress={() => toggleApp(app.id)}
+              />
+            ))}
           </View>
           <Text style={styles.note}>
             Preview only for now — no apps are actually blocked yet.
@@ -154,6 +143,60 @@ export function SetupScreen() {
         ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
+  );
+}
+
+/** Springs when you toggle it, so picking your apps has some snap to it. */
+function AppPill({
+  name,
+  tint,
+  checked,
+  onPress,
+}: {
+  name: string;
+  tint: string;
+  checked: boolean;
+  onPress: () => void;
+}) {
+  const reduceMotion = useReduceMotion();
+  const pop = useRef(new Animated.Value(1)).current;
+  const first = useRef(true);
+
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    if (reduceMotion) {
+      return;
+    }
+    pop.setValue(checked ? 0.88 : 1.06);
+    const animation = Animated.spring(pop, {
+      toValue: 1,
+      speed: 18,
+      bounciness: 16,
+      useNativeDriver: true,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [checked, pop, reduceMotion]);
+
+  return (
+    <Animated.View style={{ transform: [{ scale: pop }] }}>
+      <Pressable
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked }}
+        accessibilityLabel={name}
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.app,
+          checked && styles.appOn,
+          pressed && styles.pressed,
+        ]}>
+        <View style={[styles.dotMark, { backgroundColor: tint }]} />
+        <Text style={[styles.appName, checked && styles.appNameOn]}>{name}</Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 

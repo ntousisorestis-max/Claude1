@@ -9,7 +9,14 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, StatusBar, StyleSheet, View } from 'react-native';
+import {
+  Animated,
+  Easing,
+  StatusBar,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useReduceMotion } from './src/hooks/useReduceMotion';
 import { ActiveSetScreen } from './src/screens/ActiveSetScreen';
@@ -40,40 +47,66 @@ function CurrentScreen() {
 }
 
 /**
- * The lock/unlock flip.
+ * The lock/unlock flip, as a circular reveal.
  *
- * A lime sheet sits over a permanently dark root and fades in and out — the
- * ground colour is the app's loudest signal, so it wipes rather than cuts. It
- * lives outside the safe area so the flood reaches the very edges of the
- * display, and it never takes touches.
+ * A lime disc big enough to cover the display scales out from the centre when
+ * your apps unlock, and sucks back in when they lock. It's the app's loudest
+ * moment, so it gets the one piece of choreography here — a crossfade said the
+ * same thing far more quietly.
+ *
+ * Scale runs on the native driver, so the wipe holds 60fps even while the
+ * countdown is re-rendering underneath it.
  */
 function Ground() {
   const { state } = useWorkout();
   const reduceMotion = useReduceMotion();
+  const { width, height } = useWindowDimensions();
   const free = isFree(state.phase);
-  const flood = useRef(new Animated.Value(free ? 1 : 0)).current;
+
+  // Diagonal, so the disc still covers the corners at scale 1.
+  const diameter = Math.ceil(Math.hypot(width, height)) + 2;
+  const reveal = useRef(new Animated.Value(free ? 1 : 0)).current;
 
   useEffect(() => {
     if (reduceMotion) {
-      flood.setValue(free ? 1 : 0);
+      reveal.setValue(free ? 1 : 0);
       return;
     }
-    const animation = Animated.timing(flood, {
+    const animation = Animated.timing(reveal, {
       toValue: free ? 1 : 0,
-      // Unlocking is a reward, so it blooms; re-locking snaps shut.
-      duration: free ? 420 : 220,
+      // Unlocking is the reward, so it blooms open; re-locking snaps shut.
+      duration: free ? 460 : 260,
       easing: free ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
       useNativeDriver: true,
     });
     animation.start();
     return () => animation.stop();
-  }, [free, flood, reduceMotion]);
+  }, [free, reveal, reduceMotion]);
 
   return (
     <View style={styles.root}>
       <Animated.View
         pointerEvents="none"
-        style={[styles.flood, { opacity: flood }]}
+        style={[
+          styles.disc,
+          {
+            width: diameter,
+            height: diameter,
+            borderRadius: diameter / 2,
+            left: (width - diameter) / 2,
+            top: (height - diameter) / 2,
+            transform: [
+              {
+                // Never exactly 0 — some Android builds drop a zero-scaled view
+                // rather than animating it back up.
+                scale: reveal.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.001, 1],
+                }),
+              },
+            ],
+          },
+        ]}
       />
       <StatusBar
         barStyle={free ? 'dark-content' : 'light-content'}
@@ -97,15 +130,8 @@ function App() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.ink },
-  flood: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors.lime,
-  },
+  root: { flex: 1, backgroundColor: colors.ink, overflow: 'hidden' },
+  disc: { position: 'absolute', backgroundColor: colors.lime },
   safe: { flex: 1 },
 });
 

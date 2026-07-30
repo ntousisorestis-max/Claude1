@@ -114,8 +114,8 @@ it: black while apps are blocked, flooding lime the moment they unlock. Colour
 is the fast confirmation, never the only signal, so the app still works if you
 can't tell the two apart.
 
-The flood is applied at the root so it covers the safe-area insets too, rather
-than leaving dark bands.
+The flip is a lime disc scaling out from the centre of the screen, drawn at the
+root so it covers the safe-area insets rather than leaving dark bands.
 
 **2. Every button says exactly what it does.** "Start workout", "Done with set",
 "Skip rest", "End workout". Printed text and screen-reader text are the same
@@ -128,18 +128,24 @@ can't assume you already know that.
 Type is oversized and heavy, everything tappable is a pill, and each set gets a
 tick that fills as you bank it.
 
-## Motion
+## Motion & feel
 
-Four animations, all RN `Animated` on the native driver, no library:
+Six pieces of motion, all RN `Animated`, no library:
 
 | | what | why |
 |---|---|---|
-| **Press** | face springs down onto its shadow, back with overshoot | buttons are extruded blocks; a tap should feel like it landed |
-| **Flip** | lime sheet fades over the dark root — 420ms open, 220ms shut | unlocking is the reward, so it blooms; re-locking snaps |
+| **Press** | button face springs onto its shadow, back with overshoot | buttons are extruded blocks; a tap should feel like it landed |
+| **Flip** | lime disc scales out from centre — 460ms open, 260ms shut | the app's loudest moment deserves the one bit of choreography |
 | **Enter** | content fades and rises 14px on every phase change | the screen arrives instead of appearing |
 | **Heartbeat** | clock pulses once per second under 5s left | urgency, without a sound |
+| **Sweep** | ring glides between the countdown's 4Hz updates | at ring size, stepping four times a second reads as a stutter |
+| **Pick** | app pills spring as you toggle them | setup should feel alive too |
 
-Two rules kept it from getting silly:
+Everything except the ring sweep runs on the native driver.
+`strokeDashoffset` isn't a transform so it can't — it's one value at 4Hz, which
+the JS thread handles comfortably.
+
+Three rules keep it from getting silly:
 
 - **Nothing loops and nothing idles.** The heartbeat is driven off the second
   *changing*, not a repeating animation, so it lines up exactly with the digits
@@ -147,9 +153,20 @@ Two rules kept it from getting silly:
   an infinite `Animated.loop` under fake timers is a flake waiting to happen.
 - **Every animation checks `useReduceMotion()`** and collapses to an instant
   state change when the OS setting is on.
+- **The extrusion reserves its layout space regardless of `disabled`**, so the
+  Start button doesn't resize the moment you type an exercise name.
 
-The extrusion also reserves its layout space regardless of `disabled`, so the
-Start button doesn't resize the moment you type an exercise name.
+### Haptics — Android only, on purpose
+
+Short buzzes when a set is banked, when the lock snaps shut, and when the
+workout ends. `Vibration` is core React Native so this costs no dependency, but
+**iOS ignores the duration and fires a fixed ~400ms buzz** — far too heavy for a
+button tap, and it would make the app feel worse rather than better. iOS wants
+`UIImpactFeedbackGenerator`, which needs a native module.
+
+To finish it: add `react-native-haptic-feedback` and swap the three function
+bodies in `src/haptics.ts`. Every call site already goes through those three
+functions, so nothing else changes.
 
 ## Trying the simulated block
 
@@ -180,6 +197,7 @@ src/
   hooks/useEnter.ts          screen entry animation
   hooks/useReduceMotion.ts   OS reduce-motion setting
   notifications.ts           OS-scheduled "rest over" alert
+  haptics.ts                 buzz on set banked / lock shut / workout done
   theme.ts                   palette, type scale, spacing
 ```
 
