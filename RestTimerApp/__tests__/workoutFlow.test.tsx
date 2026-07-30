@@ -38,6 +38,10 @@ const texts = (root: ReactTestInstance): string[] =>
 const hasText = (root: ReactTestInstance, needle: string) =>
   texts(root).some(t => t.includes(needle));
 
+/** Terse visuals (e.g. "01/03") carry the full sentence as an a11y label. */
+const hasLabel = (root: ReactTestInstance, label: string) =>
+  root.findAll(n => n.props?.accessibilityLabel === label).length > 0;
+
 describe('full workout loop', () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -64,13 +68,13 @@ describe('full workout loop', () => {
 
     // --- Set 1: apps blocked -------------------------------------------
     expect(hasText(root, 'Squat')).toBe(true);
-    expect(hasText(root, 'Set 1 of 2')).toBe(true);
+    expect(hasLabel(root, 'Set 1 of 2')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(true);
 
     press(root, 'Done with Set');
 
     // --- Rest: apps unlocked, countdown running ------------------------
-    expect(hasText(root, 'Rest — scroll away 📱')).toBe(true);
+    expect(hasText(root, 'Scroll away.')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(false);
     expect(hasText(root, '01:00')).toBe(true);
 
@@ -84,12 +88,12 @@ describe('full workout loop', () => {
     await ReactTestRenderer.act(async () => {
       jest.advanceTimersByTime(31_000);
     });
-    expect(hasText(root, 'Set 2 of 2')).toBe(true);
+    expect(hasLabel(root, 'Set 2 of 2')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(true);
 
     // --- Last set: complete, unlocked for good -------------------------
     press(root, 'Done with Set');
-    expect(hasText(root, 'Workout Complete!')).toBe(true);
+    expect(hasText(root, 'Workout complete.')).toBe(true);
     expect(hasText(root, '2 of 2')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(false);
 
@@ -111,6 +115,6 @@ describe('full workout loop', () => {
 
     press(root, 'Skip Rest');
     expect(MockBlocker.isLocked()).toBe(true);
-    expect(hasText(root, 'Set 2 of 3')).toBe(true);
+    expect(hasLabel(root, 'Set 2 of 3')).toBe(true);
   });
 });

@@ -12,11 +12,12 @@ type Props = {
   children?: React.ReactNode;
 };
 
+/** Thin stroke, butt cap — an instrument dial, not a fitness-app donut. */
 export function ProgressRing({
   progress,
-  size = 260,
-  strokeWidth = 14,
-  color = colors.accent,
+  size = 268,
+  strokeWidth = 5,
+  color = colors.free,
   children,
 }: Props) {
   const radius = (size - strokeWidth) / 2;
@@ -30,7 +31,7 @@ export function ProgressRing({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={colors.surfaceAlt}
+          stroke={colors.hairline}
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -40,7 +41,6 @@ export function ProgressRing({
           r={radius}
           stroke={color}
           strokeWidth={strokeWidth}
-          strokeLinecap="round"
           fill="none"
           strokeDasharray={circumference}
           strokeDashoffset={circumference * (1 - clamped)}

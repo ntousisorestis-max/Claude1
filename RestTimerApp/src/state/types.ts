@@ -16,7 +16,8 @@ export type Phase = 'setup' | 'active' | 'resting' | 'complete';
 export type BlockableApp = {
   id: string;
   name: string;
-  emoji: string;
+  /** Monogram tint. Stands in for the real app icon, which iOS never gives us. */
+  tint: string;
 };
 
 export type WorkoutConfig = {

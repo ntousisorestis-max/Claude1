@@ -16,11 +16,11 @@ export const REST_PRESETS = [30, 60, 90, 120];
  * FamilyActivityPicker, which returns an opaque selection instead of names.
  */
 export const BLOCKABLE_APPS: BlockableApp[] = [
-  { id: 'tiktok', name: 'TikTok', emoji: '🎵' },
-  { id: 'instagram', name: 'Instagram', emoji: '📸' },
-  { id: 'youtube', name: 'YouTube', emoji: '▶️' },
-  { id: 'x', name: 'X', emoji: '🐦' },
-  { id: 'reddit', name: 'Reddit', emoji: '👽' },
+  { id: 'tiktok', name: 'TikTok', tint: '#69C9D0' },
+  { id: 'instagram', name: 'Instagram', tint: '#D6739A' },
+  { id: 'youtube', name: 'YouTube', tint: '#D96A6A' },
+  { id: 'x', name: 'X', tint: '#9AA3A9' },
+  { id: 'reddit', name: 'Reddit', tint: '#E2894F' },
 ];
 
 const defaultConfig: WorkoutConfig = {

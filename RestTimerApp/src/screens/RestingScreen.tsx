@@ -1,61 +1,69 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { BigButton } from '../components/BigButton';
-import { LockIndicator } from '../components/LockIndicator';
 import { ProgressRing } from '../components/ProgressRing';
+import { SetTicks } from '../components/SetTicks';
+import { StatusRail } from '../components/StatusRail';
 import { useCountdown } from '../hooks/useCountdown';
 import { useWorkout } from '../state/WorkoutContext';
-import { colors, formatMMSS, spacing } from '../theme';
+import { colors, formatMMSS, spacing, tabular, type } from '../theme';
 
 export function RestingScreen() {
   const {
-    state: { config, currentSet, restEndsAt },
+    state: { config, currentSet, setsCompleted, restEndsAt },
     endRest,
   } = useWorkout();
 
   // endRest is also what the countdown calls at zero — the reducer ignores it
   // if we're no longer resting, so a late tick can't skip a set.
   const secondsLeft = useCountdown(restEndsAt, endRest);
-  const progress = secondsLeft / config.restSeconds;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <LockIndicator selectedAppIds={config.selectedAppIds} />
-        <Text style={styles.title}>Rest — scroll away 📱</Text>
-        <Text style={styles.subtitle}>
-          Set {currentSet} of {config.totalSets} done
-        </Text>
+    <View style={styles.screen}>
+      <StatusRail selectedAppIds={config.selectedAppIds} />
+
+      <View style={styles.head}>
+        <Text style={styles.title}>Rest</Text>
+        <Text style={styles.sub}>Scroll away.</Text>
       </View>
 
-      <View style={styles.ringWrap}>
-        <ProgressRing progress={progress}>
-          <Text style={styles.time}>{formatMMSS(secondsLeft)}</Text>
-          <Text style={styles.until}>until lock</Text>
+      <View style={styles.dial}>
+        <ProgressRing progress={secondsLeft / config.restSeconds}>
+          <Text style={styles.clock}>{formatMMSS(secondsLeft)}</Text>
+          <Text style={styles.until}>UNTIL LOCK</Text>
         </ProgressRing>
       </View>
 
-      <BigButton label="Skip Rest" onPress={endRest} variant="secondary" />
+      <View style={styles.foot}>
+        <SetTicks
+          total={config.totalSets}
+          completed={setsCompleted}
+          current={currentSet + 1}
+        />
+        <BigButton label="Skip Rest" onPress={endRest} variant="outline" />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    padding: spacing.lg,
-    gap: spacing.lg,
-    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+    gap: spacing.md,
   },
-  header: { alignItems: 'center', gap: spacing.sm, paddingTop: spacing.lg },
-  title: { color: colors.text, fontSize: 28, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: 17, fontWeight: '600' },
-  ringWrap: { alignItems: 'center', justifyContent: 'center' },
-  time: {
-    color: colors.text,
-    fontSize: 64,
-    fontWeight: '900',
-    fontVariant: ['tabular-nums'],
+  head: { gap: 2, paddingTop: spacing.md },
+  title: { ...type.title, fontSize: 32, color: colors.chalk },
+  sub: { ...type.body, color: colors.muted },
+  dial: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  clock: {
+    ...type.display,
+    ...tabular,
+    fontSize: 76,
+    color: colors.chalk,
   },
-  until: { color: colors.textMuted, fontSize: 15, fontWeight: '600' },
+  until: { ...type.label, color: colors.faint, marginTop: spacing.xs },
+  foot: { gap: spacing.md },
 });

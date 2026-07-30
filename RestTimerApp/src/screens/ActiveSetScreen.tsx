@@ -1,13 +1,14 @@
 import React from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { BigButton } from '../components/BigButton';
-import { LockIndicator } from '../components/LockIndicator';
+import { SetTicks } from '../components/SetTicks';
+import { StatusRail } from '../components/StatusRail';
 import { useWorkout } from '../state/WorkoutContext';
-import { colors, spacing } from '../theme';
+import { colors, pad2, spacing, tabular, type } from '../theme';
 
 export function ActiveSetScreen() {
   const {
-    state: { config, currentSet },
+    state: { config, currentSet, setsCompleted },
     finishSet,
     endWorkout,
   } = useWorkout();
@@ -19,36 +20,45 @@ export function ActiveSetScreen() {
     ]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <LockIndicator selectedAppIds={config.selectedAppIds} />
+    <View style={styles.screen}>
+      <StatusRail selectedAppIds={config.selectedAppIds} />
+
+      <View style={styles.head}>
         <Text style={styles.exercise} numberOfLines={2}>
           {config.exerciseName}
         </Text>
-        <Text style={styles.setCount}>
-          Set {currentSet} of {config.totalSets}
-        </Text>
+        {/* Terse for the eye, spelled out for screen readers. */}
+        <View
+          style={styles.counter}
+          accessibilityLabel={`Set ${currentSet} of ${config.totalSets}`}>
+          <Text style={styles.current}>{pad2(currentSet)}</Text>
+          <Text style={styles.total}>/{pad2(config.totalSets)}</Text>
+        </View>
+        <SetTicks
+          total={config.totalSets}
+          completed={setsCompleted}
+          current={currentSet}
+        />
       </View>
 
-      <BigButton label="Done with Set" onPress={finishSet} huge />
+      <BigButton label="Done with Set" onPress={finishSet} slab />
 
-      <BigButton label="End Workout" onPress={confirmEnd} variant="danger" />
+      <BigButton label="End Workout" onPress={confirmEnd} variant="quit" />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
     gap: spacing.lg,
   },
-  header: { alignItems: 'center', gap: spacing.sm, paddingTop: spacing.lg },
-  exercise: {
-    color: colors.text,
-    fontSize: 34,
-    fontWeight: '900',
-    textAlign: 'center',
-  },
-  setCount: { color: colors.textMuted, fontSize: 22, fontWeight: '700' },
+  head: { gap: spacing.md, paddingTop: spacing.md },
+  exercise: { ...type.title, fontSize: 32, color: colors.chalk },
+  counter: { flexDirection: 'row', alignItems: 'baseline' },
+  current: { ...type.display, ...tabular, color: colors.chalk },
+  total: { ...type.display, ...tabular, fontSize: 38, color: colors.faint },
 });

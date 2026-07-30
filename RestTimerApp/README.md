@@ -5,8 +5,8 @@ them for the rest period, and re-locks them when the countdown hits zero.
 
 ```
 Setup ──Start──▶ Active Set ──Done with Set──▶ Resting ──0:00 / Skip──▶ Active Set
-                  🔒 locked                     🔓 unlocked                🔒 locked
-                       └────────── last set ──────────▶ Complete (🔓 unlocked)
+                 amber · locked                green · free            amber · locked
+                       └────────── last set ──────────▶ Complete (green · free)
 ```
 
 **This is Phase 1: the block is simulated.** The full loop works, but no app is
@@ -105,12 +105,26 @@ npx tsc --noEmit
 npm run lint
 ```
 
+## Design rule
+
+**Hue means lock state and nothing else.** Amber is shielded, green is free, and
+no other element may borrow either — actions are chalk white on steel graphite.
+That's why the primary button isn't coloured: a green "Done with Set" would read
+as "unlocked" at a glance, which is the one thing this app must never get wrong.
+
+Everything else follows from keeping the screens quiet: hairline rules instead of
+stacked boxes, set counts as instrument digits (`01/03`) with a tick per set,
+tabular numerals so the countdown doesn't jitter, and no emoji in the chrome.
+Terse visuals carry the full sentence as an accessibility label, so `01/03` still
+reads as "Set 1 of 3" aloud.
+
 ## Trying the simulated block
 
-Phase 1 can't intercept another app, so the lock state shows as a pill at the top
-of the Active Set and Resting screens: **🔒 2 apps blocked** / **🔓 Apps unlocked**.
-While locked, tap the pill to see the full-screen shield you'd get when opening
-TikTok. In Phase 2 that pill stops being tappable — iOS draws the real shield.
+Phase 1 can't intercept another app, so lock state shows as the rail across the
+top of the Active Set and Resting screens — a coloured bar plus **2 APPS
+BLOCKED** / **APPS UNLOCKED**. While locked the rail is tappable (marked
+`PREVIEW`) and opens the full-screen shield you'd hit when opening TikTok. In
+Phase 2 that affordance disappears — iOS draws the real shield.
 
 ## Layout
 
@@ -127,10 +141,11 @@ src/
     ScreenTimeBlocker.ts     Phase 2 — FamilyControls/ManagedSettings bridge (not wired)
     index.ts                 picks the real blocker if the native module exists
   screens/                   Setup / ActiveSet / Resting / Complete
-  components/                BigButton, Stepper, ProgressRing, LockIndicator
+  components/                BigButton, Stepper, Segmented, ProgressRing,
+                             SetTicks, StatusRail
   hooks/useCountdown.ts      wall-clock countdown
   notifications.ts           OS-scheduled "rest over" alert
-  theme.ts                   dark-first palette
+  theme.ts                   palette, type scale, spacing
 ```
 
 Two details worth knowing before you change things:
@@ -147,7 +162,7 @@ Two details worth knowing before you change things:
 Phase 1 is fully cross-platform — nothing in the loop is iOS-only, and the suite
 passes under Android module resolution (`npm run test:android`). Specifics:
 
-- **The lock pill and simulated shield work identically on Android.** They're
+- **The status rail and simulated shield work identically on Android.** They're
   plain RN views, not a Screen Time feature. Only *real* blocking is iOS-first.
 - **Rest-over notifications use AlarmManager, not WorkManager.** Notifee's
   default for timestamp triggers is WorkManager, which the OS batches — hopeless
@@ -200,7 +215,7 @@ One product consequence, worth deciding on before Phase 2: **Apple never tells t
 app which apps the user picked.** `FamilyActivityPicker` hands back an opaque
 token. The Setup screen's checkbox list therefore becomes a single "Choose apps"
 button, and the UI can only ever say "3 apps blocked", never "TikTok blocked".
-`LockIndicator` and the Setup screen are written so that swap is contained.
+`StatusRail` and the Setup screen are written so that swap is contained.
 
 ## Not in scope (yet)
 

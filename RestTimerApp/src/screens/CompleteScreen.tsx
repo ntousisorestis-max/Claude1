@@ -1,8 +1,9 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { BigButton } from '../components/BigButton';
+import { SetTicks } from '../components/SetTicks';
 import { useWorkout } from '../state/WorkoutContext';
-import { colors, formatMMSS, radius, spacing } from '../theme';
+import { colors, formatMMSS, HAIRLINE, spacing, tabular, type } from '../theme';
 
 export function CompleteScreen() {
   const {
@@ -13,19 +14,28 @@ export function CompleteScreen() {
   const finishedAll = setsCompleted >= config.totalSets;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.hero}>
-        <Text style={styles.emoji}>{finishedAll ? '🏆' : '👍'}</Text>
-        <Text style={styles.title}>
-          {finishedAll ? 'Workout Complete!' : 'Workout Ended'}
-        </Text>
-        <Text style={styles.subtitle}>🔓 Apps unlocked — scroll freely.</Text>
+    <View style={styles.screen}>
+      <View style={styles.top}>
+        <View style={[styles.bar, { backgroundColor: colors.free }]} />
+        <Text style={styles.status}>APPS UNLOCKED</Text>
       </View>
 
-      <View style={styles.card}>
-        <Row label="Exercise" value={config.exerciseName || '—'} />
-        <Row label="Sets completed" value={`${setsCompleted} of ${config.totalSets}`} />
-        <Row label="Total rest" value={formatMMSS(totalRestSeconds)} />
+      <View style={styles.body}>
+        <Text style={styles.headline}>
+          {finishedAll ? 'Workout complete.' : 'Workout ended.'}
+        </Text>
+
+        <SetTicks
+          total={config.totalSets}
+          completed={setsCompleted}
+          current={0}
+        />
+
+        <View style={styles.summary}>
+          <Row label="EXERCISE" value={config.exerciseName || '—'} />
+          <Row label="SETS" value={`${setsCompleted} of ${config.totalSets}`} />
+          <Row label="TOTAL REST" value={formatMMSS(totalRestSeconds)} />
+        </View>
       </View>
 
       <BigButton label="New Workout" onPress={newWorkout} />
@@ -45,30 +55,34 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
     gap: spacing.lg,
-    justifyContent: 'center',
   },
-  hero: { alignItems: 'center', gap: spacing.sm },
-  emoji: { fontSize: 64 },
-  title: { color: colors.text, fontSize: 34, fontWeight: '900' },
-  subtitle: { color: colors.accent, fontSize: 16, fontWeight: '700' },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
+  top: { gap: spacing.sm },
+  bar: { height: 3, borderRadius: 2 },
+  status: { ...type.label, color: colors.free },
+  body: { flex: 1, justifyContent: 'center', gap: spacing.lg },
+  headline: { ...type.title, fontSize: 40, letterSpacing: -1.2, color: colors.chalk },
+  summary: { marginTop: spacing.sm },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     gap: spacing.md,
+    paddingVertical: spacing.md,
+    borderTopWidth: HAIRLINE,
+    borderTopColor: colors.hairline,
   },
-  row: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md },
-  rowLabel: { color: colors.textMuted, fontSize: 16, fontWeight: '600' },
+  rowLabel: { ...type.label, color: colors.faint },
   rowValue: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '800',
+    ...type.body,
+    ...tabular,
+    fontWeight: '700',
+    color: colors.chalk,
     flexShrink: 1,
     textAlign: 'right',
   },

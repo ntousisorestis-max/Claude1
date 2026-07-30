@@ -1,22 +1,28 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, ViewStyle } from 'react-native';
-import { colors, radius, spacing, TAP_TARGET } from '../theme';
+import { colors, HAIRLINE, radius, spacing, TAP_TARGET, type } from '../theme';
+
+type Variant = 'chalk' | 'outline' | 'quiet' | 'quit';
 
 type Props = {
   label: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
-  /** Fills the available space — used for the mid-workout "Done with Set". */
-  huge?: boolean;
+  variant?: Variant;
+  /** Fills the available space — the mid-workout "Done with Set" slab. */
+  slab?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
 };
 
+/**
+ * Actions are chalk, never coloured — hue in this app is reserved for lock
+ * state, so a green button would read as "unlocked" at a glance.
+ */
 export function BigButton({
   label,
   onPress,
-  variant = 'primary',
-  huge = false,
+  variant = 'chalk',
+  slab = false,
   disabled = false,
   style,
 }: Props) {
@@ -30,7 +36,7 @@ export function BigButton({
       style={({ pressed }) => [
         styles.base,
         styles[variant],
-        huge && styles.huge,
+        slab && styles.slab,
         pressed && styles.pressed,
         disabled && styles.disabled,
         style,
@@ -38,12 +44,12 @@ export function BigButton({
       <Text
         style={[
           styles.label,
-          variant === 'secondary' && styles.labelSecondary,
-          variant === 'ghost' && styles.labelGhost,
-          variant === 'danger' && styles.labelDanger,
-          huge && styles.labelHuge,
+          variant === 'chalk' && styles.labelChalk,
+          variant === 'quiet' && styles.labelQuiet,
+          variant === 'quit' && styles.labelQuit,
+          slab && styles.labelSlab,
         ]}>
-        {label}
+        {slab ? label.toUpperCase() : label}
       </Text>
     </Pressable>
   );
@@ -52,30 +58,27 @@ export function BigButton({
 const styles = StyleSheet.create({
   base: {
     minHeight: TAP_TARGET,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
-  huge: {
-    flex: 1,
-    borderRadius: radius.lg,
+  slab: { flex: 1, borderRadius: radius.lg },
+  chalk: { backgroundColor: colors.chalk },
+  outline: {
+    borderWidth: HAIRLINE,
+    borderColor: colors.hairline,
+    backgroundColor: colors.surface,
   },
-  primary: { backgroundColor: colors.accent },
-  secondary: { backgroundColor: colors.surfaceAlt },
-  danger: { backgroundColor: 'transparent' },
-  ghost: { backgroundColor: 'transparent' },
-  pressed: { opacity: 0.7, transform: [{ scale: 0.99 }] },
-  disabled: { opacity: 0.35 },
-  label: {
-    color: colors.bg,
-    fontSize: 20,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
-  labelSecondary: { color: colors.text },
-  labelGhost: { color: colors.textMuted, fontSize: 16, fontWeight: '600' },
-  labelDanger: { color: colors.danger, fontSize: 16, fontWeight: '700' },
-  labelHuge: { fontSize: 34, fontWeight: '900' },
+  quiet: { backgroundColor: 'transparent' },
+  quit: { backgroundColor: 'transparent' },
+  pressed: { opacity: 0.6 },
+  disabled: { opacity: 0.25 },
+
+  label: { ...type.action, color: colors.chalk },
+  labelChalk: { color: colors.bg },
+  labelQuiet: { ...type.label, color: colors.muted },
+  labelQuit: { ...type.label, color: colors.quit },
+  labelSlab: { fontSize: 30, fontWeight: '700', letterSpacing: 1.5 },
 });
