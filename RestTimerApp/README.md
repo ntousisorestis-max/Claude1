@@ -9,6 +9,8 @@ Setup ──Start──▶ Active Set ──Done with set──▶ Resting ─�
                     └───────────── last set ─────────────▶ Complete (unlocked)
 ```
 
+**Want to run it? See [TESTING.md](TESTING.md)** for a step-by-step guide.
+
 **This is Phase 1: the block is simulated.** The full loop works, but no app is
 actually shielded yet. See [Phase 2](#phase-2--real-ios-blocking) for what real
 blocking needs — including things only you can do on your Apple Developer account.
