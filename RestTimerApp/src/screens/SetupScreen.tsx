@@ -59,7 +59,10 @@ export function SetupScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled">
         <Animated.View style={enter}>
-          <Text style={styles.masthead}>New workout</Text>
+          <Text style={styles.eyebrow}>READY TO TRAIN</Text>
+          <Text style={styles.masthead}>
+            Let’s lift<Text style={styles.stop}>.</Text>
+          </Text>
 
           <View style={styles.steps}>
             {HOW_IT_WORKS.map((step, i) => (
@@ -226,7 +229,10 @@ const styles = StyleSheet.create({
     // The main breathing room between sections.
     gap: spacing.xxl,
   },
+  eyebrow: { ...type.tag, color: colors.accent, marginBottom: spacing.sm },
   masthead: { ...type.display, fontSize: 46, color: colors.white },
+  /** The full stop picks up the accent — a small bit of colour up top. */
+  stop: { color: colors.accent },
   steps: { gap: spacing.md, marginTop: spacing.lg },
   step: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
   stepNumber: { ...type.tag, color: colors.accent, width: 14, lineHeight: 23 },

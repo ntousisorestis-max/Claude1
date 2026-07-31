@@ -59,7 +59,7 @@ describe('full workout loop', () => {
     const root = tree.root;
 
     // --- Setup ---------------------------------------------------------
-    expect(hasText(root, 'New workout')).toBe(true);
+    expect(hasText(root, 'READY TO TRAIN')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(false);
 
     type(root, 'Bench press', 'Squat');
@@ -98,7 +98,7 @@ describe('full workout loop', () => {
     expect(MockBlocker.isLocked()).toBe(false);
 
     press(root, 'New workout');
-    expect(hasText(root, 'New workout')).toBe(true);
+    expect(hasText(root, 'READY TO TRAIN')).toBe(true);
   });
 
   it('re-locks immediately when rest is skipped', async () => {
