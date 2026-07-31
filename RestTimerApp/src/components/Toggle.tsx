@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { usePressScale } from '../hooks/usePressScale';
 import { colors, radius, spacing, type } from '../theme';
 
 /**
@@ -23,8 +24,12 @@ export function Toggle({
   value: boolean;
   onChange: (next: boolean) => void;
 }) {
+  // Flipping a setting is worth a tick; it's the only feedback that it took.
+  const pressScale = usePressScale({ depth: 0.98, haptic: true });
+
   return (
     <Pressable
+      {...pressScale.handlers}
       accessibilityRole="switch"
       // Both, deliberately: `accessibilityState` is what native reads, and
       // react-native-web does not derive `aria-checked` from it, so a screen
@@ -33,15 +38,16 @@ export function Toggle({
       aria-checked={value}
       accessibilityLabel={label}
       onPress={() => onChange(!value)}
-      style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
+      style={styles.row}>
       <View style={styles.text}>
         <Text style={styles.label}>{label}</Text>
         {help ? <Text style={styles.help}>{help}</Text> : null}
       </View>
 
-      <View style={[styles.track, value && styles.trackOn]}>
+      <Animated.View
+        style={[styles.track, value && styles.trackOn, pressScale.style]}>
         <View style={[styles.thumb, value && styles.thumbOn]} />
-      </View>
+      </Animated.View>
     </Pressable>
   );
 }
@@ -58,7 +64,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     minHeight: 44,
   },
-  pressed: { opacity: 0.8 },
   text: { flex: 1, gap: 2 },
   label: { ...type.body, fontWeight: '600', color: colors.white },
   help: { ...type.helper, fontSize: 13, color: colors.mutedOnDark },

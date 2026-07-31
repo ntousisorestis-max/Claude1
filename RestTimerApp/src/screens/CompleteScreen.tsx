@@ -26,11 +26,10 @@ export function CompleteScreen() {
         <Animated.View style={[styles.hero, enterHero]}>
           <Text style={styles.badge}>{finishedAll ? '🔥' : '👍'}</Text>
           <Text style={styles.headline}>
-            {finishedAll ? 'Workout complete' : 'Workout ended'}
+            {finishedAll ? 'That’s the work.' : 'Called it early.'}
           </Text>
           <Text style={styles.sub}>
-            Your apps are unlocked. Nothing is blocked until you start another
-            workout.
+            Your phone’s yours again until the next one.
           </Text>
 
           <SetTicks

@@ -33,9 +33,9 @@ export function RestingScreen() {
       <StatusTag selectedAppIds={config.selectedAppIds} onAccent />
 
       <Animated.View style={[styles.head, enter]}>
-        <Text style={styles.title}>Rest</Text>
+        <Text style={styles.title}>Scroll away.</Text>
         <Text style={styles.sub}>
-          Scroll all you like. Your apps lock again when this hits zero.
+          Your apps lock again when this hits zero.
         </Text>
       </Animated.View>
 

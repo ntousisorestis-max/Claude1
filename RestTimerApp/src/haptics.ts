@@ -27,6 +27,14 @@ const androidOnly = (pattern: number | number[]) => {
   }
 };
 
+/**
+ * A button was pressed. The lightest tick available — this fires on ordinary
+ * taps, so anything heavier becomes irritating within a minute.
+ */
+export function tap() {
+  androidOnly(8);
+}
+
 /** A set is banked. Short and affirmative. */
 export function setBanked() {
   androidOnly(22);

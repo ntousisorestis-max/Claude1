@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { usePressScale } from '../hooks/usePressScale';
 import { colors, radius, tabular, TAP_TARGET, type } from '../theme';
 
 type Props = {
@@ -55,19 +56,21 @@ function Key({
   disabled: boolean;
   accessibilityLabel: string;
 }) {
+  // No haptic: these get held down and repeated, and a buzz per step grates.
+  const pressScale = usePressScale({ depth: 0.9 });
+
   return (
     <Pressable
+      {...pressScale.handlers}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled }}
       onPress={onPress}
       disabled={disabled}
-      style={({ pressed }) => [
-        styles.key,
-        pressed && styles.pressed,
-        disabled && styles.disabled,
-      ]}>
-      <Text style={styles.symbol}>{symbol}</Text>
+      style={disabled ? styles.disabled : undefined}>
+      <Animated.View style={[styles.key, pressScale.style]}>
+        <Text style={styles.symbol}>{symbol}</Text>
+      </Animated.View>
     </Pressable>
   );
 }
@@ -83,7 +86,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   symbol: { fontSize: 28, fontWeight: '600', color: colors.accent },
-  pressed: { opacity: 0.8, transform: [{ scale: 0.96 }] },
   disabled: { opacity: 0.25 },
   value: {
     flex: 1,

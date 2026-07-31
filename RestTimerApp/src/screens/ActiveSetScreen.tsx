@@ -48,7 +48,7 @@ export function ActiveSetScreen() {
         />
 
         <Text style={styles.explain}>
-          Your apps stay blocked until you finish this set.
+          Locked until this set is done.
         </Text>
       </Animated.View>
 

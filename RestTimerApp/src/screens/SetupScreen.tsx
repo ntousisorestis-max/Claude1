@@ -15,6 +15,7 @@ import { BrandIcon } from '../components/BrandIcon';
 import { Segmented } from '../components/Segmented';
 import { Stepper } from '../components/Stepper';
 import { useEnter } from '../hooks/useEnter';
+import { usePressScale } from '../hooks/usePressScale';
 import { useReduceMotion } from '../hooks/useReduceMotion';
 import { useWorkout } from '../state/WorkoutContext';
 import {
@@ -126,7 +127,7 @@ export function SetupScreen() {
         <View style={styles.block}>
           <Text style={styles.label}>APPS TO BLOCK</Text>
           <Text style={styles.help}>
-            Tap the apps you want locked while you lift.
+            Tap the ones you want out of reach.
           </Text>
           <View style={styles.apps}>
             {allBlockableApps(defaults.customApps).map(app => (
@@ -175,6 +176,7 @@ function AppPill({
   onPress: () => void;
 }) {
   const reduceMotion = useReduceMotion();
+  const pressScale = usePressScale({ depth: 0.94, haptic: true });
   const pop = useRef(new Animated.Value(1)).current;
   const first = useRef(true);
 
@@ -198,18 +200,15 @@ function AppPill({
   }, [checked, pop, reduceMotion]);
 
   return (
-    <Animated.View style={{ transform: [{ scale: pop }] }}>
+    <Animated.View style={[{ transform: [{ scale: pop }] }, pressScale.style]}>
       <Pressable
+        {...pressScale.handlers}
         accessibilityRole="checkbox"
         accessibilityState={{ checked }}
         aria-checked={checked}
         accessibilityLabel={name}
         onPress={onPress}
-        style={({ pressed }) => [
-          styles.app,
-          checked && styles.appOn,
-          pressed && styles.pressed,
-        ]}>
+        style={[styles.app, checked && styles.appOn]}>
         {brand ? (
           <BrandIcon
             id={brand}

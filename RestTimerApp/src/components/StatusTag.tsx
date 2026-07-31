@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { blocker } from '../blocking';
 import { BrandIcon } from './BrandIcon';
 import { allBlockableApps } from '../state/workoutReducer';
 import { useWorkout } from '../state/WorkoutContext';
+import { usePressScale } from '../hooks/usePressScale';
 import { colors, radius, spacing, TAP_TARGET, type } from '../theme';
 
 /**
@@ -15,6 +16,8 @@ import { colors, radius, spacing, TAP_TARGET, type } from '../theme';
  * accent. Phase 1 only: tap while locked to preview the shield you'd hit opening
  * a blocked app.
  */
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 export function StatusTag({
   selectedAppIds,
   onAccent = false,
@@ -32,6 +35,9 @@ export function StatusTag({
       defaults: { customApps },
     },
   } = useWorkout();
+
+  const chipPress = usePressScale({ depth: 0.95, haptic: true });
+  const backPress = usePressScale({ haptic: true });
 
   useEffect(() => blocker.subscribe(setLocked), []);
 
@@ -52,7 +58,8 @@ export function StatusTag({
 
   return (
     <>
-      <Pressable
+      <AnimatedPressable
+        {...chipPress.handlers}
         accessibilityRole={isMock && locked ? 'button' : 'text'}
         accessibilityLabel={
           isMock && locked
@@ -61,10 +68,10 @@ export function StatusTag({
         }
         disabled={!isMock || !locked}
         onPress={() => setPreview(true)}
-        style={({ pressed }) => [
+        style={[
           styles.chip,
           onAccent ? styles.chipOnAccent : styles.chipOnInk,
-          pressed && styles.pressed,
+          chipPress.style,
         ]}>
         <Text style={[styles.chipText, onAccent ? styles.textOnAccent : styles.textOnInk]}>
           {text}
@@ -72,7 +79,7 @@ export function StatusTag({
         {isMock && locked ? (
           <Text style={styles.peek}>TAP TO SEE</Text>
         ) : null}
-      </Pressable>
+      </AnimatedPressable>
 
       <Modal
         visible={preview}
@@ -117,13 +124,14 @@ export function StatusTag({
               yet — that arrives in Phase 2, when iOS draws this over the app
               itself.
             </Text>
-            <Pressable
+            <AnimatedPressable
+              {...backPress.handlers}
               accessibilityRole="button"
               accessibilityLabel="Back to workout"
               onPress={() => setPreview(false)}
-              style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
+              style={[styles.back, backPress.style]}>
               <Text style={styles.backText}>Back to workout</Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>
         </View>
       </Modal>
@@ -148,7 +156,6 @@ const styles = StyleSheet.create({
   textOnInk: { color: colors.accent },
   textOnAccent: { color: colors.white },
   peek: { ...type.tag, fontSize: 10, color: colors.faintOnDark },
-  pressed: { opacity: 0.8, transform: [{ scale: 0.98 }] },
 
   shield: {
     flex: 1,

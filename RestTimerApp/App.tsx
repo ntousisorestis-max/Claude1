@@ -18,6 +18,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenFade } from './src/components/ScreenFade';
 import { TabBar, type Tab } from './src/components/TabBar';
 import { useReduceMotion } from './src/hooks/useReduceMotion';
 import { ActiveSetScreen } from './src/screens/ActiveSetScreen';
@@ -128,7 +129,10 @@ function Ground() {
       <StatusBar barStyle="light-content" backgroundColor={free ? colors.accentDeep : colors.ink} />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.screen}>
-          {tab === 'workout' ? <WorkoutTab /> : <SettingsScreen />}
+          {/* Keyed on tab *and* phase, so both kinds of change transition. */}
+          <ScreenFade screenKey={`${tab}:${state.phase}`}>
+            {tab === 'workout' ? <WorkoutTab /> : <SettingsScreen />}
+          </ScreenFade>
         </View>
         {tabsVisible ? <TabBar active={tab} onChange={setTab} /> : null}
       </SafeAreaView>

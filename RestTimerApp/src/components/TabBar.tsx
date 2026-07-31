@@ -1,6 +1,7 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import { usePressScale } from '../hooks/usePressScale';
 import { colors, HAIRLINE, spacing, type } from '../theme';
 
 export type Tab = 'workout' | 'settings';
@@ -49,18 +50,22 @@ function TabButton({
   onPress: (tab: Tab) => void;
 }) {
   const tint = active ? colors.accent : colors.faintOnDark;
+  const pressScale = usePressScale({ depth: 0.92, haptic: true });
 
   return (
     <Pressable
+      {...pressScale.handlers}
       accessibilityRole="tab"
       accessibilityState={{ selected: active }}
       accessibilityLabel={label}
       onPress={() => onPress(tab)}
-      style={({ pressed }) => [styles.tab, pressed && styles.pressed]}>
-      <Svg width={24} height={24} viewBox="0 0 24 24">
-        {tab === 'workout' ? <DumbbellGlyph tint={tint} /> : <SlidersGlyph tint={tint} />}
-      </Svg>
-      <Text style={[styles.label, { color: tint }]}>{label}</Text>
+      style={styles.tab}>
+      <Animated.View style={[styles.tabInner, pressScale.style]}>
+        <Svg width={24} height={24} viewBox="0 0 24 24">
+          {tab === 'workout' ? <DumbbellGlyph tint={tint} /> : <SlidersGlyph tint={tint} />}
+        </Svg>
+        <Text style={[styles.label, { color: tint }]}>{label}</Text>
+      </Animated.View>
     </Pressable>
   );
 }
@@ -97,13 +102,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.ink,
     paddingTop: spacing.sm,
   },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    paddingVertical: spacing.sm,
-  },
-  pressed: { opacity: 0.6 },
+  tab: { flex: 1, paddingVertical: spacing.sm },
+  tabInner: { alignItems: 'center', justifyContent: 'center', gap: 5 },
   label: { ...type.tag, fontSize: 11 },
 });

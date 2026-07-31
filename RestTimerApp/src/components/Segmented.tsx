@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { usePressScale } from '../hooks/usePressScale';
 import { colors, radius, tabular, type } from '../theme';
 
 /** Quick-select pills. The chosen one goes solid accent. */
@@ -18,32 +19,55 @@ export function Segmented({
 }) {
   return (
     <View style={styles.row}>
-      {options.map(option => {
-        const selected = option === value;
-        return (
-          <Pressable
-            key={option}
-            accessibilityRole="button"
-            accessibilityState={{ selected }}
-            accessibilityLabel={`${label} ${format(option)}`}
-            onPress={() => onChange(option)}
-            style={({ pressed }) => [
-              styles.cell,
-              selected && styles.selected,
-              pressed && styles.pressed,
-            ]}>
-            <Text style={[styles.text, selected && styles.textSelected]}>
-              {format(option)}
-            </Text>
-          </Pressable>
-        );
-      })}
+      {options.map(option => (
+        <Cell
+          key={option}
+          option={option}
+          selected={option === value}
+          label={label}
+          format={format}
+          onChange={onChange}
+        />
+      ))}
     </View>
+  );
+}
+
+function Cell({
+  option,
+  selected,
+  label,
+  format,
+  onChange,
+}: {
+  option: number;
+  selected: boolean;
+  label: string;
+  format: (n: number) => string;
+  onChange: (next: number) => void;
+}) {
+  const pressScale = usePressScale({ depth: 0.94, haptic: true });
+
+  return (
+    <Animated.View style={[styles.cellWrap, pressScale.style]}>
+      <Pressable
+        {...pressScale.handlers}
+        accessibilityRole="button"
+        accessibilityState={{ selected }}
+        accessibilityLabel={`${label} ${format(option)}`}
+        onPress={() => onChange(option)}
+        style={[styles.cell, selected && styles.selected]}>
+        <Text style={[styles.text, selected && styles.textSelected]}>
+          {format(option)}
+        </Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 8 },
+  cellWrap: { flex: 1 },
   cell: {
     flex: 1,
     height: 50,
@@ -53,7 +77,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   selected: { backgroundColor: colors.accent },
-  pressed: { opacity: 0.85, transform: [{ scale: 0.97 }] },
   text: { ...type.body, ...tabular, fontWeight: '600', color: colors.mutedOnDark },
   textSelected: { color: colors.white, fontWeight: '800' },
 });

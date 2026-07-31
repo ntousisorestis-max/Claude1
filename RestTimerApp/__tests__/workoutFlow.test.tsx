@@ -80,7 +80,7 @@ describe('full workout loop', () => {
     press(root, 'Done with set');
 
     // --- Rest: apps unlocked, countdown running ------------------------
-    expect(hasText(root, 'lock again when this hits zero')).toBe(true);
+    expect(hasText(root, 'Scroll away.')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(false);
     expect(hasText(root, '01:00')).toBe(true);
 
@@ -99,7 +99,7 @@ describe('full workout loop', () => {
 
     // --- Last set: complete, unlocked for good -------------------------
     press(root, 'Done with set');
-    expect(hasText(root, 'Workout complete')).toBe(true);
+    expect(hasText(root, 'That’s the work.')).toBe(true);
     expect(hasText(root, '2 of 2')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(false);
 

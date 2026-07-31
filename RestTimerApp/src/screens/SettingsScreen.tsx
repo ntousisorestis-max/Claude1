@@ -17,6 +17,7 @@ import { Segmented } from '../components/Segmented';
 import { Stepper } from '../components/Stepper';
 import { Toggle } from '../components/Toggle';
 import { useEnter } from '../hooks/useEnter';
+import { usePressScale } from '../hooks/usePressScale';
 import { useWorkout } from '../state/WorkoutContext';
 import {
   allBlockableApps,
@@ -156,18 +157,11 @@ export function SettingsScreen() {
               const checked = defaults.selectedAppIds.includes(app.id);
               const custom = !app.brand;
               return (
-                <Pressable
+                <DefaultAppPill
                   key={app.id}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked }}
-                  aria-checked={checked}
-                  accessibilityLabel={`${app.name} by default`}
-                  onPress={() => toggleDefaultApp(app.id)}
-                  style={({ pressed }) => [
-                    styles.app,
-                    checked && styles.appOn,
-                    pressed && styles.pressed,
-                  ]}>
+                  checked={checked}
+                  label={`${app.name} by default`}
+                  onPress={() => toggleDefaultApp(app.id)}>
                   {app.brand ? (
                     <BrandIcon
                       id={app.brand}
@@ -204,7 +198,7 @@ export function SettingsScreen() {
                       <Text style={styles.removeMark}>×</Text>
                     </Pressable>
                   ) : null}
-                </Pressable>
+                </DefaultAppPill>
               );
             })}
           </View>
@@ -223,19 +217,7 @@ export function SettingsScreen() {
               autoCapitalize="words"
               accessibilityLabel="New app name"
             />
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Add app"
-              accessibilityState={{ disabled: !canAdd }}
-              onPress={submitApp}
-              disabled={!canAdd}
-              style={({ pressed }) => [
-                styles.addButton,
-                !canAdd && styles.addButtonOff,
-                pressed && styles.pressed,
-              ]}>
-              <Text style={[styles.addMark, !canAdd && styles.addMarkOff]}>+</Text>
-            </Pressable>
+            <AddButton canAdd={canAdd} onPress={submitApp} />
           </View>
 
           {duplicate ? (
@@ -250,13 +232,7 @@ export function SettingsScreen() {
 
         <View style={styles.block}>
           <Text style={styles.label}>RESET</Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Reset to defaults"
-            onPress={confirmReset}
-            style={({ pressed }) => [styles.reset, pressed && styles.pressed]}>
-            <Text style={styles.resetText}>Reset to defaults</Text>
-          </Pressable>
+          <ResetButton onPress={confirmReset} />
           <Text style={styles.note}>Back to {MIN_DESCRIPTION}.</Text>
         </View>
 
@@ -280,6 +256,72 @@ export function SettingsScreen() {
         </Text>
       </ScrollView>
     </KeyboardAvoidingView>
+  );
+}
+
+/** An app pill on the Settings list. Same press feel as everywhere else. */
+function DefaultAppPill({
+  checked,
+  label,
+  onPress,
+  children,
+}: {
+  checked: boolean;
+  label: string;
+  onPress: () => void;
+  children: React.ReactNode;
+}) {
+  const pressScale = usePressScale({ depth: 0.94, haptic: true });
+
+  return (
+    <Animated.View style={pressScale.style}>
+      <Pressable
+        {...pressScale.handlers}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked }}
+        aria-checked={checked}
+        accessibilityLabel={label}
+        onPress={onPress}
+        style={[styles.app, checked && styles.appOn]}>
+        {children}
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+function AddButton({ canAdd, onPress }: { canAdd: boolean; onPress: () => void }) {
+  const pressScale = usePressScale({ depth: 0.9, haptic: canAdd });
+
+  return (
+    <Animated.View style={pressScale.style}>
+      <Pressable
+        {...pressScale.handlers}
+        accessibilityRole="button"
+        accessibilityLabel="Add app"
+        accessibilityState={{ disabled: !canAdd }}
+        onPress={onPress}
+        disabled={!canAdd}
+        style={[styles.addButton, !canAdd && styles.addButtonOff]}>
+        <Text style={[styles.addMark, !canAdd && styles.addMarkOff]}>+</Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+function ResetButton({ onPress }: { onPress: () => void }) {
+  const pressScale = usePressScale({ depth: 0.97, haptic: true });
+
+  return (
+    <Animated.View style={pressScale.style}>
+      <Pressable
+        {...pressScale.handlers}
+        accessibilityRole="button"
+        accessibilityLabel="Reset to defaults"
+        onPress={onPress}
+        style={styles.reset}>
+        <Text style={styles.resetText}>Reset to defaults</Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 

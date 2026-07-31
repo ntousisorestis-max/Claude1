@@ -1,6 +1,6 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { Animated, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { useReduceMotion } from '../hooks/useReduceMotion';
+import { usePressScale } from '../hooks/usePressScale';
 import { colors, radius, spacing, TAP_TARGET, type } from '../theme';
 
 type Variant = 'accent' | 'ink' | 'outlineOnAccent' | 'quiet' | 'danger';
@@ -43,22 +43,8 @@ export function BigButton({
   disabled = false,
   style,
 }: Props) {
-  const reduceMotion = useReduceMotion();
-  const press = useRef(new Animated.Value(0)).current;
-
-  const settle = (to: number) => {
-    if (reduceMotion) {
-      press.setValue(to);
-      return;
-    }
-    Animated.spring(press, {
-      toValue: to,
-      // Snappy going down, a touch of bounce coming back up.
-      speed: to === 1 ? 40 : 20,
-      bounciness: to === 1 ? 0 : 10,
-      useNativeDriver: true,
-    }).start();
-  };
+  // Buttons are the app's primary actions, so they all tick.
+  const { handlers, press } = usePressScale({ haptic: !disabled });
 
   const travel = press.interpolate({
     inputRange: [0, 1],
@@ -75,8 +61,7 @@ export function BigButton({
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
       onPress={onPress}
-      onPressIn={() => settle(1)}
-      onPressOut={() => settle(0)}
+      {...handlers}
       disabled={disabled}
       style={[
         styles.wrap,
