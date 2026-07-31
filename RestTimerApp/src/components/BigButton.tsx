@@ -6,9 +6,15 @@ import { colors, radius, spacing, TAP_TARGET, type } from '../theme';
 type Variant = 'accent' | 'ink' | 'outlineOnAccent' | 'quiet' | 'danger';
 
 type Props = {
-  /** Button text. Say exactly what the tap does — this is also what a
-   * screen reader announces. */
+  /** Say exactly what the tap does — this is what a screen reader announces,
+   * and the visible text too unless `text` overrides it. */
   label: string;
+  /**
+   * Visible text, when it needs to be shorter than the label. A list of cards
+   * each wants to *show* "Start" while announcing "Start Bench press", or
+   * every button on the screen sounds identical.
+   */
+  text?: string;
   onPress: () => void;
   variant?: Variant;
   /** Fills the space — the mid-workout slab you hit without looking. */
@@ -37,6 +43,7 @@ const LIFT = 8;
  */
 export function BigButton({
   label,
+  text,
   onPress,
   variant = 'accent',
   slab = false,
@@ -104,7 +111,7 @@ export function BigButton({
             slab && styles.labelSlab,
             disabled && styles.labelDisabled,
           ]}>
-          {label}
+          {text ?? label}
         </Text>
       </Animated.View>
     </Pressable>

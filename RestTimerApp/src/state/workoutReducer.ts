@@ -1,9 +1,11 @@
 import type {
+  AppDefaults,
   BlockableApp,
   CustomApp,
+  Exercise,
+  SavedState,
   WorkoutAction,
   WorkoutConfig,
-  WorkoutDefaults,
   WorkoutState,
 } from './types';
 
@@ -12,6 +14,19 @@ export const MAX_SETS = 20;
 export const MIN_REST_SECONDS = 10;
 export const MAX_REST_SECONDS = 600;
 export const REST_PRESETS = [30, 60, 90, 120];
+
+export const MAX_EXERCISES = 40;
+export const MAX_EXERCISE_NAME_LENGTH = 32;
+
+/**
+ * What a brand new exercise starts at.
+ *
+ * Not a setting: sets and rest are per-exercise now, so there is no longer one
+ * shared pair of numbers for Settings to hold. These are just a sane opening
+ * position, and the first thing you do with a new card is adjust them.
+ */
+export const NEW_EXERCISE_SETS = 3;
+export const NEW_EXERCISE_REST_SECONDS = 60;
 
 /**
  * Phase 1 placeholder list. In Phase 2 on iOS this is replaced by
@@ -33,8 +48,9 @@ export const MAX_APP_NAME_LENGTH = 24;
 
 /**
  * Everything that can be blocked: the five presets plus whatever the user
- * added. Every screen showing app pills reads this, so a custom app appears in
- * the setup list and the block-preview shield without either knowing it exists.
+ * added. Every screen showing app pills reads this, so a custom app appears on
+ * an exercise card and on the block-preview shield without either knowing it
+ * exists.
  */
 export function allBlockableApps(customApps: CustomApp[]): BlockableApp[] {
   return [...BLOCKABLE_APPS, ...customApps];
@@ -45,28 +61,37 @@ export function customAppId(name: string): string {
   return `custom:${name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 }
 
-/** Exported so "Reset to defaults" and the tests share one definition. */
-export const FACTORY_DEFAULTS: WorkoutDefaults = {
-  totalSets: 3,
-  restSeconds: 60,
+/**
+ * An id for a new exercise.
+ *
+ * Not derived from the name: two exercises may legitimately be called the same
+ * thing, and renaming one must never silently merge it with another. Generated
+ * by the caller and handed to the reducer, which stays pure.
+ */
+export function newExerciseId(): string {
+  return `ex_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/** Exported so "delete everything" and the tests share one definition. */
+export const FACTORY_DEFAULTS: AppDefaults = {
   selectedAppIds: ['tiktok', 'instagram'],
   soundEnabled: true,
   customApps: [],
 };
 
-const factoryDefaults = FACTORY_DEFAULTS;
-
-const defaultConfig: WorkoutConfig = {
+/** Nothing is running, so nothing here means anything yet. */
+const EMPTY_CONFIG: WorkoutConfig = {
   exerciseName: '',
-  totalSets: factoryDefaults.totalSets,
-  restSeconds: factoryDefaults.restSeconds,
-  selectedAppIds: factoryDefaults.selectedAppIds,
+  totalSets: NEW_EXERCISE_SETS,
+  restSeconds: NEW_EXERCISE_REST_SECONDS,
+  selectedAppIds: [],
 };
 
 export const initialState: WorkoutState = {
   phase: 'setup',
-  config: defaultConfig,
-  defaults: factoryDefaults,
+  exercises: [],
+  config: EMPTY_CONFIG,
+  defaults: FACTORY_DEFAULTS,
   currentSet: 1,
   setsCompleted: 0,
   restStartedAt: null,
@@ -86,33 +111,46 @@ function restElapsed(state: WorkoutState, now: number): number {
   return Math.max(0, Math.round((now - state.restStartedAt) / 1000));
 }
 
-/** The subset of the settings that a workout config actually carries. */
-function configFromDefaults(defaults: WorkoutDefaults) {
-  return {
-    totalSets: defaults.totalSets,
-    restSeconds: defaults.restSeconds,
-    selectedAppIds: defaults.selectedAppIds,
-  };
+/**
+ * Rewrites one exercise in place, leaving the rest of the list untouched.
+ *
+ * Every per-exercise edit goes through here, which is what keeps the cards
+ * genuinely independent — there is no path that writes to more than one.
+ */
+function editExercise(
+  state: WorkoutState,
+  id: string,
+  change: (exercise: Exercise) => Exercise,
+): WorkoutState {
+  let found = false;
+  const exercises = state.exercises.map(exercise => {
+    if (exercise.id !== id) {
+      return exercise;
+    }
+    found = true;
+    return change(exercise);
+  });
+  return found ? { ...state, exercises } : state;
 }
 
-/**
- * Writes a default, and mirrors it onto the live config while the user is
- * still on the setup screen.
- *
- * Without the mirror, changing "default rest" and tapping back to a Workout
- * tab that still reads 60s looks broken — nothing has started yet, so there's
- * no reason for the two to disagree. Once a workout is running, the config is
- * left alone.
- */
-function applyDefault(
-  state: WorkoutState,
-  defaults: Partial<WorkoutDefaults>,
-  config: Partial<WorkoutConfig>,
-): WorkoutState {
+/** Drops an app id from every exercise, the defaults and any live workout. */
+function forgetApp(state: WorkoutState, appId: string): WorkoutState {
+  const without = (ids: string[]) => ids.filter(id => id !== appId);
+
   return {
     ...state,
-    defaults: { ...state.defaults, ...defaults },
-    config: state.phase === 'setup' ? { ...state.config, ...config } : state.config,
+    defaults: {
+      ...state.defaults,
+      selectedAppIds: without(state.defaults.selectedAppIds),
+    },
+    exercises: state.exercises.map(exercise => ({
+      ...exercise,
+      selectedAppIds: without(exercise.selectedAppIds),
+    })),
+    config: {
+      ...state.config,
+      selectedAppIds: without(state.config.selectedAppIds),
+    },
   };
 }
 
@@ -121,43 +159,77 @@ export function workoutReducer(
   action: WorkoutAction,
 ): WorkoutState {
   switch (action.type) {
-    case 'SET_EXERCISE_NAME':
-      return { ...state, config: { ...state.config, exerciseName: action.name } };
+    case 'ADD_EXERCISE': {
+      const name = action.name.trim().slice(0, MAX_EXERCISE_NAME_LENGTH);
 
-    case 'SET_TOTAL_SETS':
-      return {
-        ...state,
-        config: {
-          ...state.config,
-          totalSets: clamp(Math.round(action.sets), MIN_SETS, MAX_SETS),
-        },
+      // Blanks and duplicates are refused here as well as in the UI. The screen
+      // disables the button; this makes it true of the state machine too.
+      const clash = state.exercises.some(
+        exercise => exercise.name.toLowerCase() === name.toLowerCase(),
+      );
+      if (!name || clash || state.exercises.length >= MAX_EXERCISES) {
+        return state;
+      }
+
+      const exercise: Exercise = {
+        id: action.id,
+        name,
+        totalSets: NEW_EXERCISE_SETS,
+        restSeconds: NEW_EXERCISE_REST_SECONDS,
+        // The one thing a new exercise inherits from Settings.
+        selectedAppIds: state.defaults.selectedAppIds,
       };
-
-    case 'SET_REST_SECONDS':
-      return {
-        ...state,
-        config: {
-          ...state.config,
-          restSeconds: clamp(
-            Math.round(action.seconds),
-            MIN_REST_SECONDS,
-            MAX_REST_SECONDS,
-          ),
-        },
-      };
-
-    case 'TOGGLE_APP': {
-      const selected = state.config.selectedAppIds;
-      const next = selected.includes(action.appId)
-        ? selected.filter(id => id !== action.appId)
-        : [...selected, action.appId];
-      return { ...state, config: { ...state.config, selectedAppIds: next } };
+      return { ...state, exercises: [...state.exercises, exercise] };
     }
 
-    case 'START_WORKOUT':
+    case 'REMOVE_EXERCISE':
+      return {
+        ...state,
+        exercises: state.exercises.filter(e => e.id !== action.id),
+      };
+
+    case 'DELETE_ALL_EXERCISES':
+      return { ...state, exercises: [] };
+
+    case 'SET_EXERCISE_SETS':
+      return editExercise(state, action.id, exercise => ({
+        ...exercise,
+        totalSets: clamp(Math.round(action.sets), MIN_SETS, MAX_SETS),
+      }));
+
+    case 'SET_EXERCISE_REST':
+      return editExercise(state, action.id, exercise => ({
+        ...exercise,
+        restSeconds: clamp(
+          Math.round(action.seconds),
+          MIN_REST_SECONDS,
+          MAX_REST_SECONDS,
+        ),
+      }));
+
+    case 'TOGGLE_EXERCISE_APP':
+      return editExercise(state, action.id, exercise => ({
+        ...exercise,
+        selectedAppIds: exercise.selectedAppIds.includes(action.appId)
+          ? exercise.selectedAppIds.filter(id => id !== action.appId)
+          : [...exercise.selectedAppIds, action.appId],
+      }));
+
+    case 'START_WORKOUT': {
+      const exercise = state.exercises.find(e => e.id === action.id);
+      if (!exercise) {
+        return state;
+      }
       return {
         ...state,
         phase: 'active',
+        // Snapshotted, so editing the card later can't rewrite this workout.
+        config: {
+          exerciseName: exercise.name,
+          totalSets: exercise.totalSets,
+          restSeconds: exercise.restSeconds,
+          selectedAppIds: exercise.selectedAppIds,
+        },
         currentSet: 1,
         setsCompleted: 0,
         restStartedAt: null,
@@ -165,6 +237,7 @@ export function workoutReducer(
         totalRestSeconds: 0,
         appsLocked: true,
       };
+    }
 
     case 'FINISH_SET': {
       if (state.phase !== 'active') {
@@ -227,34 +300,22 @@ export function workoutReducer(
       };
     }
 
-    case 'SET_DEFAULT_SETS': {
-      const sets = clamp(Math.round(action.sets), MIN_SETS, MAX_SETS);
-      return applyDefault(state, { totalSets: sets }, { totalSets: sets });
-    }
-
-    case 'SET_DEFAULT_REST': {
-      const seconds = clamp(
-        Math.round(action.seconds),
-        MIN_REST_SECONDS,
-        MAX_REST_SECONDS,
-      );
-      return applyDefault(state, { restSeconds: seconds }, { restSeconds: seconds });
-    }
-
     case 'TOGGLE_DEFAULT_APP': {
       const selected = state.defaults.selectedAppIds;
-      const next = selected.includes(action.appId)
-        ? selected.filter(id => id !== action.appId)
-        : [...selected, action.appId];
-      return applyDefault(
-        state,
-        { selectedAppIds: next },
-        { selectedAppIds: next },
-      );
+      // Seeds the next new exercise only. Existing cards keep their own picks —
+      // that independence is the whole point of per-exercise settings.
+      return {
+        ...state,
+        defaults: {
+          ...state.defaults,
+          selectedAppIds: selected.includes(action.appId)
+            ? selected.filter(id => id !== action.appId)
+            : [...selected, action.appId],
+        },
+      };
     }
 
     case 'SET_SOUND_ENABLED':
-      // Settings-only: no config mirror, since the workout doesn't carry it.
       return {
         ...state,
         defaults: { ...state.defaults, soundEnabled: action.enabled },
@@ -282,98 +343,84 @@ export function workoutReducer(
         name,
         tint: CUSTOM_TINTS[state.defaults.customApps.length % CUSTOM_TINTS.length],
       };
-      // Added apps start selected — you typed it in to block it.
-      const selectedAppIds = [...state.defaults.selectedAppIds, id];
-
-      return applyDefault(
-        state,
-        { customApps: [...state.defaults.customApps, custom], selectedAppIds },
-        { selectedAppIds },
-      );
+      return {
+        ...state,
+        defaults: {
+          ...state.defaults,
+          customApps: [...state.defaults.customApps, custom],
+          // Added apps start selected — you typed it in to block it.
+          selectedAppIds: [...state.defaults.selectedAppIds, id],
+        },
+      };
     }
 
     case 'REMOVE_CUSTOM_APP': {
-      const customApps = state.defaults.customApps.filter(
-        app => app.id !== action.appId,
-      );
-      // Drop it from every selection too, or a deleted app keeps being counted
-      // as blocked on the workout screens.
-      const selectedAppIds = state.defaults.selectedAppIds.filter(
-        id => id !== action.appId,
-      );
+      // Forgotten everywhere at once, or a deleted app keeps being counted as
+      // blocked by whichever exercise still lists it.
+      const forgotten = forgetApp(state, action.appId);
       return {
-        ...state,
-        defaults: { ...state.defaults, customApps, selectedAppIds },
-        config: {
-          ...state.config,
-          selectedAppIds: state.config.selectedAppIds.filter(
-            id => id !== action.appId,
+        ...forgotten,
+        defaults: {
+          ...forgotten.defaults,
+          customApps: forgotten.defaults.customApps.filter(
+            app => app.id !== action.appId,
           ),
         },
       };
     }
 
-    case 'RESET_DEFAULTS':
-      return {
-        ...state,
-        defaults: FACTORY_DEFAULTS,
-        config:
-          state.phase === 'setup'
-            ? { ...state.config, ...configFromDefaults(FACTORY_DEFAULTS) }
-            : state.config,
-      };
-
     case 'NEW_WORKOUT':
-      // Sets, rest and apps come from Settings — that's what makes those
-      // defaults mean anything. The exercise name is not a setting, and
-      // retyping "Bench press" between workouts is pure friction, so it stays.
+      // Back to the list. The exercise that was just worked through is
+      // untouched — it's still saved, with its own numbers, ready to run again.
       return {
         ...initialState,
+        exercises: state.exercises,
         defaults: state.defaults,
-        config: {
-          exerciseName: state.config.exerciseName,
-          ...configFromDefaults(state.defaults),
-        },
       };
 
-    case 'HYDRATE_DEFAULTS': {
-      const customApps = (action.defaults.customApps ?? []).slice(
+    case 'HYDRATE': {
+      const customApps = (action.saved.defaults.customApps ?? []).slice(
         0,
         MAX_CUSTOM_APPS,
       );
       const known = allBlockableApps(customApps);
-
-      const defaults: WorkoutDefaults = {
-        totalSets: clamp(Math.round(action.defaults.totalSets), MIN_SETS, MAX_SETS),
-        restSeconds: clamp(
-          Math.round(action.defaults.restSeconds),
-          MIN_REST_SECONDS,
-          MAX_REST_SECONDS,
-        ),
-        // Checked against the custom apps too, or a saved selection would lose
-        // every app the user had added.
-        selectedAppIds: action.defaults.selectedAppIds.filter(id =>
-          known.some(app => app.id === id),
-        ),
-        soundEnabled: action.defaults.soundEnabled ?? FACTORY_DEFAULTS.soundEnabled,
-        customApps,
-      };
+      const isKnown = (id: string) => known.some(app => app.id === id);
 
       // Clamped and filtered on the way in: stored values are last session's
       // data, which may predate a change to the limits or the app list.
-      return {
-        ...state,
-        defaults,
-        // Nothing has started yet on launch, so the setup screen should show
-        // what was saved. A workout in progress is never disturbed.
-        config:
-          state.phase === 'setup'
-            ? { ...state.config, ...configFromDefaults(defaults) }
-            : state.config,
+      const defaults: AppDefaults = {
+        selectedAppIds: action.saved.defaults.selectedAppIds.filter(isKnown),
+        soundEnabled:
+          action.saved.defaults.soundEnabled ?? FACTORY_DEFAULTS.soundEnabled,
+        customApps,
       };
+
+      const exercises = (action.saved.exercises ?? [])
+        .slice(0, MAX_EXERCISES)
+        .filter(exercise => exercise?.name?.trim())
+        .map(exercise => ({
+          id: exercise.id,
+          name: exercise.name.trim().slice(0, MAX_EXERCISE_NAME_LENGTH),
+          totalSets: clamp(Math.round(exercise.totalSets), MIN_SETS, MAX_SETS),
+          restSeconds: clamp(
+            Math.round(exercise.restSeconds),
+            MIN_REST_SECONDS,
+            MAX_REST_SECONDS,
+          ),
+          selectedAppIds: (exercise.selectedAppIds ?? []).filter(isKnown),
+        }));
+
+      // Nothing has started yet on launch. A workout in progress is never
+      // disturbed, since hydration only ever happens once, on mount.
+      return { ...state, defaults, exercises };
     }
 
     default:
       return state;
   }
+}
+
+/** The slice of state that gets persisted. */
+export function toSaved(state: WorkoutState): SavedState {
+  return { defaults: state.defaults, exercises: state.exercises };
 }

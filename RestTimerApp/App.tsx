@@ -26,9 +26,10 @@ import { CompleteScreen } from './src/screens/CompleteScreen';
 import { RestingScreen } from './src/screens/RestingScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { SplashScreen } from './src/screens/SplashScreen';
-import { SetupScreen } from './src/screens/SetupScreen';
+import { ExercisesScreen } from './src/screens/ExercisesScreen';
 import { useWorkout, WorkoutProvider } from './src/state/WorkoutContext';
 import { colors } from './src/theme';
+import type { AppStorage } from './src/state/storage';
 import type { Phase } from './src/state/types';
 
 /** Free phases flood accent; locked phases stay dark. */
@@ -51,7 +52,7 @@ function WorkoutTab() {
 
   switch (state.phase) {
     case 'setup':
-      return <SetupScreen />;
+      return <ExercisesScreen />;
     case 'active':
       return <ActiveSetScreen />;
     case 'resting':
@@ -146,13 +147,26 @@ function Ground() {
   );
 }
 
-function App() {
+function App({
+  /**
+   * Where exercises and preferences are kept. Left undefined the provider uses
+   * its in-memory default — which is a module-level singleton, so anything
+   * mounting more than one App (the tests) must pass its own or the second one
+   * inherits the first one's list.
+   *
+   * This is also the line to change when real persistence lands. See
+   * src/state/storage.ts.
+   */
+  storage,
+}: {
+  storage?: AppStorage;
+} = {}) {
   const [splashDone, setSplashDone] = useState(false);
   const dismissSplash = useCallback(() => setSplashDone(true), []);
 
   return (
     <SafeAreaProvider>
-      <WorkoutProvider>
+      <WorkoutProvider storage={storage}>
         <Ground />
         {/* Overlaid rather than swapped, so the app is already laid out
             underneath by the time the logo fades. */}

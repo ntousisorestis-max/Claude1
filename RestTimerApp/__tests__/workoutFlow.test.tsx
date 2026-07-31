@@ -1,11 +1,13 @@
 /**
- * Drives the real screens through a whole workout: setup -> set -> rest ->
- * set -> complete, checking the lock state flips at each step.
+ * Drives the real screens through the whole thing: create an exercise, tune
+ * it, run it — set, rest, set, complete — checking the lock state flips at
+ * each step and that two exercises keep their settings apart.
  */
 import React from 'react';
 import ReactTestRenderer, { type ReactTestInstance } from 'react-test-renderer';
 import App from '../App';
 import { MockBlocker } from '../src/blocking';
+import { createMemoryStorage } from '../src/state/storage';
 
 const press = (root: ReactTestInstance, accessibilityLabel: string) => {
   const [node] = root.findAll(
@@ -42,6 +44,12 @@ const hasText = (root: ReactTestInstance, needle: string) =>
 const hasLabel = (root: ReactTestInstance, label: string) =>
   root.findAll(n => n.props?.accessibilityLabel === label).length > 0;
 
+/** Types a name into the composer and saves it. */
+const addExercise = (root: ReactTestInstance, name: string) => {
+  type(root, 'Bench press', name);
+  press(root, 'Save exercise');
+};
+
 describe('full workout loop', () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -56,31 +64,35 @@ describe('full workout loop', () => {
   /** Unmounted in afterEach so no animation outlives the test. */
   const trees: ReactTestRenderer.ReactTestRenderer[] = [];
 
-  it('locks during sets, unlocks during rest, and finishes', async () => {
+  /** Its own storage each time — the default one is shared across mounts. */
+  const launch = async () => {
     let tree!: ReactTestRenderer.ReactTestRenderer;
     await ReactTestRenderer.act(async () => {
-      tree = ReactTestRenderer.create(<App />);
+      tree = ReactTestRenderer.create(<App storage={createMemoryStorage()} />);
     });
     trees.push(tree);
-    const root = tree.root;
+    return tree.root;
+  };
 
-    // --- Setup ---------------------------------------------------------
-    expect(hasText(root, 'READY TO TRAIN')).toBe(true);
+  it('locks during sets, unlocks during rest, and finishes', async () => {
+    const root = await launch();
+
+    // --- An empty list, with the composer already open ------------------
+    expect(hasText(root, 'Nothing saved yet.')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(false);
 
-    type(root, 'Bench press', 'Squat');
-    // The controls are folded away behind Edit now — the summary is the
-    // default view, so a session tweak takes one extra tap.
-    press(root, 'Edit workout');
-    press(root, 'Decrease Sets'); // 3 -> 2 sets, to keep the test short
-    // The summary tracks the controls. (The separator lives in a nested Text,
-    // which `texts` drops, so this checks the two halves it does see.)
+    addExercise(root, 'Squat');
+    expect(hasText(root, 'Squat')).toBe(true);
+    expect(hasText(root, '3 sets')).toBe(true);
+
+    // --- Tune this exercise down to two sets ----------------------------
+    press(root, 'Squat, edit');
+    press(root, 'Decrease sets for Squat');
     expect(hasText(root, '2 sets')).toBe(true);
-    expect(hasText(root, '60s rest')).toBe(true);
-    press(root, 'Start workout');
+
+    press(root, 'Start Squat');
 
     // --- Set 1: apps blocked -------------------------------------------
-    expect(hasText(root, 'Squat')).toBe(true);
     expect(hasLabel(root, 'Set 1 of 2')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(true);
 
@@ -110,20 +122,39 @@ describe('full workout loop', () => {
     expect(hasText(root, '2 of 2')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(false);
 
+    // --- And back to the list, exercise intact -------------------------
     press(root, 'New workout');
-    expect(hasText(root, 'READY TO TRAIN')).toBe(true);
+    expect(hasText(root, 'Your lifts')).toBe(true);
+    expect(hasText(root, 'Squat')).toBe(true);
+    expect(hasText(root, '2 sets')).toBe(true);
+  });
+
+  it('keeps each exercise’s settings to itself', async () => {
+    const root = await launch();
+
+    addExercise(root, 'Squat');
+    press(root, 'Add exercise');
+    addExercise(root, 'Rows');
+
+    // Squat gets 90s rest; Rows must not move.
+    press(root, 'Squat, edit');
+    press(root, 'Increase rest for Squat');
+    press(root, 'Squat, done editing');
+
+    expect(hasText(root, '65s rest')).toBe(true);
+    expect(hasText(root, '60s rest')).toBe(true);
+
+    // And starting one runs that one.
+    press(root, 'Start Rows');
+    expect(hasText(root, 'Rows')).toBe(true);
+    expect(hasLabel(root, 'Set 1 of 3')).toBe(true);
   });
 
   it('re-locks immediately when rest is skipped', async () => {
-    let tree!: ReactTestRenderer.ReactTestRenderer;
-    await ReactTestRenderer.act(async () => {
-      tree = ReactTestRenderer.create(<App />);
-    });
-    trees.push(tree);
-    const root = tree.root;
+    const root = await launch();
 
-    type(root, 'Bench press', 'Rows');
-    press(root, 'Start workout');
+    addExercise(root, 'Rows');
+    press(root, 'Start Rows');
     press(root, 'Done with set');
     expect(MockBlocker.isLocked()).toBe(false);
 

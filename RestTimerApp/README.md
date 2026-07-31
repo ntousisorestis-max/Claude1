@@ -4,10 +4,13 @@ A gym rest-timer that blocks your scrolling apps while you're doing a set, unloc
 them for the rest period, and re-locks them when the countdown hits zero.
 
 ```
-Setup ──Start──▶ Active Set ──Done with set──▶ Resting ──0:00 / Skip──▶ Active Set
-              apps blocked (black)          apps unlocked (violet)     apps blocked
-                    └───────────── last set ─────────────▶ Complete (unlocked)
+Exercise list ──Start──▶ Active Set ──Done with set──▶ Resting ──0:00 / Skip──▶ Active Set
+                      apps blocked (black)          apps unlocked (violet)     apps blocked
+                            └───────────── last set ─────────────▶ Complete (unlocked)
 ```
+
+The Workout tab is a list of saved exercises. Each one carries its own sets,
+rest and blocked apps, and starting one snapshots that card into the workout.
 
 **Want to run it? See [TESTING.md](TESTING.md)** for a step-by-step guide.
 
@@ -164,13 +167,16 @@ can't tell the two apart.
 The flip is a violet disc scaling out from the centre of the screen, drawn at the
 root so it covers the safe-area insets rather than leaving dark bands.
 
-**2. Every button says exactly what it does.** "Start workout", "Done with set",
-"Skip rest", "End workout". Printed text and screen-reader text are the same
-string — nothing to decode, nothing to keep in sync.
+**2. Every button says exactly what it does.** "Done with set", "Skip rest",
+"End workout". Printed text and screen-reader text are the same string, with one
+deliberate exception: a card's Start button *shows* "Start" and *announces*
+"Start Bench press", because a list of buttons that all announce "Start" tells a
+screen-reader user nothing.
 
-**3. The setup screen explains the premise before you tap anything.** Three
-lines at the top, because an app whose whole point is taking your phone away
-can't assume you already know that.
+**3. Each exercise is set up once, not every time.** The list is the resting
+state of the app: a name, `3 sets · 60s rest`, the apps it blocks, and a Start.
+Tapping a card opens its own controls in place — one at a time, since two sets
+of steppers on screen is how you edit the wrong exercise.
 
 Type is oversized and heavy, everything tappable is a pill, and each set gets a
 tick that fills as you bank it.
@@ -186,7 +192,7 @@ Six pieces of motion, all RN `Animated`, no library:
 | **Enter** | content fades and rises 14px on every phase change | the screen arrives instead of appearing |
 | **Heartbeat** | clock pulses once per second under 5s left | urgency, without a sound |
 | **Sweep** | ring glides between the countdown's 4Hz updates | at ring size, stepping four times a second reads as a stutter |
-| **Pick** | app pills spring as you toggle them | setup should feel alive too |
+| **Pick** | app pills spring as you toggle them | picking should feel alive too |
 
 Everything except the ring sweep runs on the native driver.
 `strokeDashoffset` isn't a transform so it can't — it's one value at 4Hz, which
@@ -201,7 +207,7 @@ Three rules keep it from getting silly:
 - **Every animation checks `useReduceMotion()`** and collapses to an instant
   state change when the OS setting is on.
 - **The extrusion reserves its layout space regardless of `disabled`**, so the
-  Start button doesn't resize the moment you type an exercise name.
+  Start button doesn't resize the moment it becomes enabled.
 
 ### Haptics — Android only, on purpose
 
@@ -253,9 +259,10 @@ src/
     MockBlocker.ts           Phase 1 — drives the in-app overlay
     ScreenTimeBlocker.ts     Phase 2 — FamilyControls/ManagedSettings bridge (not wired)
     index.ts                 picks the real blocker if the native module exists
-  screens/                   Setup / ActiveSet / Resting / Complete
-  components/                BigButton, Stepper, Segmented, ProgressRing,
-                             SetTicks, LockStatus, LockGlyph
+  screens/                   Exercises / ActiveSet / Resting / Complete
+  components/                ExerciseCard, AppPill, BigButton, Stepper,
+                             Segmented, ProgressRing, SetTicks, LockStatus,
+                             LockGlyph
   hooks/useCountdown.ts      wall-clock countdown
   hooks/useEnter.ts          screen entry animation
   hooks/usePressScale.ts     shared press-in spring for every tappable
@@ -302,34 +309,44 @@ keep-awake), and the hardware back button doesn't intercept an active workout.
 
 ## State & persistence
 
-One `useReducer` at the root, no backend. Two separate slices:
+One `useReducer` at the root, no backend. Three slices:
 
-- **`config`** — the workout you're setting up or running. Editing sets, rest
-  or apps on the Workout tab changes only this, and only for that session.
-- **`defaults`** — what the Settings tab edits, and the single source of truth
-  for what a new workout starts from. `NEW_WORKOUT` re-seeds `config` from it.
+- **`exercises`** — the saved list. Every edit goes through one helper that
+  rewrites a single entry by id, so there is no code path that can change two
+  exercises at once. That's what makes the cards genuinely independent.
+- **`defaults`** — app-wide preferences: the sound switch, the pool of
+  blockable apps, and which of them a *newly created* exercise starts with
+  ticked. Toggling one never reaches an exercise that already exists.
+- **`config`** — a snapshot of the exercise being run, taken by `START_WORKOUT`.
+  Not a reference: editing the card mid-workout must not move the goalposts
+  under the set you're on, and the summary has to describe the workout that
+  actually happened.
 
-While you're still on the setup screen the two are kept in step: editing a
-default also updates the live config, because nothing has started and there's
-no reason for them to disagree. Once a workout is running, changing a default
-leaves it alone.
+Sets and rest deliberately have no app-wide value any more. A new exercise
+opens at `NEW_EXERCISE_SETS` / `NEW_EXERCISE_REST_SECONDS`, which are a
+starting position rather than a setting.
 
 ### Adding real saving
 
-`defaults` already goes through a storage seam — `src/state/defaultsStorage.ts`
-— which the app talks to instead of any storage library. Today it's backed by
-an in-memory store, so defaults reset on restart. Making them stick is one new
-file implementing `DefaultsStorage` (AsyncStorage on native, `localStorage` on
-web via a `.web.ts` twin) plus passing it to `<WorkoutProvider storage={...}>`.
-No screen, reducer or test changes. The file carries the code to copy.
+The list and the preferences already go through a storage seam —
+`src/state/storage.ts` — which the app talks to instead of any storage library.
+Today it's backed by an in-memory store, so everything resets on restart.
+Making it stick is one new file implementing `AppStorage` (AsyncStorage on
+native, `localStorage` on web via a `.web.ts` twin) plus passing it to
+`<App storage={...}>`. No screen, reducer or test changes. The file carries the
+code to copy.
 
-Two details worth keeping if you rewrite it:
+Three details worth keeping if you rewrite it:
 
-- **Only defaults are persisted, never the workout.** `HYDRATE_DEFAULTS` is
-  deliberately narrower than the old whole-state `HYDRATE` — restoring a saved
-  session would resume a workout whose rest timer expired days ago.
+- **The workout is never persisted, only the list and the preferences.**
+  Restoring a saved session would resume a workout whose rest timer expired
+  days ago.
 - **Stored values are clamped and filtered on the way in**, since they're last
-  session's data and may predate a change to the limits or the app list.
+  session's data and may predate a change to the limits or the app list. An
+  exercise with no usable name is dropped outright.
+- **The key is versioned** (`rest-timer.state.v2`). It went up when sets and
+  rest moved onto the exercises; a v1 payload read as v2 would put junk
+  straight into state.
 
 ## Phase 2 — real iOS blocking
 
@@ -356,10 +373,10 @@ account and can't be worked around:**
 
 One product consequence, worth deciding on before Phase 2: **Apple never tells the
 app which apps the user picked.** `FamilyActivityPicker` hands back an opaque
-token. The Setup screen's checkbox list therefore becomes a single "Choose apps"
+token. The per-exercise checkbox list therefore becomes a single "Choose apps"
 button, and the UI can only ever say "3 apps blocked", never "TikTok blocked".
-`LockStatus` and the Setup screen are written so that swap is contained — both
-name apps from one list, and both have a count to fall back to.
+`LockStatus` and `AppPill` are written so that swap is contained — every screen
+names apps from one list, and each has a count to fall back to.
 
 ## Not in scope (yet)
 

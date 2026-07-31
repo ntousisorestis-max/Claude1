@@ -3,29 +3,153 @@ import {
   FACTORY_DEFAULTS,
   initialState,
   MAX_CUSTOM_APPS,
+  MAX_EXERCISES,
+  NEW_EXERCISE_REST_SECONDS,
+  NEW_EXERCISE_SETS,
   workoutReducer,
 } from '../src/state/workoutReducer';
-import type { WorkoutState } from '../src/state/types';
+import type { Exercise, WorkoutState } from '../src/state/types';
 
 const T0 = 1_700_000_000_000;
 
-const configured = (over: Partial<WorkoutState> = {}): WorkoutState => ({
+/** A list with one exercise on it, set up for a short workout. */
+const BENCH: Exercise = {
+  id: 'ex_bench',
+  name: 'Bench',
+  totalSets: 2,
+  restSeconds: 60,
+  selectedAppIds: ['tiktok'],
+};
+
+const withBench = (over: Partial<WorkoutState> = {}): WorkoutState => ({
   ...initialState,
-  config: { ...initialState.config, exerciseName: 'Bench', totalSets: 2, restSeconds: 60 },
+  exercises: [BENCH],
   ...over,
 });
 
+const start = (state = withBench()) =>
+  workoutReducer(state, { type: 'START_WORKOUT', id: BENCH.id });
+
+describe('the exercise list', () => {
+  const add = (state: WorkoutState, name: string, id = `ex_${name}`) =>
+    workoutReducer(state, { type: 'ADD_EXERCISE', id, name });
+
+  it('adds an exercise seeded from the Settings apps', () => {
+    const s = add(initialState, 'Bench press');
+
+    expect(s.exercises).toHaveLength(1);
+    expect(s.exercises[0].name).toBe('Bench press');
+    expect(s.exercises[0].totalSets).toBe(NEW_EXERCISE_SETS);
+    expect(s.exercises[0].restSeconds).toBe(NEW_EXERCISE_REST_SECONDS);
+    expect(s.exercises[0].selectedAppIds).toEqual(FACTORY_DEFAULTS.selectedAppIds);
+  });
+
+  it('refuses blanks and duplicate names', () => {
+    expect(add(initialState, '   ')).toBe(initialState);
+
+    const once = add(initialState, 'Squat');
+    expect(add(once, '  squat ')).toBe(once);
+  });
+
+  it('stops at the cap', () => {
+    let s = initialState;
+    for (let i = 0; i < MAX_EXERCISES + 3; i++) {
+      s = add(s, `Lift ${i}`, `ex_${i}`);
+    }
+    expect(s.exercises).toHaveLength(MAX_EXERCISES);
+  });
+
+  it('edits one exercise without touching any other', () => {
+    let s = add(add(initialState, 'Bench', 'a'), 'Pulldowns', 'b');
+    s = workoutReducer(s, { type: 'SET_EXERCISE_SETS', id: 'a', sets: 8 });
+    s = workoutReducer(s, { type: 'SET_EXERCISE_REST', id: 'a', seconds: 90 });
+    s = workoutReducer(s, { type: 'TOGGLE_EXERCISE_APP', id: 'a', appId: 'tiktok' });
+
+    expect(s.exercises[0]).toMatchObject({ totalSets: 8, restSeconds: 90 });
+    expect(s.exercises[0].selectedAppIds).not.toContain('tiktok');
+
+    // The whole point of the restructure: the other card is untouched.
+    expect(s.exercises[1]).toMatchObject({
+      totalSets: NEW_EXERCISE_SETS,
+      restSeconds: NEW_EXERCISE_REST_SECONDS,
+    });
+    expect(s.exercises[1].selectedAppIds).toContain('tiktok');
+  });
+
+  it('clamps sets and rest to sane ranges', () => {
+    const s = add(initialState, 'Bench', 'a');
+
+    expect(
+      workoutReducer(s, { type: 'SET_EXERCISE_SETS', id: 'a', sets: 0 })
+        .exercises[0].totalSets,
+    ).toBe(1);
+    expect(
+      workoutReducer(s, { type: 'SET_EXERCISE_SETS', id: 'a', sets: 99 })
+        .exercises[0].totalSets,
+    ).toBe(20);
+    expect(
+      workoutReducer(s, { type: 'SET_EXERCISE_REST', id: 'a', seconds: 1 })
+        .exercises[0].restSeconds,
+    ).toBe(10);
+    expect(
+      workoutReducer(s, { type: 'SET_EXERCISE_REST', id: 'a', seconds: 9999 })
+        .exercises[0].restSeconds,
+    ).toBe(600);
+  });
+
+  it('ignores an edit aimed at an id that is not in the list', () => {
+    const s = add(initialState, 'Bench', 'a');
+    expect(workoutReducer(s, { type: 'SET_EXERCISE_SETS', id: 'gone', sets: 9 })).toBe(s);
+  });
+
+  it('deletes one, and deletes them all', () => {
+    let s = add(add(initialState, 'Bench', 'a'), 'Pulldowns', 'b');
+
+    s = workoutReducer(s, { type: 'REMOVE_EXERCISE', id: 'a' });
+    expect(s.exercises.map(e => e.id)).toEqual(['b']);
+
+    s = workoutReducer(s, { type: 'DELETE_ALL_EXERCISES' });
+    expect(s.exercises).toEqual([]);
+    // Preferences are not exercises — they survive.
+    expect(s.defaults).toEqual(FACTORY_DEFAULTS);
+  });
+});
+
 describe('workout loop', () => {
-  it('locks apps when the workout starts', () => {
-    const s = workoutReducer(configured(), { type: 'START_WORKOUT' });
+  it('locks apps and snapshots the exercise when the workout starts', () => {
+    const s = start();
+
     expect(s.phase).toBe('active');
     expect(s.appsLocked).toBe(true);
     expect(s.currentSet).toBe(1);
+    expect(s.config).toEqual({
+      exerciseName: 'Bench',
+      totalSets: 2,
+      restSeconds: 60,
+      selectedAppIds: ['tiktok'],
+    });
+  });
+
+  it('ignores a start for an exercise that is not in the list', () => {
+    const s = withBench();
+    expect(workoutReducer(s, { type: 'START_WORKOUT', id: 'gone' })).toBe(s);
+  });
+
+  it('does not let a mid-workout edit rewrite the running workout', () => {
+    // The config is a snapshot, so the set you are on cannot move.
+    const active = start();
+    const s = workoutReducer(active, {
+      type: 'SET_EXERCISE_SETS',
+      id: BENCH.id,
+      sets: 12,
+    });
+
+    expect(s.config.totalSets).toBe(2);
+    expect(s.exercises[0].totalSets).toBe(12);
   });
 
   it('unlocks apps for rest after finishing a set', () => {
-    const active = workoutReducer(configured(), { type: 'START_WORKOUT' });
-    const resting = workoutReducer(active, { type: 'FINISH_SET', now: T0 });
+    const resting = workoutReducer(start(), { type: 'FINISH_SET', now: T0 });
 
     expect(resting.phase).toBe('resting');
     expect(resting.appsLocked).toBe(false);
@@ -36,8 +160,7 @@ describe('workout loop', () => {
   });
 
   it('re-locks and advances the set when rest ends', () => {
-    const active = workoutReducer(configured(), { type: 'START_WORKOUT' });
-    const resting = workoutReducer(active, { type: 'FINISH_SET', now: T0 });
+    const resting = workoutReducer(start(), { type: 'FINISH_SET', now: T0 });
     const next = workoutReducer(resting, { type: 'END_REST', now: T0 + 60_000 });
 
     expect(next.phase).toBe('active');
@@ -47,15 +170,14 @@ describe('workout loop', () => {
   });
 
   it('counts only the time actually rested when rest is skipped', () => {
-    const active = workoutReducer(configured(), { type: 'START_WORKOUT' });
-    const resting = workoutReducer(active, { type: 'FINISH_SET', now: T0 });
+    const resting = workoutReducer(start(), { type: 'FINISH_SET', now: T0 });
     const next = workoutReducer(resting, { type: 'END_REST', now: T0 + 18_000 });
 
     expect(next.totalRestSeconds).toBe(18);
   });
 
   it('goes straight to complete after the last set, with apps unlocked', () => {
-    let s = workoutReducer(configured(), { type: 'START_WORKOUT' });
+    let s = start();
     s = workoutReducer(s, { type: 'FINISH_SET', now: T0 });
     s = workoutReducer(s, { type: 'END_REST', now: T0 + 60_000 });
     s = workoutReducer(s, { type: 'FINISH_SET', now: T0 + 90_000 });
@@ -67,8 +189,7 @@ describe('workout loop', () => {
   });
 
   it('lifts the block when the workout is ended early', () => {
-    const active = workoutReducer(configured(), { type: 'START_WORKOUT' });
-    const ended = workoutReducer(active, { type: 'END_WORKOUT' });
+    const ended = workoutReducer(start(), { type: 'END_WORKOUT' });
 
     expect(ended.phase).toBe('complete');
     expect(ended.appsLocked).toBe(false);
@@ -76,101 +197,50 @@ describe('workout loop', () => {
   });
 
   it('ignores a late END_REST once the phase moved on', () => {
-    const active = workoutReducer(configured(), { type: 'START_WORKOUT' });
-    const late = workoutReducer(active, { type: 'END_REST', now: T0 });
-
-    expect(late).toBe(active);
+    const active = start();
+    expect(workoutReducer(active, { type: 'END_REST', now: T0 })).toBe(active);
   });
 
   it('ignores a double FINISH_SET tap', () => {
-    const active = workoutReducer(configured(), { type: 'START_WORKOUT' });
-    const resting = workoutReducer(active, { type: 'FINISH_SET', now: T0 });
+    const resting = workoutReducer(start(), { type: 'FINISH_SET', now: T0 });
     const again = workoutReducer(resting, { type: 'FINISH_SET', now: T0 + 10 });
 
     expect(again).toBe(resting);
   });
 
-  it('keeps the exercise name but resets progress on a new workout', () => {
-    let s = workoutReducer(configured(), { type: 'START_WORKOUT' });
-    s = workoutReducer(s, { type: 'END_WORKOUT' });
+  it('returns to the list, with the exercise still saved', () => {
+    let s = workoutReducer(start(), { type: 'END_WORKOUT' });
     s = workoutReducer(s, { type: 'NEW_WORKOUT' });
 
     expect(s.phase).toBe('setup');
-    expect(s.config.exerciseName).toBe('Bench');
+    expect(s.exercises).toEqual([BENCH]);
     expect(s.setsCompleted).toBe(0);
     expect(s.appsLocked).toBe(false);
   });
-
-  it('re-seeds sets and rest from the settings defaults on a new workout', () => {
-    // Configured for 2 sets / 60s rest; Settings says 5 sets / 90s.
-    let s = workoutReducer(configured(), { type: 'SET_DEFAULT_SETS', sets: 5 });
-    s = workoutReducer(s, { type: 'SET_DEFAULT_REST', seconds: 90 });
-    s = workoutReducer(s, { type: 'START_WORKOUT' });
-    s = workoutReducer(s, { type: 'END_WORKOUT' });
-    s = workoutReducer(s, { type: 'NEW_WORKOUT' });
-
-    expect(s.config.totalSets).toBe(5);
-    expect(s.config.restSeconds).toBe(90);
-  });
 });
 
-describe('settings defaults', () => {
-  it('mirrors onto the live config while still on the setup screen', () => {
-    const s = workoutReducer(configured(), { type: 'SET_DEFAULT_REST', seconds: 90 });
-
-    expect(s.defaults.restSeconds).toBe(90);
-    // Nothing has started, so the two must not disagree.
-    expect(s.config.restSeconds).toBe(90);
-  });
-
-  it('leaves a running workout alone', () => {
-    const active = workoutReducer(configured(), { type: 'START_WORKOUT' });
-    const s = workoutReducer(active, { type: 'SET_DEFAULT_REST', seconds: 90 });
-
-    expect(s.defaults.restSeconds).toBe(90);
-    expect(s.config.restSeconds).toBe(60);
-  });
-
-  it('clamps defaults to the same ranges as the setup screen', () => {
-    expect(
-      workoutReducer(initialState, { type: 'SET_DEFAULT_SETS', sets: 99 }).defaults
-        .totalSets,
-    ).toBe(20);
-    expect(
-      workoutReducer(initialState, { type: 'SET_DEFAULT_REST', seconds: 1 }).defaults
-        .restSeconds,
-    ).toBe(10);
-  });
-
-  it('toggles a default app without touching a running workout', () => {
-    const off = workoutReducer(initialState, {
+describe('settings', () => {
+  it('toggling a default app leaves existing exercises alone', () => {
+    // The default selection seeds a *new* exercise and nothing else.
+    const s = workoutReducer(withBench(), {
       type: 'TOGGLE_DEFAULT_APP',
-      appId: 'tiktok',
+      appId: 'youtube',
     });
-    expect(off.defaults.selectedAppIds).not.toContain('tiktok');
+
+    expect(s.defaults.selectedAppIds).toContain('youtube');
+    expect(s.exercises[0].selectedAppIds).toEqual(['tiktok']);
+  });
+
+  it('toggles the sound preference without touching anything else', () => {
+    const s = workoutReducer(withBench(), {
+      type: 'SET_SOUND_ENABLED',
+      enabled: false,
+    });
+
+    expect(s.defaults.soundEnabled).toBe(false);
+    expect(s.exercises[0]).toEqual(BENCH);
   });
 });
-
-describe('setup inputs', () => {
-  it('clamps sets and rest to sane ranges', () => {
-    expect(workoutReducer(initialState, { type: 'SET_TOTAL_SETS', sets: 0 }).config.totalSets).toBe(1);
-    expect(workoutReducer(initialState, { type: 'SET_TOTAL_SETS', sets: 99 }).config.totalSets).toBe(20);
-    expect(
-      workoutReducer(initialState, { type: 'SET_REST_SECONDS', seconds: 1 }).config.restSeconds,
-    ).toBe(10);
-    expect(
-      workoutReducer(initialState, { type: 'SET_REST_SECONDS', seconds: 9999 }).config.restSeconds,
-    ).toBe(600);
-  });
-
-  it('toggles app selection', () => {
-    const off = workoutReducer(initialState, { type: 'TOGGLE_APP', appId: 'tiktok' });
-    expect(off.config.selectedAppIds).not.toContain('tiktok');
-    const on = workoutReducer(off, { type: 'TOGGLE_APP', appId: 'tiktok' });
-    expect(on.config.selectedAppIds).toContain('tiktok');
-  });
-});
-
 
 describe('custom apps', () => {
   const add = (state: WorkoutState, name: string) =>
@@ -183,8 +253,6 @@ describe('custom apps', () => {
     expect(s.defaults.customApps[0].name).toBe('Strava');
     // You typed it in to block it.
     expect(s.defaults.selectedAppIds).toContain(customAppId('Strava'));
-    // And it shows on the setup screen, since nothing has started.
-    expect(s.config.selectedAppIds).toContain(customAppId('Strava'));
   });
 
   it('ignores blanks and whitespace-only names', () => {
@@ -209,51 +277,17 @@ describe('custom apps', () => {
     expect(s.defaults.customApps).toHaveLength(MAX_CUSTOM_APPS);
   });
 
-  it('removing one also drops it from every selection', () => {
+  it('removing one drops it from every exercise as well', () => {
     // Otherwise a deleted app keeps being counted as blocked mid-workout.
-    const withApp = add(initialState, 'Strava');
     const id = customAppId('Strava');
-    const s = workoutReducer(withApp, { type: 'REMOVE_CUSTOM_APP', appId: id });
+    let s = add(withBench(), 'Strava');
+    s = workoutReducer(s, { type: 'TOGGLE_EXERCISE_APP', id: BENCH.id, appId: id });
+    expect(s.exercises[0].selectedAppIds).toContain(id);
+
+    s = workoutReducer(s, { type: 'REMOVE_CUSTOM_APP', appId: id });
 
     expect(s.defaults.customApps).toHaveLength(0);
     expect(s.defaults.selectedAppIds).not.toContain(id);
-    expect(s.config.selectedAppIds).not.toContain(id);
-  });
-});
-
-describe('sound setting', () => {
-  it('toggles without touching the workout config', () => {
-    const s = workoutReducer(initialState, {
-      type: 'SET_SOUND_ENABLED',
-      enabled: false,
-    });
-
-    expect(s.defaults.soundEnabled).toBe(false);
-    expect(s.config).toBe(initialState.config);
-  });
-});
-
-describe('reset to defaults', () => {
-  it('restores the factory settings and clears added apps', () => {
-    let s = workoutReducer(initialState, { type: 'SET_DEFAULT_SETS', sets: 9 });
-    s = workoutReducer(s, { type: 'SET_SOUND_ENABLED', enabled: false });
-    s = workoutReducer(s, { type: 'ADD_CUSTOM_APP', name: 'Strava' });
-
-    const reset = workoutReducer(s, { type: 'RESET_DEFAULTS' });
-
-    expect(reset.defaults).toEqual(FACTORY_DEFAULTS);
-    // The setup screen follows, since nothing has started.
-    expect(reset.config.totalSets).toBe(3);
-    expect(reset.config.restSeconds).toBe(60);
-    expect(reset.config.selectedAppIds).toEqual(['tiktok', 'instagram']);
-  });
-
-  it('leaves a running workout alone', () => {
-    let s = workoutReducer(configured(), { type: 'START_WORKOUT' });
-    s = workoutReducer(s, { type: 'RESET_DEFAULTS' });
-
-    expect(s.defaults).toEqual(FACTORY_DEFAULTS);
-    expect(s.config.totalSets).toBe(2);
-    expect(s.phase).toBe('active');
+    expect(s.exercises[0].selectedAppIds).not.toContain(id);
   });
 });

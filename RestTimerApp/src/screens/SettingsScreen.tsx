@@ -12,9 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { BrandIcon } from '../components/BrandIcon';
-import { Segmented } from '../components/Segmented';
-import { Stepper } from '../components/Stepper';
+import { AppPill } from '../components/AppPill';
 import { Toggle } from '../components/Toggle';
 import { useEnter } from '../hooks/useEnter';
 import { usePressScale } from '../hooks/usePressScale';
@@ -23,33 +21,26 @@ import {
   allBlockableApps,
   MAX_APP_NAME_LENGTH,
   MAX_CUSTOM_APPS,
-  MAX_REST_SECONDS,
-  MAX_SETS,
-  MIN_REST_SECONDS,
-  MIN_SETS,
-  REST_PRESETS,
 } from '../state/workoutReducer';
 import { APP_NAME, APP_VERSION } from '../appInfo';
 import { colors, HAIRLINE, radius, spacing, type } from '../theme';
 
 /**
- * Defaults for the next workout, plus the app-level switches.
+ * App-wide preferences — and only those.
  *
- * The sets/rest/apps controls are deliberately the same components the setup
- * screen uses, wired to `defaults` instead of `config` — a settings screen
- * that looked different from the thing it configures would be a second thing
- * to learn.
+ * Sets and rest used to live here as one shared pair of numbers. They now
+ * belong to each exercise, so this screen holds what's genuinely global: the
+ * sound switch, the pool of blockable apps, and which of them a newly created
+ * exercise starts with ticked.
  */
 export function SettingsScreen() {
   const {
-    state: { defaults },
-    setDefaultSets,
-    setDefaultRest,
+    state: { defaults, exercises },
     toggleDefaultApp,
     setSoundEnabled,
     addCustomApp,
     removeCustomApp,
-    resetDefaults,
+    deleteAllExercises,
   } = useWorkout();
 
   const [draft, setDraft] = useState('');
@@ -71,13 +62,14 @@ export function SettingsScreen() {
     setDraft('');
   };
 
-  const confirmReset = () =>
+  const count = exercises.length;
+  const confirmDeleteAll = () =>
     Alert.alert(
-      'Reset to defaults?',
-      `Back to ${MIN_DESCRIPTION}. Apps you added will be removed.`,
+      count === 1 ? 'Delete your exercise?' : `Delete all ${count} exercises?`,
+      'Every exercise and its settings go. This can’t be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Reset', style: 'destructive', onPress: resetDefaults },
+        { text: 'Delete all', style: 'destructive', onPress: deleteAllExercises },
       ],
     );
 
@@ -89,47 +81,14 @@ export function SettingsScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled">
         <Animated.View style={enter}>
-          <Text style={styles.eyebrow}>DEFAULTS</Text>
+          <Text style={styles.eyebrow}>PREFERENCES</Text>
           <Text style={styles.masthead}>
             Settings<Text style={styles.stop}>.</Text>
           </Text>
-          <Text style={styles.intro}>Every new workout starts from these.</Text>
+          <Text style={styles.intro}>
+            Sets and rest live on each exercise now. This is everything else.
+          </Text>
         </Animated.View>
-
-        <View style={styles.block}>
-          <Text style={styles.label}>SETS</Text>
-          <View style={styles.card}>
-            <Stepper
-              label="Default sets"
-              value={defaults.totalSets}
-              onChange={setDefaultSets}
-              min={MIN_SETS}
-              max={MAX_SETS}
-            />
-          </View>
-        </View>
-
-        <View style={styles.block}>
-          <Text style={styles.label}>REST BETWEEN SETS</Text>
-          <View style={styles.card}>
-            <Stepper
-              label="Default rest"
-              value={defaults.restSeconds}
-              onChange={setDefaultRest}
-              step={5}
-              min={MIN_REST_SECONDS}
-              max={MAX_REST_SECONDS}
-              unit="SECONDS"
-            />
-            <Segmented
-              label="Default rest"
-              options={REST_PRESETS}
-              value={defaults.restSeconds}
-              onChange={setDefaultRest}
-              format={n => `${n}s`}
-            />
-          </View>
-        </View>
 
         <View style={styles.block}>
           <Text style={styles.label}>ALERTS</Text>
@@ -149,58 +108,23 @@ export function SettingsScreen() {
         <View style={styles.block}>
           <Text style={styles.label}>APPS TO BLOCK</Text>
           <Text style={styles.help}>
-            These start selected on every new workout.
+            These start ticked on a new exercise. Changing them here leaves the
+            exercises you already have alone.
           </Text>
 
           <View style={styles.apps}>
-            {apps.map(app => {
-              const checked = defaults.selectedAppIds.includes(app.id);
-              const custom = !app.brand;
-              return (
-                <DefaultAppPill
-                  key={app.id}
-                  checked={checked}
-                  label={`${app.name} by default`}
-                  onPress={() => toggleDefaultApp(app.id)}>
-                  {app.brand ? (
-                    <BrandIcon
-                      id={app.brand}
-                      color={checked ? app.tint : colors.faintOnDark}
-                      hole={checked ? colors.raised : colors.surface}
-                    />
-                  ) : (
-                    <View
-                      style={[
-                        styles.monogram,
-                        { borderColor: checked ? app.tint : colors.hairline },
-                      ]}>
-                      <Text
-                        style={[
-                          styles.monogramText,
-                          { color: checked ? app.tint : colors.faintOnDark },
-                        ]}>
-                        {app.name.slice(0, 1).toUpperCase()}
-                      </Text>
-                    </View>
-                  )}
-
-                  <Text style={[styles.appName, checked && styles.appNameOn]}>
-                    {app.name}
-                  </Text>
-
-                  {custom ? (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Remove ${app.name}`}
-                      onPress={() => removeCustomApp(app.id)}
-                      hitSlop={8}
-                      style={styles.remove}>
-                      <Text style={styles.removeMark}>×</Text>
-                    </Pressable>
-                  ) : null}
-                </DefaultAppPill>
-              );
-            })}
+            {apps.map(app => (
+              <AppPill
+                key={app.id}
+                app={app}
+                checked={defaults.selectedAppIds.includes(app.id)}
+                label={`${app.name} on new exercises`}
+                onPress={() => toggleDefaultApp(app.id)}
+                onRemove={
+                  app.brand ? undefined : () => removeCustomApp(app.id)
+                }
+              />
+            ))}
           </View>
 
           <View style={styles.addRow}>
@@ -231,9 +155,17 @@ export function SettingsScreen() {
         </View>
 
         <View style={styles.block}>
-          <Text style={styles.label}>RESET</Text>
-          <ResetButton onPress={confirmReset} />
-          <Text style={styles.note}>Back to {MIN_DESCRIPTION}.</Text>
+          <Text style={styles.label}>EXERCISES</Text>
+          <DangerButton
+            label="Delete all exercises"
+            disabled={count === 0}
+            onPress={confirmDeleteAll}
+          />
+          <Text style={styles.note}>
+            {count === 0
+              ? 'Nothing saved yet.'
+              : `You have ${count} exercise${count === 1 ? '' : 's'} saved.`}
+          </Text>
         </View>
 
         <View style={styles.about}>
@@ -251,41 +183,11 @@ export function SettingsScreen() {
         </View>
 
         <Text style={styles.note}>
-          Nothing is saved between launches yet — settings reset when the app
-          restarts.
+          Nothing is saved between launches yet — exercises and settings reset
+          when the app restarts.
         </Text>
       </ScrollView>
     </KeyboardAvoidingView>
-  );
-}
-
-/** An app pill on the Settings list. Same press feel as everywhere else. */
-function DefaultAppPill({
-  checked,
-  label,
-  onPress,
-  children,
-}: {
-  checked: boolean;
-  label: string;
-  onPress: () => void;
-  children: React.ReactNode;
-}) {
-  const pressScale = usePressScale({ depth: 0.94, haptic: true });
-
-  return (
-    <Animated.View style={pressScale.style}>
-      <Pressable
-        {...pressScale.handlers}
-        accessibilityRole="checkbox"
-        accessibilityState={{ checked }}
-        aria-checked={checked}
-        accessibilityLabel={label}
-        onPress={onPress}
-        style={[styles.app, checked && styles.appOn]}>
-        {children}
-      </Pressable>
-    </Animated.View>
   );
 }
 
@@ -308,25 +210,34 @@ function AddButton({ canAdd, onPress }: { canAdd: boolean; onPress: () => void }
   );
 }
 
-function ResetButton({ onPress }: { onPress: () => void }) {
-  const pressScale = usePressScale({ depth: 0.97, haptic: true });
+function DangerButton({
+  label,
+  disabled,
+  onPress,
+}: {
+  label: string;
+  disabled: boolean;
+  onPress: () => void;
+}) {
+  const pressScale = usePressScale({ depth: 0.97, haptic: !disabled });
 
   return (
     <Animated.View style={pressScale.style}>
       <Pressable
         {...pressScale.handlers}
         accessibilityRole="button"
-        accessibilityLabel="Reset to defaults"
+        accessibilityLabel={label}
+        accessibilityState={{ disabled }}
         onPress={onPress}
-        style={styles.reset}>
-        <Text style={styles.resetText}>Reset to defaults</Text>
+        disabled={disabled}
+        style={[styles.danger, disabled && styles.dangerOff]}>
+        <Text style={[styles.dangerText, disabled && styles.dangerTextOff]}>
+          {label}
+        </Text>
       </Pressable>
     </Animated.View>
   );
 }
-
-/** Spelled once, used by both the confirm dialog and the caption under it. */
-const MIN_DESCRIPTION = '3 sets, 60 seconds rest, TikTok and Instagram';
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
@@ -339,11 +250,21 @@ const styles = StyleSheet.create({
   eyebrow: { ...type.tag, color: colors.accent, marginBottom: spacing.sm },
   masthead: { ...type.display, fontSize: 46, color: colors.white },
   stop: { color: colors.accent },
-  intro: { ...type.helper, color: colors.mutedOnDark, marginTop: spacing.md },
+  intro: {
+    ...type.helper,
+    color: colors.mutedOnDark,
+    marginTop: spacing.md,
+    lineHeight: 22,
+  },
 
   block: { gap: spacing.md },
   label: { ...type.tag, color: colors.faintOnDark },
-  help: { ...type.helper, color: colors.mutedOnDark, marginTop: -spacing.sm },
+  help: {
+    ...type.helper,
+    color: colors.mutedOnDark,
+    marginTop: -spacing.sm,
+    lineHeight: 21,
+  },
   card: {
     backgroundColor: colors.surface,
     borderWidth: HAIRLINE,
@@ -354,31 +275,6 @@ const styles = StyleSheet.create({
   },
 
   apps: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  app: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-  },
-  appOn: { backgroundColor: colors.raised, borderColor: colors.accent },
-  appName: { ...type.body, fontWeight: '600', color: colors.faintOnDark },
-  appNameOn: { color: colors.white },
-  monogram: {
-    width: 20,
-    height: 20,
-    borderRadius: radius.sm,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  monogramText: { fontSize: 11, fontWeight: '800' },
-  remove: { paddingLeft: spacing.xs },
-  removeMark: { fontSize: 20, lineHeight: 22, color: colors.faintOnDark },
 
   addRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   addInput: {
@@ -400,12 +296,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addButtonOff: { backgroundColor: colors.surface, borderWidth: HAIRLINE, borderColor: colors.hairline },
+  addButtonOff: {
+    backgroundColor: colors.surface,
+    borderWidth: HAIRLINE,
+    borderColor: colors.hairline,
+  },
   addMark: { fontSize: 26, lineHeight: 30, fontWeight: '600', color: colors.white },
   addMarkOff: { color: colors.faintOnDark },
   warn: { ...type.helper, fontSize: 13, color: colors.danger },
 
-  reset: {
+  danger: {
     minHeight: 52,
     borderRadius: radius.pill,
     borderWidth: HAIRLINE,
@@ -413,7 +313,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  resetText: { ...type.action, fontSize: 17, color: colors.danger },
+  dangerOff: { borderColor: colors.hairline },
+  dangerText: { ...type.action, fontSize: 17, color: colors.danger },
+  dangerTextOff: { color: colors.faintOnDark },
 
   about: {
     flexDirection: 'row',
@@ -423,11 +325,10 @@ const styles = StyleSheet.create({
     borderTopColor: colors.hairline,
     paddingTop: spacing.lg,
   },
-  aboutLogo: { width: 44, height: 44, borderRadius: radius.sm },
+  aboutLogo: { width: 44, height: 44 },
   aboutText: { gap: 2 },
   aboutName: { ...type.body, fontWeight: '700', color: colors.white },
   aboutVersion: { ...type.helper, fontSize: 13, color: colors.faintOnDark },
 
-  pressed: { opacity: 0.85 },
-  note: { ...type.helper, fontSize: 13, color: colors.faintOnDark },
+  note: { ...type.helper, fontSize: 13, color: colors.faintOnDark, lineHeight: 18 },
 });

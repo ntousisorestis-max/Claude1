@@ -100,33 +100,44 @@ Defender settings.
 
 Work down this list. Expected result is on the right.
 
-### Setup screen
+### Building your list
 
 | Do this | You should see |
 |---|---|
-| Look at the top | Three numbered lines explaining the app |
-| Leave the exercise box empty | **Start workout** is dimmed, with "Enter an exercise name to start." |
-| Type `Bench press` | The button lights up lime |
-| Tap **−** and **+** under *How many sets* | The big number changes, 1 to 20 |
-| Tap the `30s` / `60s` / `90s` / `120s` pills | The chosen one fills solid lime, and the number above matches |
-| Tap the app pills (TikTok, Instagram…) | They spring, and the lime outline toggles on and off |
+| Open the app | "Nothing saved yet", with the name box already open |
+| Leave the name empty | **Save exercise** is dimmed — a name is required |
+| Type `Bench press`, tap **Save exercise** | A card: the name, `3 sets · 60s rest`, the apps it blocks, and a **Start** |
+| Tap **+ Add exercise**, add `Tricep pulldowns` | A second card, independent of the first |
+| Try adding `bench press` again | "You already have a Bench press" and the button stays dimmed |
+
+### Each exercise keeps its own settings
+
+| Do this | You should see |
+|---|---|
+| Tap the **Bench press** card | It opens in place, violet outline, chevron flips |
+| Tap **−** and **+** under *Sets* | The big number changes, 1 to 20 |
+| Tap the `30s` / `60s` / `90s` / `120s` pills | The chosen one fills violet, and the number above matches |
+| Tap the app pills (TikTok, Instagram…) | They spring, and the violet outline toggles on and off |
+| Tap the card header again to close it | The summary line now shows what you just set |
+| Look at **Tricep pulldowns** | Still `3 sets · 60s rest` — untouched. This is the point of the restructure |
+| Open a card and tap **Delete** | A confirm box; confirming removes that card only |
 
 ### The main loop
 
-**Set rest to 10 seconds first** — press **−** under *Rest between sets* ten
-times. That way you don't wait a full minute to see the timer run out.
+**Set one exercise to 30s rest first**, so you don't wait a full minute to see
+the timer run out.
 
 | Do this | You should see |
 |---|---|
-| Tap **Start workout** | Screen stays black. Chip at top reads **2 APPS BLOCKED** |
+| Tap **Start** on that card | Screen stays near-black. Panel at the top reads **Apps Locked** with your app names under it, and the padlock is shut |
 | Read the middle | Exercise name, **SET 1 of 3**, and one tick per set |
-| Tap the **2 APPS BLOCKED** chip | Full-screen 🔒 *Blocked* preview listing your apps |
+| Tap the **Apps Locked** panel | Full-screen *Blocked* preview listing your apps |
 | Tap **Back to workout** | Returns to the set |
 | Press and hold **Done with set** | The button sinks onto its shadow, then springs back |
-| Release it | **The whole screen floods lime from the centre** |
-| Read the rest screen | **APPS UNLOCKED**, `00:10` counting down, ring emptying, "Up next: set 2 of 3" |
+| Release it | **The whole screen floods violet from the centre** |
+| Read the rest screen | **Apps Unlocked**, the padlock swings open, `00:30` counting down inside the ring, and a one-line prompt under it |
 | Wait until under 5 seconds | Label changes to **LOCKING NOW** and the clock pulses once a second |
-| Keep waiting for zero | **Screen snaps back to black on its own** and shows **SET 2 of 3** |
+| Keep waiting for zero | **Screen snaps back to near-black on its own** and shows **SET 2 of 3** |
 
 That last row is the whole point of the app — the lock coming back without you
 touching anything. It's worth watching once.
@@ -136,10 +147,19 @@ touching anything. It's worth watching once.
 | Do this | You should see |
 |---|---|
 | Tap **Done with set**, then **Skip rest** | Re-locks immediately, moves to the next set |
-| Finish the final set | 🔥 **Workout complete**, screen stays lime |
+| Finish the final set | 🔥 **That's the work**, screen stays violet |
 | Check the summary | Exercise name, sets completed, and total time spent resting |
-| Tap **New workout** | Back to setup, with your settings kept |
-| Start again, tap **End workout** | A confirm box; confirming shows **Workout ended** instead |
+| Tap **New workout** | Back to your list, every exercise still saved |
+| Start again, tap **End workout** | A confirm box; confirming shows **Called it early** instead |
+
+### Settings
+
+| Do this | You should see |
+|---|---|
+| Open the **Settings** tab | Sound, the app list, and *Delete all exercises* — no sets or rest |
+| Untick **YouTube**, go back, add a new exercise | The new card starts without YouTube; the cards you already had are unchanged |
+| Type a name into *Add another app* and tap **+** | It joins the list, already ticked |
+| Tap **Delete all exercises** | A confirm box naming how many; confirming empties the Workout tab |
 
 ### If you want to check accessibility
 

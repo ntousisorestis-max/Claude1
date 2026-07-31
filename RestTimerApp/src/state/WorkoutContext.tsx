@@ -13,29 +13,39 @@ import {
   requestNotificationPermission,
   scheduleRestOverNotification,
 } from '../notifications';
+import { memoryStorage, type AppStorage } from './storage';
 import {
-  memoryDefaultsStorage,
-  type DefaultsStorage,
-} from './defaultsStorage';
-import { initialState, workoutReducer } from './workoutReducer';
-import type { WorkoutDefaults, WorkoutState } from './types';
+  initialState,
+  newExerciseId,
+  toSaved,
+  workoutReducer,
+} from './workoutReducer';
+import type { Exercise, SavedState, WorkoutState } from './types';
 
 /**
  * Every field, deliberately. A missed one here means that setting silently
  * never gets written — the failure is invisible until a user reports it.
  */
-function sameDefaults(
-  a: WorkoutDefaults | null,
-  b: WorkoutDefaults,
-): boolean {
+function sameSaved(a: SavedState | null, b: SavedState): boolean {
   return (
     a != null &&
+    a.defaults.soundEnabled === b.defaults.soundEnabled &&
+    sameIds(a.defaults.selectedAppIds, b.defaults.selectedAppIds) &&
+    a.defaults.customApps.length === b.defaults.customApps.length &&
+    a.defaults.customApps.every((app, i) => app.id === b.defaults.customApps[i]?.id) &&
+    a.exercises.length === b.exercises.length &&
+    a.exercises.every((exercise, i) => sameExercise(exercise, b.exercises[i]))
+  );
+}
+
+function sameExercise(a: Exercise, b: Exercise | undefined): boolean {
+  return (
+    b != null &&
+    a.id === b.id &&
+    a.name === b.name &&
     a.totalSets === b.totalSets &&
     a.restSeconds === b.restSeconds &&
-    a.soundEnabled === b.soundEnabled &&
-    sameIds(a.selectedAppIds, b.selectedAppIds) &&
-    a.customApps.length === b.customApps.length &&
-    a.customApps.every((app, i) => app.id === b.customApps[i]?.id)
+    sameIds(a.selectedAppIds, b.selectedAppIds)
   );
 }
 
@@ -44,18 +54,17 @@ function sameIds(a: string[], b: string[]): boolean {
 }
 
 type WorkoutActions = {
-  setExerciseName: (name: string) => void;
-  setTotalSets: (sets: number) => void;
-  setRestSeconds: (seconds: number) => void;
-  toggleApp: (appId: string) => void;
-  setDefaultSets: (sets: number) => void;
-  setDefaultRest: (seconds: number) => void;
+  addExercise: (name: string) => void;
+  removeExercise: (id: string) => void;
+  setExerciseSets: (id: string, sets: number) => void;
+  setExerciseRest: (id: string, seconds: number) => void;
+  toggleExerciseApp: (id: string, appId: string) => void;
+  deleteAllExercises: () => void;
   toggleDefaultApp: (appId: string) => void;
   setSoundEnabled: (enabled: boolean) => void;
   addCustomApp: (name: string) => void;
   removeCustomApp: (appId: string) => void;
-  resetDefaults: () => void;
-  startWorkout: () => void;
+  startWorkout: (id: string) => void;
   finishSet: () => void;
   endRest: () => void;
   endWorkout: () => void;
@@ -69,21 +78,22 @@ const WorkoutContext = createContext<
 export function WorkoutProvider({
   children,
   /**
-   * Where Settings defaults live between launches. Defaults to an in-memory
-   * store; pass an AsyncStorage- or localStorage-backed one to make them stick.
-   * See src/state/defaultsStorage.ts.
+   * Where exercises and preferences live between launches. Defaults to an
+   * in-memory store; pass an AsyncStorage- or localStorage-backed one to make
+   * them stick. See src/state/storage.ts.
    */
-  storage = memoryDefaultsStorage,
+  storage = memoryStorage,
 }: {
   children: React.ReactNode;
-  storage?: DefaultsStorage;
+  storage?: AppStorage;
 }) {
   const [state, dispatch] = useReducer(workoutReducer, initialState);
 
-  // Load once on mount. Only defaults are restored — never a saved workout,
-  // which would resume a session whose rest timer expired days ago.
+  // Load once on mount. Only the list and the preferences are restored — never
+  // a saved workout, which would resume a session whose rest timer expired
+  // days ago.
   const hydrated = useRef(false);
-  const lastPersisted = useRef<WorkoutDefaults | null>(null);
+  const lastPersisted = useRef<SavedState | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -92,10 +102,10 @@ export function WorkoutProvider({
       .then(saved => {
         if (alive && saved) {
           lastPersisted.current = saved;
-          dispatch({ type: 'HYDRATE_DEFAULTS', defaults: saved });
+          dispatch({ type: 'HYDRATE', saved });
         }
       })
-      .catch(err => console.warn('[rest-timer] could not load defaults', err))
+      .catch(err => console.warn('[rest-timer] could not load', err))
       .finally(() => {
         hydrated.current = true;
       });
@@ -104,21 +114,22 @@ export function WorkoutProvider({
     };
   }, [storage]);
 
-  // Save whenever they change.
+  // Save whenever the list or the preferences change.
   //
   // Two guards, both load-bearing: nothing is written until the load has
-  // settled, so factory defaults can't overwrite what's on disk; and nothing
-  // is written that matches what was just read, so a launch where the user
+  // settled, so an empty list can't overwrite what's on disk; and nothing is
+  // written that matches what was just read, so a launch where the user
   // changes nothing performs no writes at all.
   useEffect(() => {
-    if (!hydrated.current || sameDefaults(lastPersisted.current, state.defaults)) {
+    const saved = toSaved(state);
+    if (!hydrated.current || sameSaved(lastPersisted.current, saved)) {
       return;
     }
-    lastPersisted.current = state.defaults;
+    lastPersisted.current = saved;
     storage
-      .save(state.defaults)
-      .catch(err => console.warn('[rest-timer] could not save defaults', err));
-  }, [state.defaults, storage]);
+      .save(saved)
+      .catch(err => console.warn('[rest-timer] could not save', err));
+  }, [state, storage]);
 
   // The single place the OS-level shield is driven from. Every screen just
   // moves the state machine; locking follows from `appsLocked`.
@@ -178,20 +189,25 @@ export function WorkoutProvider({
 
   const actions = useMemo<WorkoutActions>(
     () => ({
-      setExerciseName: name => dispatch({ type: 'SET_EXERCISE_NAME', name }),
-      setTotalSets: sets => dispatch({ type: 'SET_TOTAL_SETS', sets }),
-      setRestSeconds: seconds => dispatch({ type: 'SET_REST_SECONDS', seconds }),
-      toggleApp: appId => dispatch({ type: 'TOGGLE_APP', appId }),
-      setDefaultSets: sets => dispatch({ type: 'SET_DEFAULT_SETS', sets }),
-      setDefaultRest: seconds => dispatch({ type: 'SET_DEFAULT_REST', seconds }),
+      // The id is minted here rather than in the reducer, which has to stay a
+      // pure function of its inputs.
+      addExercise: name =>
+        dispatch({ type: 'ADD_EXERCISE', id: newExerciseId(), name }),
+      removeExercise: id => dispatch({ type: 'REMOVE_EXERCISE', id }),
+      setExerciseSets: (id, sets) =>
+        dispatch({ type: 'SET_EXERCISE_SETS', id, sets }),
+      setExerciseRest: (id, seconds) =>
+        dispatch({ type: 'SET_EXERCISE_REST', id, seconds }),
+      toggleExerciseApp: (id, appId) =>
+        dispatch({ type: 'TOGGLE_EXERCISE_APP', id, appId }),
+      deleteAllExercises: () => dispatch({ type: 'DELETE_ALL_EXERCISES' }),
       toggleDefaultApp: appId => dispatch({ type: 'TOGGLE_DEFAULT_APP', appId }),
       setSoundEnabled: enabled => dispatch({ type: 'SET_SOUND_ENABLED', enabled }),
       addCustomApp: name => dispatch({ type: 'ADD_CUSTOM_APP', name }),
       removeCustomApp: appId => dispatch({ type: 'REMOVE_CUSTOM_APP', appId }),
-      resetDefaults: () => dispatch({ type: 'RESET_DEFAULTS' }),
-      startWorkout: () => {
+      startWorkout: id => {
         requestNotificationPermission();
-        dispatch({ type: 'START_WORKOUT' });
+        dispatch({ type: 'START_WORKOUT', id });
       },
       // No haptics here — see the phase-change effect above.
       finishSet: () => dispatch({ type: 'FINISH_SET', now: Date.now() }),
