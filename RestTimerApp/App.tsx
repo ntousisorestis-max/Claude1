@@ -27,7 +27,7 @@ import { useWorkout, WorkoutProvider } from './src/state/WorkoutContext';
 import { colors } from './src/theme';
 import type { Phase } from './src/state/types';
 
-/** Free phases flood lime; locked phases stay dark. */
+/** Free phases flood accent; locked phases stay dark. */
 const isFree = (phase: Phase) => phase === 'resting' || phase === 'complete';
 
 /** The workout phase is the navigation — no router needed for four screens. */
@@ -49,7 +49,7 @@ function CurrentScreen() {
 /**
  * The lock/unlock flip, as a circular reveal.
  *
- * A lime disc big enough to cover the display scales out from the centre when
+ * A violet disc big enough to cover the display scales out from the centre when
  * your apps unlock, and sucks back in when they lock. It's the app's loudest
  * moment, so it gets the one piece of choreography here — a crossfade said the
  * same thing far more quietly.
@@ -108,10 +108,8 @@ function Ground() {
           },
         ]}
       />
-      <StatusBar
-        barStyle={free ? 'dark-content' : 'light-content'}
-        backgroundColor={free ? colors.lime : colors.ink}
-      />
+      {/* Content is light on both grounds now, so the bar never flips. */}
+      <StatusBar barStyle="light-content" backgroundColor={free ? colors.accentDeep : colors.ink} />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <CurrentScreen />
       </SafeAreaView>
@@ -131,7 +129,7 @@ function App() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.ink, overflow: 'hidden' },
-  disc: { position: 'absolute', backgroundColor: colors.lime },
+  disc: { position: 'absolute', backgroundColor: colors.accentDeep },
   safe: { flex: 1 },
 });
 

@@ -3,7 +3,7 @@ import { Animated, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-na
 import { useReduceMotion } from '../hooks/useReduceMotion';
 import { colors, radius, spacing, TAP_TARGET, type } from '../theme';
 
-type Variant = 'lime' | 'ink' | 'outlineOnLime' | 'quiet' | 'danger';
+type Variant = 'accent' | 'ink' | 'outlineOnAccent' | 'quiet' | 'danger';
 
 type Props = {
   /** Button text. Say exactly what the tap does — this is also what a
@@ -29,7 +29,7 @@ const LIFT = 8;
  * - **The slab** (mid-workout "Done with set") is an extruded block: a solid
  *   shadow sits under the face and pressing drives the face down onto it. It's
  *   the one control you hit without looking, so it gets real physical depth.
- * - **Everything else** is flat with a tight lime glow. A chunky offset block
+ * - **Everything else** is flat with a tight violet glow. A chunky offset block
  *   on every button made the screens feel heavy and cluttered.
  *
  * The glow is `shadow*`, which iOS and web render as a coloured shadow. Android
@@ -38,7 +38,7 @@ const LIFT = 8;
 export function BigButton({
   label,
   onPress,
-  variant = 'lime',
+  variant = 'accent',
   slab = false,
   disabled = false,
   style,
@@ -96,7 +96,7 @@ export function BigButton({
           // The glow would read as "still active" on a dimmed button.
           // The slab already has physical depth from its shadow block; a glow
           // on top of it reads as two competing treatments.
-          variant === 'lime' && !slab && !disabled && styles.glow,
+          variant === 'accent' && !slab && !disabled && styles.glow,
           variant === 'ink' && !disabled && styles.dropShadow,
           // A distinct off state, not a faded on state.
           disabled && styles.faceDisabled,
@@ -111,9 +111,9 @@ export function BigButton({
         <Text
           style={[
             styles.label,
-            variant === 'lime' && styles.labelOnLime,
+            variant === 'accent' && styles.labelOnAccent,
             variant === 'ink' && styles.labelOnInk,
-            variant === 'outlineOnLime' && styles.labelOnLime,
+            variant === 'outlineOnAccent' && styles.labelOnAccent,
             variant === 'quiet' && styles.labelQuiet,
             variant === 'danger' && styles.labelDanger,
             slab && styles.labelSlab,
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     borderRadius: radius.lg,
-    backgroundColor: '#7E9E00',
+    backgroundColor: colors.accentDeep,
   },
   face: {
     minHeight: TAP_TARGET,
@@ -148,9 +148,9 @@ const styles = StyleSheet.create({
   },
   faceSlab: { flex: 1, borderRadius: radius.lg },
 
-  lime: { backgroundColor: colors.lime },
+  accent: { backgroundColor: colors.accent },
   ink: { backgroundColor: colors.ink },
-  outlineOnLime: { borderWidth: 2, borderColor: colors.ink },
+  outlineOnAccent: { borderWidth: 2, borderColor: colors.white },
   quiet: {},
   danger: {},
 
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
 
   /** Tight, close to the edge — a halo, not a drop shadow. */
   glow: {
-    shadowColor: colors.lime,
+    shadowColor: colors.accent,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 14,
@@ -175,8 +175,8 @@ const styles = StyleSheet.create({
   },
 
   label: { ...type.action, color: colors.white },
-  labelOnLime: { color: colors.ink },
-  labelOnInk: { color: colors.lime },
+  labelOnAccent: { color: colors.white },
+  labelOnInk: { color: colors.white },
   labelQuiet: { ...type.tag, color: colors.mutedOnDark },
   labelDanger: { ...type.tag, color: colors.danger },
   labelSlab: { fontSize: 34, fontWeight: '900', letterSpacing: -1 },

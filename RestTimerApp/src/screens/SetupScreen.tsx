@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   masthead: { ...type.display, fontSize: 46, color: colors.white },
   steps: { gap: spacing.md, marginTop: spacing.lg },
   step: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
-  stepNumber: { ...type.tag, color: colors.lime, width: 14, lineHeight: 23 },
+  stepNumber: { ...type.tag, color: colors.accent, width: 14, lineHeight: 23 },
   stepText: { ...type.helper, flex: 1, color: colors.mutedOnDark, lineHeight: 23 },
 
   block: { gap: spacing.md },
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
   },
   appOn: {
     backgroundColor: colors.raised,
-    borderColor: colors.lime,
+    borderColor: colors.accent,
   },
   appName: { ...type.body, fontWeight: '600', color: colors.faintOnDark },
   appNameOn: { color: colors.white },

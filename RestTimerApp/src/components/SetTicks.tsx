@@ -13,12 +13,12 @@ export function SetTicks({
   total,
   completed,
   current,
-  onLime = false,
+  onAccent = false,
 }: {
   total: number;
   completed: number;
   current: number;
-  onLime?: boolean;
+  onAccent?: boolean;
 }) {
   const reduceMotion = useReduceMotion();
   const pop = useRef(new Animated.Value(1)).current;
@@ -60,9 +60,9 @@ export function SetTicks({
             key={index}
             style={[
               styles.tick,
-              onLime ? styles.emptyOnLime : styles.emptyOnInk,
-              done && (onLime ? styles.doneOnLime : styles.doneOnInk),
-              active && (onLime ? styles.activeOnLime : styles.activeOnInk),
+              onAccent ? styles.emptyOnAccent : styles.emptyOnInk,
+              done && (onAccent ? styles.doneOnAccent : styles.doneOnInk),
+              active && (onAccent ? styles.activeOnAccent : styles.activeOnInk),
               newest && {
                 transform: [
                   {
@@ -85,9 +85,9 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 6 },
   tick: { flex: 1, height: 10, borderRadius: radius.pill },
   emptyOnInk: { backgroundColor: colors.hairline },
-  emptyOnLime: { backgroundColor: 'rgba(11,11,15,0.16)' },
-  doneOnInk: { backgroundColor: colors.lime },
-  doneOnLime: { backgroundColor: colors.ink },
-  activeOnInk: { backgroundColor: colors.limeDim },
-  activeOnLime: { backgroundColor: 'rgba(11,11,15,0.5)' },
+  emptyOnAccent: { backgroundColor: 'rgba(255,255,255,0.24)' },
+  doneOnInk: { backgroundColor: colors.accent },
+  doneOnAccent: { backgroundColor: colors.white },
+  activeOnInk: { backgroundColor: colors.accentDim },
+  activeOnAccent: { backgroundColor: 'rgba(255,255,255,0.6)' },
 });

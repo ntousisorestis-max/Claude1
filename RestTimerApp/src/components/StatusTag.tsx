@@ -10,16 +10,16 @@ import { colors, radius, spacing, TAP_TARGET, type } from '../theme';
  * The lock state as a sticker chip.
  *
  * The screen's own colour already says locked-or-free — this just spells it
- * out. On a lime ground it goes black-on-black-outline; on a dark ground it's
- * lime. Phase 1 only: tap while locked to preview the shield you'd hit opening
+ * out. On a accent ground it goes black-on-black-outline; on a dark ground it's
+ * accent. Phase 1 only: tap while locked to preview the shield you'd hit opening
  * a blocked app.
  */
 export function StatusTag({
   selectedAppIds,
-  onLime = false,
+  onAccent = false,
 }: {
   selectedAppIds: string[];
-  onLime?: boolean;
+  onAccent?: boolean;
 }) {
   const [locked, setLocked] = useState(false);
   const [preview, setPreview] = useState(false);
@@ -53,10 +53,10 @@ export function StatusTag({
         onPress={() => setPreview(true)}
         style={({ pressed }) => [
           styles.chip,
-          onLime ? styles.chipOnLime : styles.chipOnInk,
+          onAccent ? styles.chipOnAccent : styles.chipOnInk,
           pressed && styles.pressed,
         ]}>
-        <Text style={[styles.chipText, onLime ? styles.textOnLime : styles.textOnInk]}>
+        <Text style={[styles.chipText, onAccent ? styles.textOnAccent : styles.textOnInk]}>
           {text}
         </Text>
         {isMock && locked ? (
@@ -132,11 +132,11 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderWidth: 2,
   },
-  chipOnInk: { borderColor: colors.lime, backgroundColor: 'rgba(217,255,61,0.08)' },
-  chipOnLime: { borderColor: colors.ink, backgroundColor: 'transparent' },
+  chipOnInk: { borderColor: colors.accent, backgroundColor: colors.accentWash },
+  chipOnAccent: { borderColor: colors.white, backgroundColor: 'transparent' },
   chipText: { ...type.tag },
-  textOnInk: { color: colors.lime },
-  textOnLime: { color: colors.ink },
+  textOnInk: { color: colors.accent },
+  textOnAccent: { color: colors.white },
   peek: { ...type.tag, fontSize: 10, color: colors.faintOnDark },
   pressed: { opacity: 0.8, transform: [{ scale: 0.98 }] },
 
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   },
   shieldTop: { flex: 1, justifyContent: 'center', gap: spacing.sm },
   shieldLock: { fontSize: 72, marginBottom: spacing.sm },
-  shieldTitle: { ...type.mega, fontSize: 68, color: colors.lime },
+  shieldTitle: { ...type.mega, fontSize: 68, color: colors.accent },
   shieldSub: { ...type.helper, fontSize: 17, color: colors.mutedOnDark, lineHeight: 24 },
   shieldApps: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
   pill: {
@@ -168,9 +168,9 @@ const styles = StyleSheet.create({
   back: {
     minHeight: TAP_TARGET,
     borderRadius: radius.pill,
-    backgroundColor: colors.lime,
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backText: { ...type.action, color: colors.ink },
+  backText: { ...type.action, color: colors.white },
 });

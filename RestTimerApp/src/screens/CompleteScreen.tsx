@@ -37,7 +37,7 @@ export function CompleteScreen() {
             total={config.totalSets}
             completed={setsCompleted}
             current={0}
-            onLime
+            onAccent
           />
         </Animated.View>
 
@@ -78,8 +78,8 @@ const styles = StyleSheet.create({
   body: { flex: 1, justifyContent: 'center', gap: spacing.lg },
   hero: { gap: spacing.sm },
   badge: { fontSize: 56 },
-  headline: { ...type.mega, fontSize: 52, color: colors.ink },
-  sub: { ...type.helper, color: colors.mutedOnLime, marginBottom: spacing.md, lineHeight: 21 },
+  headline: { ...type.mega, fontSize: 52, color: colors.white },
+  sub: { ...type.helper, color: colors.mutedOnAccent, marginBottom: spacing.md, lineHeight: 21 },
   card: {
     backgroundColor: colors.ink,
     borderRadius: radius.lg,
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     ...type.body,
     ...tabular,
     fontWeight: '800',
-    color: colors.lime,
+    color: colors.accent,
     flexShrink: 1,
     textAlign: 'right',
   },

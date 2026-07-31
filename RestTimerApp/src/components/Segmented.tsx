@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, tabular, type } from '../theme';
 
-/** Quick-select pills. The chosen one goes solid lime. */
+/** Quick-select pills. The chosen one goes solid accent. */
 export function Segmented({
   options,
   value,
@@ -52,8 +52,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  selected: { backgroundColor: colors.lime },
+  selected: { backgroundColor: colors.accent },
   pressed: { opacity: 0.85, transform: [{ scale: 0.97 }] },
   text: { ...type.body, ...tabular, fontWeight: '600', color: colors.mutedOnDark },
-  textSelected: { color: colors.ink, fontWeight: '800' },
+  textSelected: { color: colors.white, fontWeight: '800' },
 });

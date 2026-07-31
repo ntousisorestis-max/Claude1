@@ -1,39 +1,46 @@
 /**
- * Acid lime on black, and the screen flips when you're free.
+ * Violet on charcoal-purple.
  *
  * The rule that holds it together: **colour is lock state.** Locked screens are
- * near-black with lime on top. The instant your apps unlock, the whole screen
- * floods lime and the type goes black.
+ * near-black with violet accents. The instant your apps unlock, the ground
+ * floods violet and the content goes white.
  *
- * The one deliberate exception is brand colour on the app icons — those exist
- * to identify TikTok from Instagram at a glance, which is a different job.
+ * Why the flood uses a deeper violet than the buttons: a full screen of the
+ * bright accent reads as loud, and black text on it only just clears contrast
+ * minimums. The deeper tone with white content is calmer *and* more legible.
+ *
+ * The one deliberate exception to the rule is brand colour on the app icons —
+ * those exist to tell TikTok from Instagram at a glance, a different job.
  */
 export const colors = {
   /**
-   * Elevation ramp. Four steps rather than a single flat black, so a card
-   * reads as sitting on the screen instead of being cut out of it. Each step
-   * is a visible jump; anything subtler disappears under gym lighting.
+   * Elevation ramp. Four steps rather than one flat black, so a card reads as
+   * sitting on the screen instead of being cut out of it. Each carries a
+   * little violet in it, so the ground never looks like dead grey.
    */
-  ink: '#0A0A0E', // the screen itself
-  surface: '#13131A', // inputs, cards, unselected pills
-  raised: '#1C1C26', // interactive surfaces sitting on a card
-  hairline: '#2A2A36', // borders and empty tick marks
+  ink: '#0F0B1A', // the screen itself
+  surface: '#17122A', // inputs, cards, unselected pills
+  raised: '#201A38', // interactive surfaces sitting on a card
+  hairline: '#2E2647', // borders and empty tick marks
 
-  /** Free ground, and the hero colour on dark. */
-  lime: '#D9FF3D',
-  limeDim: '#A8C82A',
-  /** Lime at low alpha, for glows and tinted fills. */
-  limeGlow: 'rgba(217, 255, 61, 0.45)',
-  limeWash: 'rgba(217, 255, 61, 0.10)',
+  /** Primary actions and selected states. */
+  accent: '#8B5CF6',
+  /** The full-screen "unlocked" ground, and the slab's extruded shadow. */
+  accentDeep: '#6D42D9',
+  /** Pressed/active tick — one step down from the accent. */
+  accentDim: '#7048E8',
+  accentWash: 'rgba(139, 92, 246, 0.12)',
 
   white: '#FFFFFF',
-  mutedOnDark: '#9494A4',
-  faintOnDark: '#5E5E6C',
-  /** Type on a lime ground. */
-  mutedOnLime: 'rgba(10, 10, 14, 0.66)',
-  faintOnLime: 'rgba(10, 10, 14, 0.45)',
+  /** Purple-leaning greys — a neutral grey next to violet reads as dirty. */
+  mutedOnDark: '#A29BBC',
+  faintOnDark: '#6C6489',
 
-  danger: '#FF5C5C',
+  /** Content on the flooded violet ground. */
+  mutedOnAccent: 'rgba(255, 255, 255, 0.76)',
+  faintOnAccent: 'rgba(255, 255, 255, 0.52)',
+
+  danger: '#FF6B81',
 } as const;
 
 export const spacing = {

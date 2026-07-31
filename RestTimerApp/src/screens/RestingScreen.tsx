@@ -30,7 +30,7 @@ export function RestingScreen() {
 
   return (
     <View style={styles.screen}>
-      <StatusTag selectedAppIds={config.selectedAppIds} onLime />
+      <StatusTag selectedAppIds={config.selectedAppIds} onAccent />
 
       <Animated.View style={[styles.head, enter]}>
         <Text style={styles.title}>Rest</Text>
@@ -42,8 +42,8 @@ export function RestingScreen() {
       <View style={styles.dial}>
         <ProgressRing
           progress={secondsLeft / config.restSeconds}
-          color={colors.ink}
-          trackColor="rgba(11,11,15,0.15)">
+          color={colors.white}
+          trackColor="rgba(255,255,255,0.22)">
           <Animated.Text style={[styles.clock, { transform: [{ scale: beat }] }]}>
             {formatMMSS(secondsLeft)}
           </Animated.Text>
@@ -61,12 +61,12 @@ export function RestingScreen() {
           total={config.totalSets}
           completed={setsCompleted}
           current={nextSet}
-          onLime
+          onAccent
         />
         <BigButton
           label="Skip rest"
           onPress={endRest}
-          variant="outlineOnLime"
+          variant="outlineOnAccent"
         />
       </View>
     </View>
@@ -110,11 +110,11 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   head: { paddingTop: spacing.lg, gap: spacing.xs },
-  title: { ...type.display, fontSize: 46, color: colors.ink },
-  sub: { ...type.helper, color: colors.mutedOnLime, lineHeight: 21 },
+  title: { ...type.display, fontSize: 46, color: colors.white },
+  sub: { ...type.helper, color: colors.mutedOnAccent, lineHeight: 21 },
   dial: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  clock: { ...type.mega, ...tabular, fontSize: 80, color: colors.ink },
-  until: { ...type.tag, color: colors.mutedOnLime, marginTop: spacing.xs },
+  clock: { ...type.mega, ...tabular, fontSize: 80, color: colors.white },
+  until: { ...type.tag, color: colors.mutedOnAccent, marginTop: spacing.xs },
   foot: { gap: spacing.sm },
-  next: { ...type.body, fontWeight: '700', color: colors.ink },
+  next: { ...type.body, fontWeight: '700', color: colors.white },
 });

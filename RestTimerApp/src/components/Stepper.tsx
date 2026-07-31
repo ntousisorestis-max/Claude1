@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  symbol: { fontSize: 28, fontWeight: '600', color: colors.lime },
+  symbol: { fontSize: 28, fontWeight: '600', color: colors.accent },
   pressed: { opacity: 0.8, transform: [{ scale: 0.96 }] },
   disabled: { opacity: 0.25 },
   value: {

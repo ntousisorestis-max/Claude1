@@ -12,7 +12,7 @@ type Props = {
   size?: number;
   strokeWidth?: number;
   color?: string;
-  /** The unfilled remainder — must be set when drawing on a lime ground. */
+  /** The unfilled remainder — must be set when drawing on a accent ground. */
   trackColor?: string;
   children?: React.ReactNode;
 };
@@ -30,7 +30,7 @@ export function ProgressRing({
   progress,
   size = 264,
   strokeWidth = 14,
-  color = colors.lime,
+  color = colors.accent,
   trackColor = colors.hairline,
   children,
 }: Props) {

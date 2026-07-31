@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   exercise: { ...type.display, color: colors.white },
   setLabel: { ...type.tag, color: colors.faintOnDark, marginBottom: -spacing.xs },
   counter: { flexDirection: 'row', alignItems: 'baseline' },
-  current: { ...type.mega, ...tabular, color: colors.lime },
+  current: { ...type.mega, ...tabular, color: colors.accent },
   total: {
     ...type.display,
     ...tabular,
