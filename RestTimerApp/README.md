@@ -40,14 +40,25 @@ notifications, no haptics — browsers can't do any of them, and Phase 2's whole
 premise is iOS-only. Treat it as a way to feel the UX and prove the code runs,
 not as a shippable product.
 
-Two pieces are swapped at build time, both by webpack's `.web.*` resolution
+Three pieces are swapped at build time, all by webpack's `.web.*` resolution
 rather than by edits to shared code:
 
 - `src/notifications.web.ts` — honest no-ops. A browser has no equivalent of an
   OS alarm that survives the tab being backgrounded, which is the entire point
   of the native version, so it doesn't pretend with a `setTimeout`.
+- `src/components/AnimatedCircle.web.tsx` — strips the `collapsable` prop that
+  RN's animated layer forces onto whatever it wraps. There's no view flattening
+  on the web, react-native-svg renders a real DOM `<circle>`, and the unknown
+  attribute makes React log a warning on every rest screen.
 - Haptics need no stub: `src/haptics.ts` already checks `Platform.OS`, which is
   `'web'` here, so it no-ops on its own.
+
+**Don't use `Alert` anywhere.** `react-native-web`'s implementation is an empty
+function body, so anything behind an `Alert.alert` confirmation is silently
+dead in a browser — no dialog, no error, nothing. Destructive actions go
+through `src/components/ConfirmDialog.tsx`, which draws its own modal and
+behaves identically on all three targets. `Alert.prompt` is worse: it doesn't
+exist on Android either.
 
 Blocking also degrades correctly on its own — `getBlocker()` only returns the
 Screen Time blocker on iOS with the native module present, so web gets
@@ -260,9 +271,9 @@ src/
     ScreenTimeBlocker.ts     Phase 2 — FamilyControls/ManagedSettings bridge (not wired)
     index.ts                 picks the real blocker if the native module exists
   screens/                   Exercises / ActiveSet / Resting / Complete
-  components/                ExerciseCard, AppPill, BigButton, Stepper,
-                             Segmented, ProgressRing, SetTicks, LockStatus,
-                             LockGlyph
+  components/                ExerciseCard, AppPill, ConfirmDialog, BigButton,
+                             Stepper, Segmented, ProgressRing, SetTicks,
+                             LockStatus, LockGlyph
   hooks/useCountdown.ts      wall-clock countdown
   hooks/useEnter.ts          screen entry animation
   hooks/usePressScale.ts     shared press-in spring for every tappable

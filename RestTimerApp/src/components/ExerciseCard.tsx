@@ -1,7 +1,8 @@
-import React from 'react';
-import { Alert, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { AppPill } from './AppPill';
 import { BigButton } from './BigButton';
+import { ConfirmDialog } from './ConfirmDialog';
 import { Segmented } from './Segmented';
 import { Stepper } from './Stepper';
 import { useEnter } from '../hooks/useEnter';
@@ -48,18 +49,9 @@ export function ExerciseCard({
   onDelete: () => void;
 }) {
   const headPress = usePressScale({ depth: 0.985, haptic: true });
+  const [confirming, setConfirming] = useState(false);
 
   const blocked = apps.filter(app => exercise.selectedAppIds.includes(app.id));
-
-  const confirmDelete = () =>
-    Alert.alert(
-      `Delete ${exercise.name}?`,
-      'This removes the exercise and its settings.',
-      [
-        { text: 'Keep it', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: onDelete },
-      ],
-    );
 
   return (
     <Animated.View style={[styles.card, expanded && styles.cardOpen]}>
@@ -104,7 +96,7 @@ export function ExerciseCard({
           onSets={onSets}
           onRest={onRest}
           onToggleApp={onToggleApp}
-          onDelete={confirmDelete}
+          onDelete={() => setConfirming(true)}
         />
       ) : null}
 
@@ -113,6 +105,19 @@ export function ExerciseCard({
         text="Start"
         onPress={onStart}
         style={styles.start}
+      />
+
+      <ConfirmDialog
+        visible={confirming}
+        title={`Delete ${exercise.name}?`}
+        message="The exercise and everything set on it go for good."
+        confirmLabel="Delete it"
+        cancelLabel="Keep it"
+        onConfirm={() => {
+          setConfirming(false);
+          onDelete();
+        }}
+        onCancel={() => setConfirming(false)}
       />
     </Animated.View>
   );

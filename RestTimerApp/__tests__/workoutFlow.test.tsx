@@ -150,6 +150,47 @@ describe('full workout loop', () => {
     expect(hasLabel(root, 'Set 1 of 3')).toBe(true);
   });
 
+  it('ends the workout through the confirm dialog', async () => {
+    // Regression: this used to go through Alert.alert, whose react-native-web
+    // implementation is an empty function — the button did nothing at all in a
+    // browser, and no test noticed because Alert is mocked away on native.
+    const root = await launch();
+
+    addExercise(root, 'Rows');
+    press(root, 'Start Rows');
+    expect(MockBlocker.isLocked()).toBe(true);
+
+    press(root, 'End workout');
+    expect(hasText(root, 'End this workout?')).toBe(true);
+    // Still running: asking is not doing.
+    expect(MockBlocker.isLocked()).toBe(true);
+
+    press(root, 'Keep going');
+    expect(hasText(root, 'End this workout?')).toBe(false);
+    expect(MockBlocker.isLocked()).toBe(true);
+
+    press(root, 'End workout');
+    press(root, 'End it now');
+    expect(hasText(root, 'Called it early.')).toBe(true);
+    expect(MockBlocker.isLocked()).toBe(false);
+  });
+
+  it('deletes an exercise through the confirm dialog', async () => {
+    const root = await launch();
+
+    addExercise(root, 'Rows');
+    press(root, 'Add exercise');
+    addExercise(root, 'Squat');
+
+    press(root, 'Rows, edit');
+    press(root, 'Delete Rows');
+    expect(hasText(root, 'Delete Rows?')).toBe(true);
+
+    press(root, 'Delete it');
+    expect(hasText(root, 'Squat')).toBe(true);
+    expect(hasText(root, 'Rows')).toBe(false);
+  });
+
   it('re-locks immediately when rest is skipped', async () => {
     const root = await launch();
 

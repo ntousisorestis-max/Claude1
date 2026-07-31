@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Alert,
   Animated,
   Image,
   KeyboardAvoidingView,
@@ -13,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { AppPill } from '../components/AppPill';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Toggle } from '../components/Toggle';
 import { useEnter } from '../hooks/useEnter';
 import { usePressScale } from '../hooks/usePressScale';
@@ -44,6 +44,7 @@ export function SettingsScreen() {
   } = useWorkout();
 
   const [draft, setDraft] = useState('');
+  const [confirming, setConfirming] = useState(false);
   const enter = useEnter();
 
   const apps = allBlockableApps(defaults.customApps);
@@ -63,15 +64,6 @@ export function SettingsScreen() {
   };
 
   const count = exercises.length;
-  const confirmDeleteAll = () =>
-    Alert.alert(
-      count === 1 ? 'Delete your exercise?' : `Delete all ${count} exercises?`,
-      'Every exercise and its settings go. This can’t be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete all', style: 'destructive', onPress: deleteAllExercises },
-      ],
-    );
 
   return (
     <KeyboardAvoidingView
@@ -159,7 +151,7 @@ export function SettingsScreen() {
           <DangerButton
             label="Delete all exercises"
             disabled={count === 0}
-            onPress={confirmDeleteAll}
+            onPress={() => setConfirming(true)}
           />
           <Text style={styles.note}>
             {count === 0
@@ -186,6 +178,20 @@ export function SettingsScreen() {
           Nothing is saved between launches yet — exercises and settings reset
           when the app restarts.
         </Text>
+
+        <ConfirmDialog
+          visible={confirming}
+          title={
+            count === 1 ? 'Delete your exercise?' : `Delete all ${count} exercises?`
+          }
+          message="Every exercise and everything set on it goes. This can’t be undone."
+          confirmLabel="Delete them all"
+          onConfirm={() => {
+            setConfirming(false);
+            deleteAllExercises();
+          }}
+          onCancel={() => setConfirming(false)}
+        />
       </ScrollView>
     </KeyboardAvoidingView>
   );

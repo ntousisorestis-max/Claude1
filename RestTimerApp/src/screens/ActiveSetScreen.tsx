@@ -1,6 +1,7 @@
-import React from 'react';
-import { Alert, Animated, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import { BigButton } from '../components/BigButton';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { LockStatus } from '../components/LockStatus';
 import { SetTicks } from '../components/SetTicks';
 import { useEnter } from '../hooks/useEnter';
@@ -16,12 +17,7 @@ export function ActiveSetScreen() {
 
   const enterHead = useEnter();
   const enterSlab = useEnter(70);
-
-  const confirmEnd = () =>
-    Alert.alert('End this workout?', 'Your apps will unlock right away.', [
-      { text: 'Keep going', style: 'cancel' },
-      { text: 'End workout', style: 'destructive', onPress: endWorkout },
-    ]);
+  const [confirming, setConfirming] = useState(false);
 
   return (
     <View style={styles.screen}>
@@ -52,7 +48,24 @@ export function ActiveSetScreen() {
         <BigButton label="Done with set" onPress={finishSet} slab />
       </Animated.View>
 
-      <BigButton label="End workout" onPress={confirmEnd} variant="danger" />
+      <BigButton
+        label="End workout"
+        onPress={() => setConfirming(true)}
+        variant="danger"
+      />
+
+      <ConfirmDialog
+        visible={confirming}
+        title="End this workout?"
+        message="Your apps unlock right away, and this workout stops where it is."
+        confirmLabel="End it now"
+        cancelLabel="Keep going"
+        onConfirm={() => {
+          setConfirming(false);
+          endWorkout();
+        }}
+        onCancel={() => setConfirming(false)}
+      />
     </View>
   );
 }
