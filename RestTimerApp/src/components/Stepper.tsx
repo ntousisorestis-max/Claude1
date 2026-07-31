@@ -78,11 +78,11 @@ const styles = StyleSheet.create({
     width: TAP_TARGET,
     height: TAP_TARGET,
     borderRadius: radius.pill,
-    backgroundColor: colors.inkSoft,
+    backgroundColor: colors.raised,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  symbol: { fontSize: 30, fontWeight: '700', color: colors.lime },
+  symbol: { fontSize: 28, fontWeight: '600', color: colors.lime },
   pressed: { opacity: 0.8, transform: [{ scale: 0.96 }] },
   disabled: { opacity: 0.25 },
   value: {

@@ -84,7 +84,7 @@ export function SetTicks({
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 6 },
   tick: { flex: 1, height: 10, borderRadius: radius.pill },
-  emptyOnInk: { backgroundColor: colors.inkLine },
+  emptyOnInk: { backgroundColor: colors.hairline },
   emptyOnLime: { backgroundColor: 'rgba(11,11,15,0.16)' },
   doneOnInk: { backgroundColor: colors.lime },
   doneOnLime: { backgroundColor: colors.ink },

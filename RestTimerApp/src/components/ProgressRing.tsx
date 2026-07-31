@@ -31,7 +31,7 @@ export function ProgressRing({
   size = 264,
   strokeWidth = 14,
   color = colors.lime,
-  trackColor = colors.inkLine,
+  trackColor = colors.hairline,
   children,
 }: Props) {
   const reduceMotion = useReduceMotion();

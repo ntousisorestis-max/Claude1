@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { blocker } from '../blocking';
+import { BrandIcon, type BrandId } from './BrandIcon';
 import { BLOCKABLE_APPS } from '../state/workoutReducer';
 import { colors, radius, spacing, TAP_TARGET, type } from '../theme';
 
@@ -87,7 +88,11 @@ export function StatusTag({
             {apps.length ? (
               apps.map(app => (
                 <View key={app.id} style={styles.pill}>
-                  <View style={[styles.dot, { backgroundColor: app.tint }]} />
+                  <BrandIcon
+                    id={app.id as BrandId}
+                    color={app.tint}
+                    hole={colors.surface}
+                  />
                   <Text style={styles.pillText}>{app.name}</Text>
                 </View>
               ))
@@ -144,8 +149,8 @@ const styles = StyleSheet.create({
   shieldTop: { flex: 1, justifyContent: 'center', gap: spacing.sm },
   shieldLock: { fontSize: 72, marginBottom: spacing.sm },
   shieldTitle: { ...type.mega, fontSize: 68, color: colors.lime },
-  shieldSub: { ...type.title, fontSize: 22, color: colors.mutedOnDark },
-  shieldApps: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  shieldSub: { ...type.helper, fontSize: 17, color: colors.mutedOnDark, lineHeight: 24 },
+  shieldApps: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -153,12 +158,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.pill,
-    backgroundColor: colors.inkSoft,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.hairline,
   },
-  dot: { width: 10, height: 10, borderRadius: 5 },
-  pillText: { ...type.body, color: colors.white },
+  pillText: { ...type.body, fontWeight: '600', color: colors.white },
   shieldFoot: { gap: spacing.md, marginTop: spacing.lg },
-  shieldNote: { ...type.body, fontSize: 13, color: colors.faintOnDark },
+  shieldNote: { ...type.helper, fontSize: 13, color: colors.faintOnDark, lineHeight: 19 },
   back: {
     minHeight: TAP_TARGET,
     borderRadius: radius.pill,

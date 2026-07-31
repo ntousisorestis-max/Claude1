@@ -67,9 +67,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
-    gap: spacing.md,
+    gap: spacing.lg,
   },
-  head: { gap: spacing.sm, paddingTop: spacing.sm },
+  head: { gap: spacing.md, paddingTop: spacing.lg },
   slabWrap: { flex: 1 },
   exercise: { ...type.display, color: colors.white },
   setLabel: { ...type.tag, color: colors.faintOnDark, marginBottom: -spacing.xs },
@@ -81,5 +81,5 @@ const styles = StyleSheet.create({
     fontSize: 34,
     color: colors.mutedOnDark,
   },
-  explain: { ...type.body, color: colors.mutedOnDark, marginTop: spacing.xs },
+  explain: { ...type.helper, color: colors.mutedOnDark, marginTop: spacing.sm },
 });

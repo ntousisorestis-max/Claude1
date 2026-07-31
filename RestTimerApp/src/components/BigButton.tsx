@@ -17,23 +17,23 @@ type Props = {
   style?: ViewStyle;
 };
 
-/** How far the face sits above its shadow, in px. */
-const LIFT = 6;
-const LIFT_SLAB = 9;
-
-/** Variants that are drawn as a solid extruded block. */
-const EXTRUDED: Record<Variant, string | null> = {
-  lime: '#7E9E00',
-  ink: 'rgba(11,11,15,0.32)',
-  outlineOnLime: null,
-  quiet: null,
-  danger: null,
-};
+/**
+ * How far the slab's face sits above its shadow block, in px.
+ * Only the slab is extruded — see below.
+ */
+const LIFT = 8;
 
 /**
- * Extruded sticker button: a solid shadow block sits under the face, and
- * pressing drives the face down onto it. Release springs it back with a little
- * overshoot, so every tap feels like it actually did something.
+ * Two kinds of button, on purpose:
+ *
+ * - **The slab** (mid-workout "Done with set") is an extruded block: a solid
+ *   shadow sits under the face and pressing drives the face down onto it. It's
+ *   the one control you hit without looking, so it gets real physical depth.
+ * - **Everything else** is flat with a tight lime glow. A chunky offset block
+ *   on every button made the screens feel heavy and cluttered.
+ *
+ * The glow is `shadow*`, which iOS and web render as a coloured shadow. Android
+ * can't tint elevation shadows, so it simply gets a clean flat button there.
  */
 export function BigButton({
   label,
@@ -45,12 +45,6 @@ export function BigButton({
 }: Props) {
   const reduceMotion = useReduceMotion();
   const press = useRef(new Animated.Value(0)).current;
-
-  const lift = slab ? LIFT_SLAB : LIFT;
-  const shadowColor = EXTRUDED[variant];
-  // Independent of `disabled`: the extrusion reserves layout space, so
-  // dropping it when disabled would resize the button the moment it enables.
-  const extruded = shadowColor != null;
 
   const settle = (to: number) => {
     if (reduceMotion) {
@@ -68,11 +62,11 @@ export function BigButton({
 
   const travel = press.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, extruded ? lift : 0],
+    outputRange: [0, slab ? LIFT : 0],
   });
   const squash = press.interpolate({
     inputRange: [0, 1],
-    outputRange: [1, extruded ? 1 : 0.97],
+    outputRange: [1, slab ? 1 : 0.97],
   });
 
   return (
@@ -87,25 +81,25 @@ export function BigButton({
       style={[
         styles.wrap,
         slab && styles.wrapSlab,
-        extruded && { paddingRight: lift, paddingBottom: lift },
-        disabled && styles.disabled,
+        // Reserved regardless of `disabled`, so the button can't resize the
+        // moment it becomes enabled.
+        slab && { paddingRight: LIFT, paddingBottom: LIFT },
         style,
       ]}>
-      {extruded ? (
-        <View
-          style={[
-            styles.shadow,
-            { left: lift, top: lift, backgroundColor: shadowColor },
-            slab && styles.shadowSlab,
-          ]}
-        />
-      ) : null}
+      {slab ? <View style={styles.shadowBlock} /> : null}
 
       <Animated.View
         style={[
           styles.face,
           styles[variant],
           slab && styles.faceSlab,
+          // The glow would read as "still active" on a dimmed button.
+          // The slab already has physical depth from its shadow block; a glow
+          // on top of it reads as two competing treatments.
+          variant === 'lime' && !slab && !disabled && styles.glow,
+          variant === 'ink' && !disabled && styles.dropShadow,
+          // A distinct off state, not a faded on state.
+          disabled && styles.faceDisabled,
           {
             transform: [
               { translateX: travel },
@@ -123,6 +117,7 @@ export function BigButton({
             variant === 'quiet' && styles.labelQuiet,
             variant === 'danger' && styles.labelDanger,
             slab && styles.labelSlab,
+            disabled && styles.labelDisabled,
           ]}>
           {label}
         </Text>
@@ -134,12 +129,14 @@ export function BigButton({
 const styles = StyleSheet.create({
   wrap: { position: 'relative' },
   wrapSlab: { flex: 1 },
-  disabled: { opacity: 0.3 },
-  shadow: {
+  shadowBlock: {
     position: 'absolute',
+    left: LIFT,
+    top: LIFT,
     right: 0,
     bottom: 0,
-    borderRadius: radius.pill,
+    borderRadius: radius.lg,
+    backgroundColor: '#7E9E00',
   },
   face: {
     minHeight: TAP_TARGET,
@@ -150,12 +147,32 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   faceSlab: { flex: 1, borderRadius: radius.lg },
-  shadowSlab: { borderRadius: radius.lg },
+
   lime: { backgroundColor: colors.lime },
   ink: { backgroundColor: colors.ink },
   outlineOnLime: { borderWidth: 2, borderColor: colors.ink },
   quiet: {},
   danger: {},
+
+  faceDisabled: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+  },
+
+  /** Tight, close to the edge — a halo, not a drop shadow. */
+  glow: {
+    shadowColor: colors.lime,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 14,
+  },
+  dropShadow: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.24,
+    shadowRadius: 10,
+  },
 
   label: { ...type.action, color: colors.white },
   labelOnLime: { color: colors.ink },
@@ -163,4 +180,5 @@ const styles = StyleSheet.create({
   labelQuiet: { ...type.tag, color: colors.mutedOnDark },
   labelDanger: { ...type.tag, color: colors.danger },
   labelSlab: { fontSize: 34, fontWeight: '900', letterSpacing: -1 },
+  labelDisabled: { color: colors.faintOnDark },
 });

@@ -75,11 +75,11 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     gap: spacing.md,
   },
-  body: { flex: 1, justifyContent: 'center', gap: spacing.md },
+  body: { flex: 1, justifyContent: 'center', gap: spacing.lg },
   hero: { gap: spacing.sm },
   badge: { fontSize: 56 },
   headline: { ...type.mega, fontSize: 52, color: colors.ink },
-  sub: { ...type.body, color: colors.mutedOnLime, marginBottom: spacing.sm },
+  sub: { ...type.helper, color: colors.mutedOnLime, marginBottom: spacing.md, lineHeight: 21 },
   card: {
     backgroundColor: colors.ink,
     borderRadius: radius.lg,
