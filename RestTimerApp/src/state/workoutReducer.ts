@@ -2,6 +2,7 @@ import type {
   BlockableApp,
   WorkoutAction,
   WorkoutConfig,
+  WorkoutDefaults,
   WorkoutState,
 } from './types';
 
@@ -23,16 +24,21 @@ export const BLOCKABLE_APPS: BlockableApp[] = [
   { id: 'reddit', name: 'Reddit', tint: '#E2894F' },
 ];
 
-const defaultConfig: WorkoutConfig = {
-  exerciseName: '',
+const factoryDefaults: WorkoutDefaults = {
   totalSets: 3,
   restSeconds: 60,
   selectedAppIds: ['tiktok', 'instagram'],
 };
 
+const defaultConfig: WorkoutConfig = {
+  exerciseName: '',
+  ...factoryDefaults,
+};
+
 export const initialState: WorkoutState = {
   phase: 'setup',
   config: defaultConfig,
+  defaults: factoryDefaults,
   currentSet: 1,
   setsCompleted: 0,
   restStartedAt: null,
@@ -50,6 +56,27 @@ function restElapsed(state: WorkoutState, now: number): number {
     return 0;
   }
   return Math.max(0, Math.round((now - state.restStartedAt) / 1000));
+}
+
+/**
+ * Writes a default, and mirrors it onto the live config while the user is
+ * still on the setup screen.
+ *
+ * Without the mirror, changing "default rest" and tapping back to a Workout
+ * tab that still reads 60s looks broken — nothing has started yet, so there's
+ * no reason for the two to disagree. Once a workout is running, the config is
+ * left alone.
+ */
+function applyDefault(
+  state: WorkoutState,
+  defaults: Partial<WorkoutDefaults>,
+  config: Partial<WorkoutConfig>,
+): WorkoutState {
+  return {
+    ...state,
+    defaults: { ...state.defaults, ...defaults },
+    config: state.phase === 'setup' ? { ...state.config, ...config } : state.config,
+  };
 }
 
 export function workoutReducer(
@@ -163,9 +190,41 @@ export function workoutReducer(
       };
     }
 
+    case 'SET_DEFAULT_SETS': {
+      const sets = clamp(Math.round(action.sets), MIN_SETS, MAX_SETS);
+      return applyDefault(state, { totalSets: sets }, { totalSets: sets });
+    }
+
+    case 'SET_DEFAULT_REST': {
+      const seconds = clamp(
+        Math.round(action.seconds),
+        MIN_REST_SECONDS,
+        MAX_REST_SECONDS,
+      );
+      return applyDefault(state, { restSeconds: seconds }, { restSeconds: seconds });
+    }
+
+    case 'TOGGLE_DEFAULT_APP': {
+      const selected = state.defaults.selectedAppIds;
+      const next = selected.includes(action.appId)
+        ? selected.filter(id => id !== action.appId)
+        : [...selected, action.appId];
+      return applyDefault(
+        state,
+        { selectedAppIds: next },
+        { selectedAppIds: next },
+      );
+    }
+
     case 'NEW_WORKOUT':
-      // Keep the config — most people repeat the same setup.
-      return { ...initialState, config: state.config };
+      // Sets, rest and apps come from Settings — that's what makes those
+      // defaults mean anything. The exercise name is not a setting, and
+      // retyping "Bench press" between workouts is pure friction, so it stays.
+      return {
+        ...initialState,
+        defaults: state.defaults,
+        config: { exerciseName: state.config.exerciseName, ...state.defaults },
+      };
 
     case 'HYDRATE':
       return action.state;

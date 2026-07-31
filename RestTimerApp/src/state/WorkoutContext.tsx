@@ -20,6 +20,9 @@ type WorkoutActions = {
   setTotalSets: (sets: number) => void;
   setRestSeconds: (seconds: number) => void;
   toggleApp: (appId: string) => void;
+  setDefaultSets: (sets: number) => void;
+  setDefaultRest: (seconds: number) => void;
+  toggleDefaultApp: (appId: string) => void;
   startWorkout: () => void;
   finishSet: () => void;
   endRest: () => void;
@@ -78,6 +81,9 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       setTotalSets: sets => dispatch({ type: 'SET_TOTAL_SETS', sets }),
       setRestSeconds: seconds => dispatch({ type: 'SET_REST_SECONDS', seconds }),
       toggleApp: appId => dispatch({ type: 'TOGGLE_APP', appId }),
+      setDefaultSets: sets => dispatch({ type: 'SET_DEFAULT_SETS', sets }),
+      setDefaultRest: seconds => dispatch({ type: 'SET_DEFAULT_REST', seconds }),
+      toggleDefaultApp: appId => dispatch({ type: 'TOGGLE_DEFAULT_APP', appId }),
       startWorkout: () => {
         requestNotificationPermission();
         dispatch({ type: 'START_WORKOUT' });

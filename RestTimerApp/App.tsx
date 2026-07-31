@@ -8,7 +8,7 @@
  * @format
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -18,10 +18,12 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { TabBar, type Tab } from './src/components/TabBar';
 import { useReduceMotion } from './src/hooks/useReduceMotion';
 import { ActiveSetScreen } from './src/screens/ActiveSetScreen';
 import { CompleteScreen } from './src/screens/CompleteScreen';
 import { RestingScreen } from './src/screens/RestingScreen';
+import { SettingsScreen } from './src/screens/SettingsScreen';
 import { SetupScreen } from './src/screens/SetupScreen';
 import { useWorkout, WorkoutProvider } from './src/state/WorkoutContext';
 import { colors } from './src/theme';
@@ -30,8 +32,19 @@ import type { Phase } from './src/state/types';
 /** Free phases flood accent; locked phases stay dark. */
 const isFree = (phase: Phase) => phase === 'resting' || phase === 'complete';
 
+/**
+ * A workout in progress owns the whole screen.
+ *
+ * Once you tap Start there is nowhere else to be, and the resting and complete
+ * screens flood violet edge to edge — a tab bar sitting on top of that flood
+ * would both break the full-screen moment and offer an escape hatch from the
+ * one screen the app exists to keep you on. The bar returns as soon as the
+ * workout ends.
+ */
+const showsTabs = (phase: Phase) => phase === 'setup';
+
 /** The workout phase is the navigation — no router needed for four screens. */
-function CurrentScreen() {
+function WorkoutTab() {
   const { state } = useWorkout();
 
   switch (state.phase) {
@@ -61,7 +74,9 @@ function Ground() {
   const { state } = useWorkout();
   const reduceMotion = useReduceMotion();
   const { width, height } = useWindowDimensions();
+  const [tab, setTab] = useState<Tab>('workout');
   const free = isFree(state.phase);
+  const tabsVisible = tab === 'settings' || showsTabs(state.phase);
 
   // Diagonal, so the disc still covers the corners at scale 1.
   const diameter = Math.ceil(Math.hypot(width, height)) + 2;
@@ -111,7 +126,10 @@ function Ground() {
       {/* Content is light on both grounds now, so the bar never flips. */}
       <StatusBar barStyle="light-content" backgroundColor={free ? colors.accentDeep : colors.ink} />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <CurrentScreen />
+        <View style={styles.screen}>
+          {tab === 'workout' ? <WorkoutTab /> : <SettingsScreen />}
+        </View>
+        {tabsVisible ? <TabBar active={tab} onChange={setTab} /> : null}
       </SafeAreaView>
     </View>
   );
@@ -129,6 +147,7 @@ function App() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.ink, overflow: 'hidden' },
+  screen: { flex: 1 },
   disc: { position: 'absolute', backgroundColor: colors.accentDeep },
   safe: { flex: 1 },
 });

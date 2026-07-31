@@ -84,7 +84,7 @@ describe('workout loop', () => {
     expect(again).toBe(resting);
   });
 
-  it('keeps the config but resets progress on a new workout', () => {
+  it('keeps the exercise name but resets progress on a new workout', () => {
     let s = workoutReducer(configured(), { type: 'START_WORKOUT' });
     s = workoutReducer(s, { type: 'END_WORKOUT' });
     s = workoutReducer(s, { type: 'NEW_WORKOUT' });
@@ -93,6 +93,55 @@ describe('workout loop', () => {
     expect(s.config.exerciseName).toBe('Bench');
     expect(s.setsCompleted).toBe(0);
     expect(s.appsLocked).toBe(false);
+  });
+
+  it('re-seeds sets and rest from the settings defaults on a new workout', () => {
+    // Configured for 2 sets / 60s rest; Settings says 5 sets / 90s.
+    let s = workoutReducer(configured(), { type: 'SET_DEFAULT_SETS', sets: 5 });
+    s = workoutReducer(s, { type: 'SET_DEFAULT_REST', seconds: 90 });
+    s = workoutReducer(s, { type: 'START_WORKOUT' });
+    s = workoutReducer(s, { type: 'END_WORKOUT' });
+    s = workoutReducer(s, { type: 'NEW_WORKOUT' });
+
+    expect(s.config.totalSets).toBe(5);
+    expect(s.config.restSeconds).toBe(90);
+  });
+});
+
+describe('settings defaults', () => {
+  it('mirrors onto the live config while still on the setup screen', () => {
+    const s = workoutReducer(configured(), { type: 'SET_DEFAULT_REST', seconds: 90 });
+
+    expect(s.defaults.restSeconds).toBe(90);
+    // Nothing has started, so the two must not disagree.
+    expect(s.config.restSeconds).toBe(90);
+  });
+
+  it('leaves a running workout alone', () => {
+    const active = workoutReducer(configured(), { type: 'START_WORKOUT' });
+    const s = workoutReducer(active, { type: 'SET_DEFAULT_REST', seconds: 90 });
+
+    expect(s.defaults.restSeconds).toBe(90);
+    expect(s.config.restSeconds).toBe(60);
+  });
+
+  it('clamps defaults to the same ranges as the setup screen', () => {
+    expect(
+      workoutReducer(initialState, { type: 'SET_DEFAULT_SETS', sets: 99 }).defaults
+        .totalSets,
+    ).toBe(20);
+    expect(
+      workoutReducer(initialState, { type: 'SET_DEFAULT_REST', seconds: 1 }).defaults
+        .restSeconds,
+    ).toBe(10);
+  });
+
+  it('toggles a default app without touching a running workout', () => {
+    const off = workoutReducer(initialState, {
+      type: 'TOGGLE_DEFAULT_APP',
+      appId: 'tiktok',
+    });
+    expect(off.defaults.selectedAppIds).not.toContain('tiktok');
   });
 });
 

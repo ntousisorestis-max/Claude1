@@ -28,9 +28,20 @@ export type WorkoutConfig = {
   selectedAppIds: string[];
 };
 
+/**
+ * What a new workout starts from. Edited on the Settings tab; the Setup screen
+ * is seeded from these every time you come back to it.
+ */
+export type WorkoutDefaults = {
+  totalSets: number;
+  restSeconds: number;
+  selectedAppIds: string[];
+};
+
 export type WorkoutState = {
   phase: Phase;
   config: WorkoutConfig;
+  defaults: WorkoutDefaults;
   /** 1-based index of the set the user is on / just finished. */
   currentSet: number;
   setsCompleted: number;
@@ -49,6 +60,10 @@ export type WorkoutAction =
   | { type: 'SET_TOTAL_SETS'; sets: number }
   | { type: 'SET_REST_SECONDS'; seconds: number }
   | { type: 'TOGGLE_APP'; appId: string }
+  /* Settings tab — these seed the next workout rather than the current one. */
+  | { type: 'SET_DEFAULT_SETS'; sets: number }
+  | { type: 'SET_DEFAULT_REST'; seconds: number }
+  | { type: 'TOGGLE_DEFAULT_APP'; appId: string }
   | { type: 'START_WORKOUT' }
   /** User tapped "Done with Set" — begins rest, or completes the workout. */
   | { type: 'FINISH_SET'; now: number }
