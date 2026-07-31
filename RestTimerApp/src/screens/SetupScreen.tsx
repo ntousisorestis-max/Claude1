@@ -11,14 +11,14 @@ import {
   View,
 } from 'react-native';
 import { BigButton } from '../components/BigButton';
-import { BrandIcon, type BrandId } from '../components/BrandIcon';
+import { BrandIcon } from '../components/BrandIcon';
 import { Segmented } from '../components/Segmented';
 import { Stepper } from '../components/Stepper';
 import { useEnter } from '../hooks/useEnter';
 import { useReduceMotion } from '../hooks/useReduceMotion';
 import { useWorkout } from '../state/WorkoutContext';
 import {
-  BLOCKABLE_APPS,
+  allBlockableApps,
   MAX_REST_SECONDS,
   MAX_SETS,
   MIN_REST_SECONDS,
@@ -26,6 +26,7 @@ import {
   REST_PRESETS,
 } from '../state/workoutReducer';
 import { colors, HAIRLINE, radius, spacing, type } from '../theme';
+import type { BrandId } from '../state/types';
 
 /**
  * Spelled out in three steps, because the whole premise — an app that
@@ -40,7 +41,7 @@ const HOW_IT_WORKS = [
 
 export function SetupScreen() {
   const {
-    state: { config },
+    state: { config, defaults },
     setExerciseName,
     setTotalSets,
     setRestSeconds,
@@ -128,10 +129,10 @@ export function SetupScreen() {
             Tap the apps you want locked while you lift.
           </Text>
           <View style={styles.apps}>
-            {BLOCKABLE_APPS.map(app => (
+            {allBlockableApps(defaults.customApps).map(app => (
               <AppPill
                 key={app.id}
-                id={app.id as BrandId}
+                brand={app.brand}
                 name={app.name}
                 tint={app.tint}
                 checked={config.selectedAppIds.includes(app.id)}
@@ -161,13 +162,13 @@ export function SetupScreen() {
 
 /** Springs when you toggle it, so picking your apps has some snap to it. */
 function AppPill({
-  id,
+  brand,
   name,
   tint,
   checked,
   onPress,
 }: {
-  id: BrandId;
+  brand?: BrandId;
   name: string;
   tint: string;
   checked: boolean;
@@ -201,6 +202,7 @@ function AppPill({
       <Pressable
         accessibilityRole="checkbox"
         accessibilityState={{ checked }}
+        aria-checked={checked}
         accessibilityLabel={name}
         onPress={onPress}
         style={({ pressed }) => [
@@ -208,12 +210,29 @@ function AppPill({
           checked && styles.appOn,
           pressed && styles.pressed,
         ]}>
-        <BrandIcon
-          id={id}
-          // Full brand colour when it's going to be blocked, drained when not.
-          color={checked ? tint : colors.faintOnDark}
-          hole={checked ? colors.raised : colors.surface}
-        />
+        {brand ? (
+          <BrandIcon
+            id={brand}
+            // Full brand colour when it's going to be blocked, drained when not.
+            color={checked ? tint : colors.faintOnDark}
+            hole={checked ? colors.raised : colors.surface}
+          />
+        ) : (
+          // Apps added by hand have no logo to draw.
+          <View
+            style={[
+              styles.monogram,
+              { borderColor: checked ? tint : colors.hairline },
+            ]}>
+            <Text
+              style={[
+                styles.monogramText,
+                { color: checked ? tint : colors.faintOnDark },
+              ]}>
+              {name.slice(0, 1).toUpperCase()}
+            </Text>
+          </View>
+        )}
         <Text style={[styles.appName, checked && styles.appNameOn]}>{name}</Text>
       </Pressable>
     </Animated.View>
@@ -281,6 +300,15 @@ const styles = StyleSheet.create({
   },
   appName: { ...type.body, fontWeight: '600', color: colors.faintOnDark },
   appNameOn: { color: colors.white },
+  monogram: {
+    width: 20,
+    height: 20,
+    borderRadius: radius.sm,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  monogramText: { fontSize: 11, fontWeight: '800' },
   note: { ...type.helper, fontSize: 13, color: colors.faintOnDark },
   pressed: { opacity: 0.85 },
 

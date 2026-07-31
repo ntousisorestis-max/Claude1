@@ -19,6 +19,7 @@ export async function scheduleRestOverNotification(
   _endsAt: number,
   _nextSet: number,
   _totalSets: number,
+  _withSound?: boolean,
 ): Promise<void> {
   // No-op: see above.
 }

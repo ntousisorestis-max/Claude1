@@ -20,6 +20,10 @@ import {
 import { initialState, workoutReducer } from './workoutReducer';
 import type { WorkoutDefaults, WorkoutState } from './types';
 
+/**
+ * Every field, deliberately. A missed one here means that setting silently
+ * never gets written — the failure is invisible until a user reports it.
+ */
 function sameDefaults(
   a: WorkoutDefaults | null,
   b: WorkoutDefaults,
@@ -28,9 +32,15 @@ function sameDefaults(
     a != null &&
     a.totalSets === b.totalSets &&
     a.restSeconds === b.restSeconds &&
-    a.selectedAppIds.length === b.selectedAppIds.length &&
-    a.selectedAppIds.every((id, i) => id === b.selectedAppIds[i])
+    a.soundEnabled === b.soundEnabled &&
+    sameIds(a.selectedAppIds, b.selectedAppIds) &&
+    a.customApps.length === b.customApps.length &&
+    a.customApps.every((app, i) => app.id === b.customApps[i]?.id)
   );
+}
+
+function sameIds(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((id, i) => id === b[i]);
 }
 
 type WorkoutActions = {
@@ -41,6 +51,10 @@ type WorkoutActions = {
   setDefaultSets: (sets: number) => void;
   setDefaultRest: (seconds: number) => void;
   toggleDefaultApp: (appId: string) => void;
+  setSoundEnabled: (enabled: boolean) => void;
+  addCustomApp: (name: string) => void;
+  removeCustomApp: (appId: string) => void;
+  resetDefaults: () => void;
   startWorkout: () => void;
   finishSet: () => void;
   endRest: () => void;
@@ -131,12 +145,19 @@ export function WorkoutProvider({
         state.restEndsAt,
         state.currentSet + 1,
         state.config.totalSets,
+        state.defaults.soundEnabled,
       );
       return () => {
         cancelRestOverNotification();
       };
     }
-  }, [state.phase, state.restEndsAt, state.currentSet, state.config.totalSets]);
+  }, [
+    state.phase,
+    state.restEndsAt,
+    state.currentSet,
+    state.config.totalSets,
+    state.defaults.soundEnabled,
+  ]);
 
   const actions = useMemo<WorkoutActions>(
     () => ({
@@ -147,6 +168,10 @@ export function WorkoutProvider({
       setDefaultSets: sets => dispatch({ type: 'SET_DEFAULT_SETS', sets }),
       setDefaultRest: seconds => dispatch({ type: 'SET_DEFAULT_REST', seconds }),
       toggleDefaultApp: appId => dispatch({ type: 'TOGGLE_DEFAULT_APP', appId }),
+      setSoundEnabled: enabled => dispatch({ type: 'SET_SOUND_ENABLED', enabled }),
+      addCustomApp: name => dispatch({ type: 'ADD_CUSTOM_APP', name }),
+      removeCustomApp: appId => dispatch({ type: 'REMOVE_CUSTOM_APP', appId }),
+      resetDefaults: () => dispatch({ type: 'RESET_DEFAULTS' }),
       startWorkout: () => {
         requestNotificationPermission();
         dispatch({ type: 'START_WORKOUT' });

@@ -15,20 +15,32 @@ import notifee, {
  * user is scrolling.
  */
 
-const CHANNEL_ID = 'rest-timer';
 const NOTIFICATION_ID = 'rest-over';
 
-let channelReady: Promise<string> | null = null;
+/**
+ * Two channels, because an Android channel's sound cannot be changed after it
+ * is created — the OS owns it from then on. Toggling sound therefore means
+ * picking a different channel, not editing one.
+ */
+const CHANNELS = {
+  loud: { id: 'rest-timer', name: 'Rest timer' },
+  silent: { id: 'rest-timer-silent', name: 'Rest timer (silent)' },
+} as const;
 
-async function ensureChannel(): Promise<string> {
-  if (!channelReady) {
-    channelReady = notifee.createChannel({
-      id: CHANNEL_ID,
-      name: 'Rest timer',
-      importance: AndroidImportance.HIGH,
+const channelReady: Partial<Record<'loud' | 'silent', Promise<string>>> = {};
+
+async function ensureChannel(withSound: boolean): Promise<string> {
+  const key = withSound ? 'loud' : 'silent';
+  if (!channelReady[key]) {
+    channelReady[key] = notifee.createChannel({
+      ...CHANNELS[key],
+      importance: withSound ? AndroidImportance.HIGH : AndroidImportance.DEFAULT,
+      // `undefined` keeps the system default; `none` silences the channel.
+      sound: withSound ? undefined : 'none',
+      vibration: withSound,
     });
   }
-  return channelReady;
+  return channelReady[key]!;
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {
@@ -46,9 +58,10 @@ export async function scheduleRestOverNotification(
   endsAt: number,
   nextSet: number,
   totalSets: number,
+  withSound: boolean = true,
 ) {
   try {
-    await ensureChannel();
+    const channelId = await ensureChannel(withSound);
     const trigger: TimestampTrigger = {
       type: TriggerType.TIMESTAMP,
       timestamp: Math.max(Date.now() + 1000, endsAt),
@@ -65,8 +78,9 @@ export async function scheduleRestOverNotification(
         id: NOTIFICATION_ID,
         title: 'Rest over — apps locked 🔒',
         body: `Start set ${nextSet} of ${totalSets}.`,
-        android: { channelId: CHANNEL_ID, pressAction: { id: 'default' } },
-        ios: { sound: 'default' },
+        android: { channelId, pressAction: { id: 'default' } },
+        // Omitting `sound` on iOS delivers the alert silently.
+        ios: withSound ? { sound: 'default' } : {},
       },
       trigger,
     );

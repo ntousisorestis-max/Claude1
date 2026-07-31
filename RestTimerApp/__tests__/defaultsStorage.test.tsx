@@ -8,7 +8,11 @@ import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 import { createMemoryDefaultsStorage } from '../src/state/defaultsStorage';
 import { useWorkout, WorkoutProvider } from '../src/state/WorkoutContext';
-import { initialState, workoutReducer } from '../src/state/workoutReducer';
+import {
+  FACTORY_DEFAULTS,
+  initialState,
+  workoutReducer,
+} from '../src/state/workoutReducer';
 import type { DefaultsStorage } from '../src/state/defaultsStorage';
 import type { WorkoutDefaults } from '../src/state/types';
 
@@ -47,6 +51,7 @@ async function mount(storage: DefaultsStorage) {
 describe('defaults persistence seam', () => {
   it('restores saved defaults on launch', async () => {
     const saved: WorkoutDefaults = {
+      ...FACTORY_DEFAULTS,
       totalSets: 7,
       restSeconds: 120,
       selectedAppIds: ['youtube'],
@@ -79,6 +84,7 @@ describe('defaults persistence seam', () => {
   it('does not write before the load has settled', async () => {
     // Otherwise the factory defaults would clobber the saved ones on launch.
     const storage = createMemoryDefaultsStorage({
+      ...FACTORY_DEFAULTS,
       totalSets: 5,
       restSeconds: 30,
       selectedAppIds: ['x'],
@@ -112,7 +118,7 @@ describe('HYDRATE_DEFAULTS', () => {
   it('clamps stored values that are out of range', async () => {
     const s = workoutReducer(initialState, {
       type: 'HYDRATE_DEFAULTS',
-      defaults: { totalSets: 999, restSeconds: 1, selectedAppIds: [] },
+      defaults: { ...FACTORY_DEFAULTS, totalSets: 999, restSeconds: 1, selectedAppIds: [] },
     });
 
     expect(s.defaults.totalSets).toBe(20);
@@ -122,17 +128,35 @@ describe('HYDRATE_DEFAULTS', () => {
   it('drops app ids the app no longer knows about', async () => {
     const s = workoutReducer(initialState, {
       type: 'HYDRATE_DEFAULTS',
-      defaults: { totalSets: 3, restSeconds: 60, selectedAppIds: ['tiktok', 'myspace'] },
+      defaults: {
+        ...FACTORY_DEFAULTS,
+        selectedAppIds: ['tiktok', 'myspace'],
+      },
     });
 
     expect(s.defaults.selectedAppIds).toEqual(['tiktok']);
+  });
+
+  it('keeps a saved selection that refers to a custom app', async () => {
+    // Filtering only against the presets would silently drop every app the
+    // user had added themselves.
+    const s = workoutReducer(initialState, {
+      type: 'HYDRATE_DEFAULTS',
+      defaults: {
+        ...FACTORY_DEFAULTS,
+        customApps: [{ id: 'custom:strava', name: 'Strava', tint: '#A78BFA' }],
+        selectedAppIds: ['tiktok', 'custom:strava'],
+      },
+    });
+
+    expect(s.defaults.selectedAppIds).toEqual(['tiktok', 'custom:strava']);
   });
 
   it('leaves a workout in progress untouched', async () => {
     const active = workoutReducer(initialState, { type: 'START_WORKOUT' });
     const s = workoutReducer(active, {
       type: 'HYDRATE_DEFAULTS',
-      defaults: { totalSets: 9, restSeconds: 120, selectedAppIds: ['x'] },
+      defaults: { ...FACTORY_DEFAULTS, totalSets: 9, restSeconds: 120, selectedAppIds: ['x'] },
     });
 
     expect(s.defaults.totalSets).toBe(9);

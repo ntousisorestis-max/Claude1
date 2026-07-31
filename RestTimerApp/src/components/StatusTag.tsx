@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { blocker } from '../blocking';
-import { BrandIcon, type BrandId } from './BrandIcon';
-import { BLOCKABLE_APPS } from '../state/workoutReducer';
+import { BrandIcon } from './BrandIcon';
+import { allBlockableApps } from '../state/workoutReducer';
+import { useWorkout } from '../state/WorkoutContext';
 import { colors, radius, spacing, TAP_TARGET, type } from '../theme';
 
 /**
@@ -26,6 +27,11 @@ export function StatusTag({
   const isMock = blocker.kind === 'mock';
   // targetSdk 36 draws modals edge to edge behind the Android system bars.
   const insets = useSafeAreaInsets();
+  const {
+    state: {
+      defaults: { customApps },
+    },
+  } = useWorkout();
 
   useEffect(() => blocker.subscribe(setLocked), []);
 
@@ -35,7 +41,11 @@ export function StatusTag({
     }
   }, [locked]);
 
-  const apps = BLOCKABLE_APPS.filter(a => selectedAppIds.includes(a.id));
+  // Reads the full list, so an app the user added is counted on the chip and
+  // shown on the shield like any preset.
+  const apps = allBlockableApps(customApps).filter(a =>
+    selectedAppIds.includes(a.id),
+  );
   const text = locked
     ? `${apps.length} APP${apps.length === 1 ? '' : 'S'} BLOCKED`
     : 'APPS UNLOCKED';
@@ -88,11 +98,11 @@ export function StatusTag({
             {apps.length ? (
               apps.map(app => (
                 <View key={app.id} style={styles.pill}>
-                  <BrandIcon
-                    id={app.id as BrandId}
-                    color={app.tint}
-                    hole={colors.surface}
-                  />
+                  {app.brand ? (
+                    <BrandIcon id={app.brand} color={app.tint} hole={colors.surface} />
+                  ) : (
+                    <View style={[styles.dot, { backgroundColor: app.tint }]} />
+                  )}
                   <Text style={styles.pillText}>{app.name}</Text>
                 </View>
               ))
@@ -162,6 +172,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.hairline,
   },
+  dot: { width: 10, height: 10, borderRadius: 5 },
   pillText: { ...type.body, fontWeight: '600', color: colors.white },
   shieldFoot: { gap: spacing.md, marginTop: spacing.lg },
   shieldNote: { ...type.helper, fontSize: 13, color: colors.faintOnDark, lineHeight: 19 },

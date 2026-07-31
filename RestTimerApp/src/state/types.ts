@@ -13,10 +13,22 @@ export type Phase = 'setup' | 'active' | 'resting' | 'complete';
  * chosen, so this list collapses into an opaque token. Keep consumers reading
  * `selectedAppIds.length` rather than the individual ids.
  */
+/** The five apps that ship with a drawn brand mark. */
+export type BrandId = 'tiktok' | 'instagram' | 'youtube' | 'x' | 'reddit';
+
 export type BlockableApp = {
   id: string;
   name: string;
-  /** Monogram tint. Stands in for the real app icon, which iOS never gives us. */
+  /** Icon tint. Stands in for the real app icon, which iOS never gives us. */
+  tint: string;
+  /** Preset apps have a drawn logo; ones you add fall back to a monogram. */
+  brand?: BrandId;
+};
+
+/** An app the user typed in themselves. */
+export type CustomApp = {
+  id: string;
+  name: string;
   tint: string;
 };
 
@@ -36,6 +48,10 @@ export type WorkoutDefaults = {
   totalSets: number;
   restSeconds: number;
   selectedAppIds: string[];
+  /** Whether the rest-over notification makes a sound. */
+  soundEnabled: boolean;
+  /** Apps added by hand, on top of the five presets. */
+  customApps: CustomApp[];
 };
 
 export type WorkoutState = {
@@ -64,6 +80,11 @@ export type WorkoutAction =
   | { type: 'SET_DEFAULT_SETS'; sets: number }
   | { type: 'SET_DEFAULT_REST'; seconds: number }
   | { type: 'TOGGLE_DEFAULT_APP'; appId: string }
+  | { type: 'SET_SOUND_ENABLED'; enabled: boolean }
+  | { type: 'ADD_CUSTOM_APP'; name: string }
+  | { type: 'REMOVE_CUSTOM_APP'; appId: string }
+  /** Back to factory settings. */
+  | { type: 'RESET_DEFAULTS' }
   | { type: 'START_WORKOUT' }
   /** User tapped "Done with Set" — begins rest, or completes the workout. */
   | { type: 'FINISH_SET'; now: number }
