@@ -5,7 +5,7 @@ them for the rest period, and re-locks them when the countdown hits zero.
 
 ```
 Setup ──Start──▶ Active Set ──Done with set──▶ Resting ──0:00 / Skip──▶ Active Set
-              apps blocked (black)          apps unlocked (lime)     apps blocked
+              apps blocked (black)          apps unlocked (violet)     apps blocked
                     └───────────── last set ─────────────▶ Complete (unlocked)
 ```
 
@@ -156,11 +156,12 @@ The logo committed today is a placeholder.
 **1. Say it in words first, then repeat it in colour.** Every screen states the
 lock status plainly — "2 apps blocked", "apps unlocked" — and each in-workout
 screen adds a line saying what happens next. The background colour then repeats
-it: black while apps are blocked, flooding lime the moment they unlock. Colour
+it: near-black while apps are blocked, flooding violet the moment they unlock.
+Colour
 is the fast confirmation, never the only signal, so the app still works if you
 can't tell the two apart.
 
-The flip is a lime disc scaling out from the centre of the screen, drawn at the
+The flip is a violet disc scaling out from the centre of the screen, drawn at the
 root so it covers the safe-area insets rather than leaving dark bands.
 
 **2. Every button says exactly what it does.** "Start workout", "Done with set",
@@ -181,7 +182,7 @@ Six pieces of motion, all RN `Animated`, no library:
 | | what | why |
 |---|---|---|
 | **Press** | button face springs onto its shadow, back with overshoot | buttons are extruded blocks; a tap should feel like it landed |
-| **Flip** | lime disc scales out from centre — 460ms open, 260ms shut | the app's loudest moment deserves the one bit of choreography |
+| **Flip** | violet disc scales out from centre — 460ms open, 260ms shut | the app's loudest moment deserves the one bit of choreography |
 | **Enter** | content fades and rises 14px on every phase change | the screen arrives instead of appearing |
 | **Heartbeat** | clock pulses once per second under 5s left | urgency, without a sound |
 | **Sweep** | ring glides between the countdown's 4Hz updates | at ring size, stepping four times a second reads as a stutter |
@@ -277,7 +278,7 @@ Two details worth knowing before you change things:
 Phase 1 is fully cross-platform — nothing in the loop is iOS-only, and the suite
 passes under Android module resolution (`npm run test:android`). Specifics:
 
-- **The lime flip and simulated shield work identically on Android.** They're
+- **The violet flip and simulated shield work identically on Android.** They're
   plain RN views, not a Screen Time feature. Only *real* blocking is iOS-first.
 - **Rest-over notifications use AlarmManager, not WorkManager.** Notifee's
   default for timestamp triggers is WorkManager, which the OS batches — hopeless
