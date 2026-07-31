@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useMemo,
   useReducer,
+  useRef,
 } from 'react';
 import { blocker } from '../blocking';
 import { lockedShut, setBanked, workoutDone } from '../haptics';
@@ -12,8 +13,25 @@ import {
   requestNotificationPermission,
   scheduleRestOverNotification,
 } from '../notifications';
+import {
+  memoryDefaultsStorage,
+  type DefaultsStorage,
+} from './defaultsStorage';
 import { initialState, workoutReducer } from './workoutReducer';
-import type { WorkoutState } from './types';
+import type { WorkoutDefaults, WorkoutState } from './types';
+
+function sameDefaults(
+  a: WorkoutDefaults | null,
+  b: WorkoutDefaults,
+): boolean {
+  return (
+    a != null &&
+    a.totalSets === b.totalSets &&
+    a.restSeconds === b.restSeconds &&
+    a.selectedAppIds.length === b.selectedAppIds.length &&
+    a.selectedAppIds.every((id, i) => id === b.selectedAppIds[i])
+  );
+}
 
 type WorkoutActions = {
   setExerciseName: (name: string) => void;
@@ -34,14 +52,59 @@ const WorkoutContext = createContext<
   { state: WorkoutState } & WorkoutActions | null
 >(null);
 
-export function WorkoutProvider({ children }: { children: React.ReactNode }) {
+export function WorkoutProvider({
+  children,
+  /**
+   * Where Settings defaults live between launches. Defaults to an in-memory
+   * store; pass an AsyncStorage- or localStorage-backed one to make them stick.
+   * See src/state/defaultsStorage.ts.
+   */
+  storage = memoryDefaultsStorage,
+}: {
+  children: React.ReactNode;
+  storage?: DefaultsStorage;
+}) {
   const [state, dispatch] = useReducer(workoutReducer, initialState);
 
-  // --- Persistence slot -----------------------------------------------------
-  // Adding AsyncStorage later means two hooks here and nothing else:
-  //   useEffect(() => { load().then(s => s && dispatch({type:'HYDRATE', state:s})) }, []);
-  //   useEffect(() => { save(state) }, [state]);
-  // -------------------------------------------------------------------------
+  // Load once on mount. Only defaults are restored — never a saved workout,
+  // which would resume a session whose rest timer expired days ago.
+  const hydrated = useRef(false);
+  const lastPersisted = useRef<WorkoutDefaults | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    storage
+      .load()
+      .then(saved => {
+        if (alive && saved) {
+          lastPersisted.current = saved;
+          dispatch({ type: 'HYDRATE_DEFAULTS', defaults: saved });
+        }
+      })
+      .catch(err => console.warn('[rest-timer] could not load defaults', err))
+      .finally(() => {
+        hydrated.current = true;
+      });
+    return () => {
+      alive = false;
+    };
+  }, [storage]);
+
+  // Save whenever they change.
+  //
+  // Two guards, both load-bearing: nothing is written until the load has
+  // settled, so factory defaults can't overwrite what's on disk; and nothing
+  // is written that matches what was just read, so a launch where the user
+  // changes nothing performs no writes at all.
+  useEffect(() => {
+    if (!hydrated.current || sameDefaults(lastPersisted.current, state.defaults)) {
+      return;
+    }
+    lastPersisted.current = state.defaults;
+    storage
+      .save(state.defaults)
+      .catch(err => console.warn('[rest-timer] could not save defaults', err));
+  }, [state.defaults, storage]);
 
   // The single place the OS-level shield is driven from. Every screen just
   // moves the state machine; locking follows from `appsLocked`.

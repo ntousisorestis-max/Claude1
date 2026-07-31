@@ -71,5 +71,11 @@ export type WorkoutAction =
   | { type: 'END_REST'; now: number }
   | { type: 'END_WORKOUT' }
   | { type: 'NEW_WORKOUT' }
-  /** Rehydrate from a storage layer (AsyncStorage) — unused in Phase 1. */
-  | { type: 'HYDRATE'; state: WorkoutState };
+  /**
+   * Defaults restored from storage on launch.
+   *
+   * Deliberately narrower than the whole state: restoring a saved *workout*
+   * would resume a session from days ago, with a `restEndsAt` long past. Only
+   * the settings are worth persisting.
+   */
+  | { type: 'HYDRATE_DEFAULTS'; defaults: WorkoutDefaults };

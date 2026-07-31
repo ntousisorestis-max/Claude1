@@ -300,9 +300,34 @@ keep-awake), and the hardware back button doesn't intercept an active workout.
 
 ## State & persistence
 
-Local only — one `useReducer` at the root, no backend. There is no persistence
-yet, but `WorkoutContext.tsx` has the slot marked: a `HYDRATE` action already
-exists, so adding AsyncStorage is two `useEffect`s and nothing else.
+One `useReducer` at the root, no backend. Two separate slices:
+
+- **`config`** — the workout you're setting up or running. Editing sets, rest
+  or apps on the Workout tab changes only this, and only for that session.
+- **`defaults`** — what the Settings tab edits, and the single source of truth
+  for what a new workout starts from. `NEW_WORKOUT` re-seeds `config` from it.
+
+While you're still on the setup screen the two are kept in step: editing a
+default also updates the live config, because nothing has started and there's
+no reason for them to disagree. Once a workout is running, changing a default
+leaves it alone.
+
+### Adding real saving
+
+`defaults` already goes through a storage seam — `src/state/defaultsStorage.ts`
+— which the app talks to instead of any storage library. Today it's backed by
+an in-memory store, so defaults reset on restart. Making them stick is one new
+file implementing `DefaultsStorage` (AsyncStorage on native, `localStorage` on
+web via a `.web.ts` twin) plus passing it to `<WorkoutProvider storage={...}>`.
+No screen, reducer or test changes. The file carries the code to copy.
+
+Two details worth keeping if you rewrite it:
+
+- **Only defaults are persisted, never the workout.** `HYDRATE_DEFAULTS` is
+  deliberately narrower than the old whole-state `HYDRATE` — restoring a saved
+  session would resume a workout whose rest timer expired days ago.
+- **Stored values are clamped and filtered on the way in**, since they're last
+  session's data and may predate a change to the limits or the app list.
 
 ## Phase 2 — real iOS blocking
 

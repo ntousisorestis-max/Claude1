@@ -226,8 +226,29 @@ export function workoutReducer(
         config: { exerciseName: state.config.exerciseName, ...state.defaults },
       };
 
-    case 'HYDRATE':
-      return action.state;
+    case 'HYDRATE_DEFAULTS': {
+      const defaults = {
+        totalSets: clamp(Math.round(action.defaults.totalSets), MIN_SETS, MAX_SETS),
+        restSeconds: clamp(
+          Math.round(action.defaults.restSeconds),
+          MIN_REST_SECONDS,
+          MAX_REST_SECONDS,
+        ),
+        selectedAppIds: action.defaults.selectedAppIds.filter(id =>
+          BLOCKABLE_APPS.some(app => app.id === id),
+        ),
+      };
+
+      // Clamped and filtered on the way in: stored values are last session's
+      // data, which may predate a change to the limits or the app list.
+      return {
+        ...state,
+        defaults,
+        // Nothing has started yet on launch, so the setup screen should show
+        // what was saved. A workout in progress is never disturbed.
+        config: state.phase === 'setup' ? { ...state.config, ...defaults } : state.config,
+      };
+    }
 
     default:
       return state;
