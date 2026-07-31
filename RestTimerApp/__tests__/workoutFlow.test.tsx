@@ -48,14 +48,20 @@ describe('full workout loop', () => {
   });
 
   afterEach(() => {
+    trees.forEach(t => ReactTestRenderer.act(() => t.unmount()));
+    trees.length = 0;
     jest.useRealTimers();
   });
+
+  /** Unmounted in afterEach so no animation outlives the test. */
+  const trees: ReactTestRenderer.ReactTestRenderer[] = [];
 
   it('locks during sets, unlocks during rest, and finishes', async () => {
     let tree!: ReactTestRenderer.ReactTestRenderer;
     await ReactTestRenderer.act(async () => {
       tree = ReactTestRenderer.create(<App />);
     });
+    trees.push(tree);
     const root = tree.root;
 
     // --- Setup ---------------------------------------------------------
@@ -106,6 +112,7 @@ describe('full workout loop', () => {
     await ReactTestRenderer.act(async () => {
       tree = ReactTestRenderer.create(<App />);
     });
+    trees.push(tree);
     const root = tree.root;
 
     type(root, 'Bench press', 'Rows');

@@ -8,6 +8,7 @@
  * notifications, haptics), because browsers can't do them.
  */
 const path = require('path');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const appDirectory = __dirname;
@@ -91,6 +92,18 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: path.resolve(appDirectory, 'public/index.html'),
+    }),
+    // The favicon and touch icon are referenced by fixed name in index.html,
+    // so they're copied verbatim rather than run through the asset pipeline,
+    // which would hash the filenames.
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: path.resolve(appDirectory, 'public'),
+          globOptions: { ignore: ['**/index.html'] },
+          noErrorOnMissing: true,
+        },
+      ],
     }),
   ],
 

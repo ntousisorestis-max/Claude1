@@ -142,6 +142,15 @@ npm run lint
 build. The web bundle builds and runs; iOS and Android are unproven until
 someone with the toolchain runs them. See [Known risks](#known-risks).
 
+## Logo and icons
+
+The single source is **`assets/logo.png`** — square PNG, 1024px or larger.
+Replace it, then run `npm run icons` to regenerate the iOS asset catalogue,
+the five Android mipmap densities and the web icons. The in-app splash reads
+the file directly and needs no command. See [assets/README.md](assets/README.md).
+
+The logo committed today is a placeholder.
+
 ## Design rules
 
 **1. Say it in words first, then repeat it in colour.** Every screen states the

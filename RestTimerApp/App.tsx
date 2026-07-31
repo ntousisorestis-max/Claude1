@@ -8,7 +8,7 @@
  * @format
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -24,6 +24,7 @@ import { ActiveSetScreen } from './src/screens/ActiveSetScreen';
 import { CompleteScreen } from './src/screens/CompleteScreen';
 import { RestingScreen } from './src/screens/RestingScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import { SplashScreen } from './src/screens/SplashScreen';
 import { SetupScreen } from './src/screens/SetupScreen';
 import { useWorkout, WorkoutProvider } from './src/state/WorkoutContext';
 import { colors } from './src/theme';
@@ -136,10 +137,16 @@ function Ground() {
 }
 
 function App() {
+  const [splashDone, setSplashDone] = useState(false);
+  const dismissSplash = useCallback(() => setSplashDone(true), []);
+
   return (
     <SafeAreaProvider>
       <WorkoutProvider>
         <Ground />
+        {/* Overlaid rather than swapped, so the app is already laid out
+            underneath by the time the logo fades. */}
+        {splashDone ? null : <SplashScreen onDone={dismissSplash} />}
       </WorkoutProvider>
     </SafeAreaProvider>
   );
