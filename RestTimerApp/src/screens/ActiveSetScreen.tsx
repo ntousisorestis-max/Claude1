@@ -1,8 +1,8 @@
 import React from 'react';
 import { Alert, Animated, StyleSheet, Text, View } from 'react-native';
 import { BigButton } from '../components/BigButton';
+import { LockStatus } from '../components/LockStatus';
 import { SetTicks } from '../components/SetTicks';
-import { StatusTag } from '../components/StatusTag';
 import { useEnter } from '../hooks/useEnter';
 import { useWorkout } from '../state/WorkoutContext';
 import { colors, spacing, tabular, type } from '../theme';
@@ -25,7 +25,7 @@ export function ActiveSetScreen() {
 
   return (
     <View style={styles.screen}>
-      <StatusTag selectedAppIds={config.selectedAppIds} />
+      <LockStatus selectedAppIds={config.selectedAppIds} />
 
       <Animated.View style={[styles.head, enterHead]}>
         <Text style={styles.exercise} numberOfLines={2}>
@@ -46,10 +46,6 @@ export function ActiveSetScreen() {
           completed={setsCompleted}
           current={currentSet}
         />
-
-        <Text style={styles.explain}>
-          Locked until this set is done.
-        </Text>
       </Animated.View>
 
       <Animated.View style={[styles.slabWrap, enterSlab]}>
@@ -81,5 +77,4 @@ const styles = StyleSheet.create({
     fontSize: 34,
     color: colors.mutedOnDark,
   },
-  explain: { ...type.helper, color: colors.mutedOnDark, marginTop: spacing.sm },
 });

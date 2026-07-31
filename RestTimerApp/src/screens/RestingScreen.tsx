@@ -1,17 +1,27 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import {
+  Animated,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { BigButton } from '../components/BigButton';
+import { LockStatus } from '../components/LockStatus';
 import { ProgressRing } from '../components/ProgressRing';
 import { SetTicks } from '../components/SetTicks';
-import { StatusTag } from '../components/StatusTag';
 import { useCountdown } from '../hooks/useCountdown';
 import { useEnter } from '../hooks/useEnter';
 import { useReduceMotion } from '../hooks/useReduceMotion';
+import { pickRestLine } from '../restLines';
 import { useWorkout } from '../state/WorkoutContext';
 import { colors, formatMMSS, spacing, tabular, type } from '../theme';
 
 /** Under this many seconds left, the clock starts ticking visibly. */
 const URGENT_AT = 5;
+
+/** Biggest the ring is allowed to get, however wide the phone is. */
+const MAX_RING = 320;
 
 /** The flooded screen: your apps are open, and you can see that across the room. */
 export function RestingScreen() {
@@ -24,24 +34,33 @@ export function RestingScreen() {
   // if we're no longer resting, so a late tick can't skip a set.
   const secondsLeft = useCountdown(restEndsAt, endRest);
   const enter = useEnter();
+  const enterRing = useEnter(70);
   const beat = useHeartbeat(secondsLeft);
+  const { width } = useWindowDimensions();
+
+  const line = useRestLine(restEndsAt);
 
   const nextSet = currentSet + 1;
+  const ring = Math.min(MAX_RING, width - spacing.lg * 2);
 
   return (
     <View style={styles.screen}>
-      <StatusTag selectedAppIds={config.selectedAppIds} onAccent />
+      <LockStatus
+        selectedAppIds={config.selectedAppIds}
+        caption={`Locking again in ${formatMMSS(secondsLeft)}`}
+        onAccent
+      />
 
       <Animated.View style={[styles.head, enter]}>
         <Text style={styles.title}>Scroll away.</Text>
-        <Text style={styles.sub}>
-          Your apps lock again when this hits zero.
-        </Text>
       </Animated.View>
 
-      <View style={styles.dial}>
+      {/* The ring is the screen. Everything else is a caption to it. */}
+      <Animated.View style={[styles.dial, enterRing]}>
         <ProgressRing
           progress={secondsLeft / config.restSeconds}
+          size={ring}
+          strokeWidth={18}
           color={colors.white}
           trackColor="rgba(255,255,255,0.22)">
           <Animated.Text style={[styles.clock, { transform: [{ scale: beat }] }]}>
@@ -51,7 +70,9 @@ export function RestingScreen() {
             {secondsLeft <= URGENT_AT ? 'LOCKING NOW' : 'REST REMAINING'}
           </Text>
         </ProgressRing>
-      </View>
+
+        <Text style={styles.line}>{line}</Text>
+      </Animated.View>
 
       <View style={styles.foot}>
         <Text style={styles.next}>
@@ -71,6 +92,26 @@ export function RestingScreen() {
       </View>
     </View>
   );
+}
+
+/**
+ * One line per rest period, held steady while the clock runs down.
+ *
+ * Re-picking on every render would flicker through the whole pool four times a
+ * second, so it's keyed to the rest period's end time: a new rest, a new line.
+ * Stored in a ref rather than state because nothing needs to re-render when it
+ * changes — the render that changes it is already happening.
+ */
+function useRestLine(restEndsAt: number | null): string {
+  const chosen = useRef<{ key: number | null; line: string }>({
+    key: null,
+    line: '',
+  });
+
+  if (chosen.current.key !== restEndsAt) {
+    chosen.current = { key: restEndsAt, line: pickRestLine() };
+  }
+  return chosen.current.line;
 }
 
 /**
@@ -109,12 +150,19 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     gap: spacing.md,
   },
-  head: { paddingTop: spacing.lg, gap: spacing.xs },
-  title: { ...type.display, fontSize: 46, color: colors.white },
-  sub: { ...type.helper, color: colors.mutedOnAccent, lineHeight: 21 },
-  dial: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  clock: { ...type.mega, ...tabular, fontSize: 80, color: colors.white },
+  head: { paddingTop: spacing.sm },
+  // Smaller than it was: the ring outranks it now.
+  title: { ...type.display, fontSize: 34, color: colors.white },
+  dial: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.lg },
+  clock: { ...type.mega, ...tabular, fontSize: 84, color: colors.white },
   until: { ...type.tag, color: colors.mutedOnAccent, marginTop: spacing.xs },
+  line: {
+    ...type.body,
+    fontSize: 17,
+    fontWeight: '600',
+    color: colors.mutedOnAccent,
+    textAlign: 'center',
+  },
   foot: { gap: spacing.sm },
   next: { ...type.body, fontWeight: '700', color: colors.white },
 });

@@ -69,7 +69,14 @@ describe('full workout loop', () => {
     expect(MockBlocker.isLocked()).toBe(false);
 
     type(root, 'Bench press', 'Squat');
+    // The controls are folded away behind Edit now — the summary is the
+    // default view, so a session tweak takes one extra tap.
+    press(root, 'Edit workout');
     press(root, 'Decrease Sets'); // 3 -> 2 sets, to keep the test short
+    // The summary tracks the controls. (The separator lives in a nested Text,
+    // which `texts` drops, so this checks the two halves it does see.)
+    expect(hasText(root, '2 sets')).toBe(true);
+    expect(hasText(root, '60s rest')).toBe(true);
     press(root, 'Start workout');
 
     // --- Set 1: apps blocked -------------------------------------------

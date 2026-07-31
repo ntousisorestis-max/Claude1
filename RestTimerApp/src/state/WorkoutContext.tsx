@@ -7,7 +7,7 @@ import React, {
   useRef,
 } from 'react';
 import { blocker } from '../blocking';
-import { lockedShut, setBanked, workoutDone } from '../haptics';
+import { lockedShut, setBanked, workoutDone, workoutStarted } from '../haptics';
 import {
   cancelRestOverNotification,
   requestNotificationPermission,
@@ -130,10 +130,27 @@ export function WorkoutProvider({
     }
   }, [state.appsLocked]);
 
-  // Buzz once when the workout finishes. Driven off the phase rather than the
-  // action, so ending early and finishing the last set both get it.
+  // Every haptic in the app, in one place.
+  //
+  // Each buzz-worthy moment *is* a phase change, so deriving them from the
+  // phase rather than firing them inside the action creators means the timer
+  // running out on its own feels exactly like tapping Skip rest, and finishing
+  // the last set can't buzz twice on its way to the summary.
+  const previousPhase = useRef(state.phase);
   useEffect(() => {
-    if (state.phase === 'complete') {
+    const from = previousPhase.current;
+    const to = state.phase;
+    previousPhase.current = to;
+
+    if (from === to) {
+      return;
+    }
+    if (to === 'active') {
+      // Coming back from rest is a re-lock; anything else is the first set.
+      (from === 'resting' ? lockedShut : workoutStarted)();
+    } else if (to === 'resting') {
+      setBanked();
+    } else if (to === 'complete') {
       workoutDone();
     }
   }, [state.phase]);
@@ -176,14 +193,9 @@ export function WorkoutProvider({
         requestNotificationPermission();
         dispatch({ type: 'START_WORKOUT' });
       },
-      finishSet: () => {
-        setBanked();
-        dispatch({ type: 'FINISH_SET', now: Date.now() });
-      },
-      endRest: () => {
-        lockedShut();
-        dispatch({ type: 'END_REST', now: Date.now() });
-      },
+      // No haptics here — see the phase-change effect above.
+      finishSet: () => dispatch({ type: 'FINISH_SET', now: Date.now() }),
+      endRest: () => dispatch({ type: 'END_REST', now: Date.now() }),
       endWorkout: () => dispatch({ type: 'END_WORKOUT' }),
       newWorkout: () => dispatch({ type: 'NEW_WORKOUT' }),
     }),

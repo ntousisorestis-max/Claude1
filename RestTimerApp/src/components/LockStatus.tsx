@@ -3,27 +3,34 @@ import { Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { blocker } from '../blocking';
 import { BrandIcon } from './BrandIcon';
+import { LockGlyph } from './LockGlyph';
 import { allBlockableApps } from '../state/workoutReducer';
 import { useWorkout } from '../state/WorkoutContext';
 import { usePressScale } from '../hooks/usePressScale';
-import { colors, radius, spacing, TAP_TARGET, type } from '../theme';
+import { colors, HAIRLINE, radius, spacing, TAP_TARGET, type } from '../theme';
 
-/**
- * The lock state as a sticker chip.
- *
- * The screen's own colour already says locked-or-free — this just spells it
- * out. On a accent ground it goes black-on-black-outline; on a dark ground it's
- * accent. Phase 1 only: tap while locked to preview the shield you'd hit opening
- * a blocked app.
- */
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function StatusTag({
+/**
+ * What is happening to your apps, right now, in words.
+ *
+ * The screen's colour already says locked-or-free — this spells it out and,
+ * more usefully, names the apps it's talking about, so "blocked" isn't an
+ * abstraction you have to trust. The padlock opens and shuts between the two
+ * states rather than swapping, which is the only moving part on the set screen.
+ *
+ * Phase 1 only: tap it while locked to preview the shield you'd hit trying to
+ * open one of those apps.
+ */
+export function LockStatus({
   selectedAppIds,
   onAccent = false,
+  /** Replaces the app list underneath — the rest screen puts the countdown here. */
+  caption,
 }: {
   selectedAppIds: string[];
   onAccent?: boolean;
+  caption?: string;
 }) {
   const [locked, setLocked] = useState(false);
   const [preview, setPreview] = useState(false);
@@ -36,7 +43,7 @@ export function StatusTag({
     },
   } = useWorkout();
 
-  const chipPress = usePressScale({ depth: 0.95, haptic: true });
+  const panelPress = usePressScale({ depth: 0.97, haptic: true });
   const backPress = usePressScale({ haptic: true });
 
   useEffect(() => blocker.subscribe(setLocked), []);
@@ -47,38 +54,55 @@ export function StatusTag({
     }
   }, [locked]);
 
-  // Reads the full list, so an app the user added is counted on the chip and
-  // shown on the shield like any preset.
+  // Reads the full list, so an app the user added is named here and shown on
+  // the shield like any preset.
   const apps = allBlockableApps(customApps).filter(a =>
     selectedAppIds.includes(a.id),
   );
-  const text = locked
-    ? `${apps.length} APP${apps.length === 1 ? '' : 'S'} BLOCKED`
-    : 'APPS UNLOCKED';
+  const names = apps.map(a => a.name).join(', ');
+  const tappable = isMock && locked;
+
+  const title = locked ? 'Apps Locked' : 'Apps Unlocked';
+  const detail =
+    caption ?? (names || (locked ? 'No apps selected' : 'Nothing was blocked'));
 
   return (
     <>
       <AnimatedPressable
-        {...chipPress.handlers}
-        accessibilityRole={isMock && locked ? 'button' : 'text'}
+        {...panelPress.handlers}
+        accessibilityRole={tappable ? 'button' : 'text'}
         accessibilityLabel={
-          isMock && locked
-            ? `${apps.length} apps blocked. Preview the block screen.`
-            : 'Apps unlocked'
+          locked
+            ? `${apps.length} apps blocked: ${names || 'none selected'}.${
+                tappable ? ' Preview the block screen.' : ''
+              }`
+            : `Apps unlocked. ${detail}`
         }
-        disabled={!isMock || !locked}
+        disabled={!tappable}
         onPress={() => setPreview(true)}
         style={[
-          styles.chip,
-          onAccent ? styles.chipOnAccent : styles.chipOnInk,
-          chipPress.style,
+          styles.panel,
+          onAccent ? styles.panelOnAccent : styles.panelOnInk,
+          panelPress.style,
         ]}>
-        <Text style={[styles.chipText, onAccent ? styles.textOnAccent : styles.textOnInk]}>
-          {text}
-        </Text>
-        {isMock && locked ? (
-          <Text style={styles.peek}>TAP TO SEE</Text>
-        ) : null}
+        <LockGlyph
+          locked={locked}
+          color={onAccent ? colors.white : colors.accent}
+        />
+
+        <View style={styles.words}>
+          <Text style={styles.title}>{title}</Text>
+          <Text
+            style={[
+              styles.detail,
+              onAccent ? styles.detailOnAccent : styles.detailOnInk,
+            ]}
+            numberOfLines={2}>
+            {detail}
+          </Text>
+        </View>
+
+        {tappable ? <Text style={styles.peek}>PREVIEW</Text> : null}
       </AnimatedPressable>
 
       <Modal
@@ -94,7 +118,11 @@ export function StatusTag({
             },
           ]}>
           <View style={styles.shieldTop}>
-            <Text style={styles.shieldLock}>🔒</Text>
+            {/* Boxed, or the glyph's own centring would stretch it across the
+                width and knock it out of line with the text below. */}
+            <View style={styles.shieldGlyph}>
+              <LockGlyph locked color={colors.accent} size={64} />
+            </View>
             <Text style={styles.shieldTitle}>Blocked</Text>
             <Text style={styles.shieldSub}>
               Finish your set, then these unlock for your rest:
@@ -140,21 +168,26 @@ export function StatusTag({
 }
 
 const styles = StyleSheet.create({
-  chip: {
-    alignSelf: 'flex-start',
+  panel: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.md,
     paddingHorizontal: spacing.md,
-    paddingVertical: 7,
-    borderRadius: radius.pill,
-    borderWidth: 2,
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: HAIRLINE,
   },
-  chipOnInk: { borderColor: colors.accent, backgroundColor: colors.accentWash },
-  chipOnAccent: { borderColor: colors.white, backgroundColor: 'transparent' },
-  chipText: { ...type.tag },
-  textOnInk: { color: colors.accent },
-  textOnAccent: { color: colors.white },
+  panelOnInk: { backgroundColor: colors.surface, borderColor: colors.hairline },
+  panelOnAccent: {
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderColor: 'rgba(255,255,255,0.28)',
+  },
+  words: { flex: 1, gap: 2 },
+  // White on both grounds — the panel behind it changes, the words don't.
+  title: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2, color: colors.white },
+  detail: { ...type.helper, fontSize: 13, lineHeight: 18 },
+  detailOnInk: { color: colors.mutedOnDark },
+  detailOnAccent: { color: colors.mutedOnAccent },
   peek: { ...type.tag, fontSize: 10, color: colors.faintOnDark },
 
   shield: {
@@ -164,8 +197,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   shieldTop: { flex: 1, justifyContent: 'center', gap: spacing.sm },
-  shieldLock: { fontSize: 72, marginBottom: spacing.sm },
-  shieldTitle: { ...type.mega, fontSize: 68, color: colors.accent },
+  shieldGlyph: { alignItems: 'flex-start' },
+  shieldTitle: { ...type.mega, fontSize: 68, color: colors.accent, marginTop: spacing.lg },
   shieldSub: { ...type.helper, fontSize: 17, color: colors.mutedOnDark, lineHeight: 24 },
   shieldApps: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
   pill: {

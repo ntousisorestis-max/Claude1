@@ -112,10 +112,16 @@ function Ground() {
             borderRadius: diameter / 2,
             left: (width - diameter) / 2,
             top: (height - diameter) / 2,
+            // Scale never reaches exactly 0 — some Android builds drop a
+            // zero-scaled view rather than animating it back up — which leaves
+            // a single violet pixel sitting in the middle of every locked
+            // screen. Fading the last sliver out hides it.
+            opacity: reveal.interpolate({
+              inputRange: [0, 0.01, 1],
+              outputRange: [0, 1, 1],
+            }),
             transform: [
               {
-                // Never exactly 0 — some Android builds drop a zero-scaled view
-                // rather than animating it back up.
                 scale: reveal.interpolate({
                   inputRange: [0, 1],
                   outputRange: [0.001, 1],

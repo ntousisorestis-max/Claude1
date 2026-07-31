@@ -6,13 +6,18 @@
 
 Requirements:
 - **PNG**, square, **1024×1024 or larger**
-- Design it edge-to-edge. iOS rounds the corners itself and Android may mask
-  it to a circle, so keep anything important away from the very edges.
-- Transparency is fine. The icon generator flattens it onto the app's dark
-  background, because iOS rejects icons with an alpha channel.
+- **A transparent background is strongly preferred.** The splash screen draws
+  this file directly on the app's background with nothing around it — no card,
+  no border. A logo painted edge-to-edge on its own colour will therefore show
+  up as a coloured tile floating on the dark screen. Transparent art has no
+  edge to see.
+- Keep anything important away from the very edges: iOS rounds the corners of
+  the app icon and Android may mask it to a circle.
+- The icon generator flattens transparency onto the app's dark background, so
+  a transparent source still produces valid opaque app icons.
 
-The file currently in this folder is a **placeholder** — a dumbbell on violet.
-Overwrite it with yours.
+The file currently in this folder is a **placeholder** — a violet dumbbell on a
+transparent ground. Overwrite it with yours.
 
 ## After you replace it
 

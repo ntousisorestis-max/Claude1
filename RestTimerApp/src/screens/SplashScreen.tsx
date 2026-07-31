@@ -170,9 +170,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.xl,
   },
-  // No border radius: the logo brings its own shape and its own dark ground,
-  // which melts into this screen.
-  logo: { width: 148, height: 148 },
+  /**
+   * The mark sits straight on the screen: no card, no border, no radius, no
+   * background of its own. The only thing that can put a box around it is the
+   * PNG — a logo drawn edge-to-edge on its own colour will read as a tile here,
+   * however this is styled. The shipped placeholder is therefore transparent.
+   */
+  logo: { width: 168, height: 168 },
   dots: { flexDirection: 'row', gap: spacing.sm },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.accent },
   dotStill: { opacity: 0.5 },

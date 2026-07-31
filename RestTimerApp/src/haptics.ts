@@ -1,8 +1,12 @@
 import { Platform, Vibration } from 'react-native';
 
 /**
- * Physical feedback on the moments that matter: banking a set, the lock
- * snapping shut, finishing the workout.
+ * Physical feedback on the four moments that matter: starting, banking a set,
+ * the lock snapping shut again, finishing.
+ *
+ * All four are fired from one place — the phase-change effect in
+ * WorkoutContext — so rest running out on its own feels identical to skipping
+ * it, and no screen has to remember to buzz.
  *
  * **Android only, deliberately.** `Vibration` is core React Native, so this
  * costs no dependency — but on iOS it ignores the duration and fires a fixed
@@ -35,7 +39,16 @@ export function tap() {
   androidOnly(8);
 }
 
-/** A set is banked. Short and affirmative. */
+/**
+ * The workout just started and the shield went up. A rising two-beat: this is
+ * the same "locked" news as `lockedShut`, but it's the start of everything, so
+ * it gets a little more weight.
+ */
+export function workoutStarted() {
+  androidOnly([0, 16, 70, 30]);
+}
+
+/** A set is banked and rest has begun. Short and affirmative. */
 export function setBanked() {
   androidOnly(22);
 }

@@ -255,12 +255,14 @@ src/
     index.ts                 picks the real blocker if the native module exists
   screens/                   Setup / ActiveSet / Resting / Complete
   components/                BigButton, Stepper, Segmented, ProgressRing,
-                             SetTicks, StatusTag
+                             SetTicks, LockStatus, LockGlyph
   hooks/useCountdown.ts      wall-clock countdown
   hooks/useEnter.ts          screen entry animation
+  hooks/usePressScale.ts     shared press-in spring for every tappable
   hooks/useReduceMotion.ts   OS reduce-motion setting
   notifications.ts           OS-scheduled "rest over" alert
-  haptics.ts                 buzz on set banked / lock shut / workout done
+  haptics.ts                 buzz on start / set banked / lock shut / done
+  restLines.ts               the rest screen's one-liners
   theme.ts                   palette, type scale, spacing
 ```
 
@@ -356,7 +358,8 @@ One product consequence, worth deciding on before Phase 2: **Apple never tells t
 app which apps the user picked.** `FamilyActivityPicker` hands back an opaque
 token. The Setup screen's checkbox list therefore becomes a single "Choose apps"
 button, and the UI can only ever say "3 apps blocked", never "TikTok blocked".
-`StatusTag` and the Setup screen are written so that swap is contained.
+`LockStatus` and the Setup screen are written so that swap is contained — both
+name apps from one list, and both have a count to fall back to.
 
 ## Not in scope (yet)
 

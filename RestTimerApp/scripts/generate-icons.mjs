@@ -17,7 +17,15 @@ import sharp from 'sharp';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCE = join(root, 'assets', 'logo.png');
 
-/** iOS icons must be fully opaque, so anything transparent lands on this. */
+/**
+ * What transparency lands on.
+ *
+ * Every icon here is flattened, not just the ones the platforms demand it for.
+ * A launcher icon with holes in it shows whatever wallpaper is behind it, which
+ * looks broken rather than transparent — and the shipped logo has a transparent
+ * ground on purpose, so the in-app splash can sit the mark straight on the
+ * screen with no box around it.
+ */
 const OPAQUE_BACKGROUND = { r: 15, g: 11, b: 26, alpha: 1 }; // colors.ink
 
 const ANDROID_DENSITIES = {
@@ -62,14 +70,15 @@ async function main() {
   }
 
   const square = (size) =>
-    sharp(SOURCE).resize(size, size, { fit: 'fill' }).png();
+    sharp(SOURCE)
+      .resize(size, size, { fit: 'fill' })
+      .flatten({ background: OPAQUE_BACKGROUND })
+      .png();
 
   // ---- iOS -----------------------------------------------------------------
   const iosDir = join(root, 'ios', 'RestTimerApp', 'Images.xcassets', 'AppIcon.appiconset');
   mkdirSync(iosDir, { recursive: true });
-  await square(1024)
-    .flatten({ background: OPAQUE_BACKGROUND })
-    .toFile(join(iosDir, 'icon-1024.png'));
+  await square(1024).toFile(join(iosDir, 'icon-1024.png'));
   writeFileSync(
     join(iosDir, 'Contents.json'),
     JSON.stringify(IOS_CONTENTS, null, 2) + '\n',
@@ -100,10 +109,7 @@ async function main() {
   mkdirSync(publicDir, { recursive: true });
   await square(192).toFile(join(publicDir, 'icon-192.png'));
   await square(512).toFile(join(publicDir, 'icon-512.png'));
-  // Home-screen icons on iOS are composited on white if left transparent.
-  await square(180)
-    .flatten({ background: OPAQUE_BACKGROUND })
-    .toFile(join(publicDir, 'apple-touch-icon.png'));
+  await square(180).toFile(join(publicDir, 'apple-touch-icon.png'));
   console.log('web      icon-192, icon-512, apple-touch-icon');
 
   console.log('\nDone. The in-app splash reads assets/logo.png directly, so it\n' +
