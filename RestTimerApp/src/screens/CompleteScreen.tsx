@@ -4,7 +4,7 @@ import { BigButton } from '../components/BigButton';
 import { SetTicks } from '../components/SetTicks';
 import { useEnter } from '../hooks/useEnter';
 import { useWorkout } from '../state/WorkoutContext';
-import { colors, formatMMSS, radius, spacing, tabular, type } from '../theme';
+import { colors, formatMMSS, radius, spacing, tabular, type, sized } from '../theme';
 
 /** Also flooded: the workout is over, so the phone is yours again. */
 export function CompleteScreen() {
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   body: { flex: 1, justifyContent: 'center', gap: spacing.lg },
   hero: { gap: spacing.sm },
   badge: { fontSize: 56 },
-  headline: { ...type.mega, fontSize: 52, color: colors.white },
+  headline: { ...sized(type.mega, 52), color: colors.white },
   sub: { ...type.helper, color: colors.mutedOnAccent, marginBottom: spacing.md, lineHeight: 21 },
   card: {
     backgroundColor: colors.ink,

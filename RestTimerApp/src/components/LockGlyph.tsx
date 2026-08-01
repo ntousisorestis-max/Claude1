@@ -1,20 +1,50 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
+import Svg, { Path, Rect } from 'react-native-svg';
 import { useReduceMotion } from '../hooks/useReduceMotion';
 
 /**
- * A padlock whose shackle actually opens.
+ * A padlock whose shackle actually swings open.
  *
- * Built from two views rather than an SVG path: the body is a rounded
- * rectangle, and the shackle is a view with only its top borders drawn and its
- * top corners fully rounded, which leaves a half-circle arch. That means the
- * open/shut animation is pure `transform` — it runs on the native driver and
- * keeps 60fps while a countdown re-renders underneath it.
+ * Drawn as SVG in a 24-unit box. It used to be built from two plain views, with
+ * the shackle faked as a `View` with only its top borders drawn — but CSS
+ * mitres border corners, so with `borderBottomWidth: 0` the side borders taper
+ * to points and the "arch" renders as a wedge. Closed it just about passed;
+ * open, tilted away from the body, it read as a floating loop rather than a
+ * lock.
  *
- * There is no transform-origin in React Native, so the hinge is faked: the
- * shackle lifts, slides right and tilts at the same time, which reads as
- * pivoting on its right foot.
+ * The shackle is hinged on the base of its right leg, so opening is a real
+ * rotation about a real pivot rather than a slide. React Native has no
+ * transform-origin, so the pivot is the standard translate-rotate-translate
+ * sandwich — which keeps the whole thing on transforms, and therefore on the
+ * native driver.
+ *
+ * Nothing animates an SVG prop: the two SVGs are static and the RN view around
+ * the shackle is what moves. That also keeps it clear of the `collapsable`
+ * warning that animated SVG children produce on the web.
  */
+
+/** The drawing grid. All geometry below is in these units. */
+const BOX = 24;
+
+/**
+ * Left leg up, semicircle over, right leg down. Both ends run a little past
+ * the body's top edge so they're hidden behind it when the lock is shut.
+ */
+const SHACKLE = 'M6 11 V7.5 A4 4 0 0 1 14 7.5 V11';
+
+/** The body. Sits left of centre, leaving room for the shackle to swing clear. */
+const BODY = { x: 2.5, y: 10.5, width: 15, height: 11, rx: 2.6 };
+
+/**
+ * Where the shackle goes when open: up and to the right, still upright.
+ *
+ * Every recognisable open-padlock icon — Material, Feather, SF Symbols — keeps
+ * the shackle vertical and lifts it off the body. Tilting it, which is what a
+ * real padlock does, reads as a question mark at 26px rather than as a lock.
+ */
+const OPEN_OFFSET = { x: 5.5, y: -1.5 };
+
 export function LockGlyph({
   locked,
   color,
@@ -22,7 +52,7 @@ export function LockGlyph({
 }: {
   locked: boolean;
   color: string;
-  /** Width of the lock body, in px. Everything else scales off it. */
+  /** Width of the whole glyph, in px. Everything scales off it. */
   size?: number;
 }) {
   const reduceMotion = useReduceMotion();
@@ -36,68 +66,54 @@ export function LockGlyph({
     }
     const animation = Animated.spring(open, {
       toValue: target,
-      speed: 14,
-      bounciness: 9,
+      speed: 13,
+      bounciness: 8,
       useNativeDriver: true,
     });
     animation.start();
     return () => animation.stop();
   }, [locked, open, reduceMotion]);
 
-  const bodyHeight = size * 0.7;
-  const shackleWidth = size * 0.6;
-  // Taller than a semicircle, so the arch has straight legs under it. At
-  // exactly half its width it has none, and the whole glyph reads as a handbag.
-  const shackleHeight = size * 0.5;
-  const stroke = Math.max(2, Math.round(size * 0.1));
-
-  const range = (from: number, to: number) =>
-    open.interpolate({ inputRange: [0, 1], outputRange: [from, to] });
+  const scale = size / BOX;
+  const lift = (distance: number) =>
+    open.interpolate({ inputRange: [0, 1], outputRange: [0, distance * scale] });
 
   return (
     // Purely decorative: it carries no text, and the panel around it owns the
     // accessibility label that says the same thing in words.
-    <View style={styles.wrap}>
+    <View style={[styles.box, { width: size, height: size }]}>
+      {/* Behind the body, so both legs disappear into it when shut. */}
       <Animated.View
         style={[
-          styles.shackle,
+          styles.layer,
           {
-            width: shackleWidth,
-            height: shackleHeight,
-            borderColor: color,
-            borderWidth: stroke,
-            // Half the width, so the top is a true semicircle.
-            borderTopLeftRadius: shackleWidth / 2,
-            borderTopRightRadius: shackleWidth / 2,
-            // Tucks the shackle's feet behind the body.
-            marginBottom: -stroke,
             transform: [
-              { translateY: range(0, -size * 0.24) },
-              { translateX: range(0, size * 0.15) },
-              {
-                rotate: open.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ['0deg', '16deg'],
-                }),
-              },
+              { translateX: lift(OPEN_OFFSET.x) },
+              { translateY: lift(OPEN_OFFSET.y) },
             ],
           },
-        ]}
-      />
-      <View
-        style={{
-          width: size,
-          height: bodyHeight,
-          borderRadius: Math.round(size * 0.22),
-          backgroundColor: color,
-        }}
-      />
+        ]}>
+        <Svg width={size} height={size} viewBox={`0 0 ${BOX} ${BOX}`}>
+          <Path
+            d={SHACKLE}
+            stroke={color}
+            strokeWidth={2.4}
+            strokeLinecap="round"
+            fill="none"
+          />
+        </Svg>
+      </Animated.View>
+
+      <View style={styles.layer} pointerEvents="none">
+        <Svg width={size} height={size} viewBox={`0 0 ${BOX} ${BOX}`}>
+          <Rect {...BODY} fill={color} />
+        </Svg>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center' },
-  /** Everything else about the shackle is computed from `size`. */
-  shackle: { borderBottomWidth: 0 },
+  box: { alignItems: 'center', justifyContent: 'center' },
+  layer: { position: 'absolute', top: 0, left: 0 },
 });

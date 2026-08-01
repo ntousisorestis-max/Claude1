@@ -14,7 +14,7 @@ import {
   MIN_SETS,
   REST_PRESETS,
 } from '../state/workoutReducer';
-import { colors, HAIRLINE, radius, spacing, type } from '../theme';
+import { colors, HAIRLINE, radius, spacing, type, sized } from '../theme';
 import type { BlockableApp, Exercise } from '../state/types';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
 
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
   headText: { flex: 1, gap: 2 },
-  name: { ...type.title, fontSize: 26, color: colors.white },
+  name: { ...sized(type.title, 26), color: colors.white },
   summary: { ...type.body, fontWeight: '700', color: colors.accentText },
   dot: { color: colors.faintOnDark },
   blocked: { ...type.helper, fontSize: 13, color: colors.mutedOnDark, lineHeight: 18 },

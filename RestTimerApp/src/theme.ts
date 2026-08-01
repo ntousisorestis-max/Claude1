@@ -104,6 +104,35 @@ export const type = {
   tag: { fontSize: 12, fontWeight: '700', letterSpacing: 1.3 },
 } as const;
 
+/**
+ * Re-sizes one of the scale's steps, carrying its tracking with it.
+ *
+ * The tracking above is written in pixels but *means* a proportion of the size:
+ * `mega`'s -5 is -5.4% of 92px. Spreading `...type.mega` and overriding only
+ * `fontSize` therefore keeps tracking meant for a much larger face — at 52px
+ * that same -5px is -9.6%, which is enough to shove the two l's of "Called"
+ * into each other.
+ *
+ * So don't do that. Use this instead:
+ *
+ * ```ts
+ * headline: { ...sized(type.mega, 52), color: colors.white }
+ * ```
+ *
+ * It reads the ratio off the token, so a change to the scale flows through to
+ * everything derived from it.
+ */
+export function sized<T extends { fontSize: number; letterSpacing: number }>(
+  scale: T,
+  fontSize: number,
+): T {
+  return {
+    ...scale,
+    fontSize,
+    letterSpacing: (scale.letterSpacing / scale.fontSize) * fontSize,
+  };
+}
+
 /** Digits must not jitter as they count down. */
 export const tabular = { fontVariant: ['tabular-nums' as const] };
 

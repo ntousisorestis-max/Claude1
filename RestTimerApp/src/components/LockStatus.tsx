@@ -7,7 +7,7 @@ import { LockGlyph } from './LockGlyph';
 import { allBlockableApps } from '../state/workoutReducer';
 import { useWorkout } from '../state/WorkoutContext';
 import { usePressScale } from '../hooks/usePressScale';
-import { colors, HAIRLINE, radius, spacing, TAP_TARGET, type } from '../theme';
+import { colors, HAIRLINE, radius, spacing, TAP_TARGET, type, sized } from '../theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   detail: { ...type.helper, fontSize: 13, lineHeight: 18 },
   detailOnInk: { color: colors.mutedOnDark },
   detailOnAccent: { color: colors.mutedOnAccent },
-  peek: { ...type.tag, fontSize: 10, color: colors.mutedOnDark },
+  peek: { ...sized(type.tag, 10), color: colors.mutedOnDark },
 
   shield: {
     flex: 1,
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   },
   shieldTop: { flex: 1, justifyContent: 'center', gap: spacing.sm },
   shieldGlyph: { alignItems: 'flex-start' },
-  shieldTitle: { ...type.mega, fontSize: 68, color: colors.accent, marginTop: spacing.lg },
+  shieldTitle: { ...sized(type.mega, 68), color: colors.accent, marginTop: spacing.lg },
   shieldSub: { ...type.helper, fontSize: 17, color: colors.mutedOnDark, lineHeight: 24 },
   shieldApps: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
   pill: {

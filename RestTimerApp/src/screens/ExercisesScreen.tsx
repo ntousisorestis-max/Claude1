@@ -19,7 +19,7 @@ import {
   MAX_EXERCISE_NAME_LENGTH,
   MAX_EXERCISES,
 } from '../state/workoutReducer';
-import { colors, HAIRLINE, radius, spacing, type } from '../theme';
+import { colors, HAIRLINE, radius, spacing, type, sized } from '../theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
 
   head: { gap: spacing.sm },
   eyebrow: { ...type.tag, color: colors.accentText },
-  masthead: { ...type.display, fontSize: 42, color: colors.white },
+  masthead: { ...sized(type.display, 42), color: colors.white },
   stop: { color: colors.accent },
 
   list: { gap: spacing.md },
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingVertical: spacing.lg,
   },
-  emptyTitle: { ...type.title, fontSize: 24, color: colors.white },
+  emptyTitle: { ...sized(type.title, 24), color: colors.white },
   emptyBody: { ...type.helper, color: colors.mutedOnDark, lineHeight: 22 },
 
   composer: {
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
     borderWidth: HAIRLINE,
     borderColor: colors.hairline,
   },
-  saveText: { ...type.action, fontSize: 17, color: colors.white },
+  saveText: { ...sized(type.action, 17), color: colors.white },
   saveTextOff: { color: colors.faintOnDark },
   cancel: {
     minHeight: 52,
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addOff: { opacity: 0.4 },
-  addText: { ...type.action, fontSize: 17, color: colors.accentText },
+  addText: { ...sized(type.action, 17), color: colors.accentText },
   addTextOff: { color: colors.faintOnDark },
 
   note: { ...type.helper, fontSize: 13, color: colors.faintOnDark, lineHeight: 18 },

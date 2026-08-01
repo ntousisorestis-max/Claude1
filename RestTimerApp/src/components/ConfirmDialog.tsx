@@ -1,7 +1,7 @@
 import React from 'react';
 import { Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { usePressScale } from '../hooks/usePressScale';
-import { colors, HAIRLINE, radius, spacing, TAP_TARGET, type } from '../theme';
+import { colors, HAIRLINE, radius, spacing, TAP_TARGET, type, sized } from '../theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: spacing.sm,
   },
-  title: { ...type.title, fontSize: 26, color: colors.white },
+  title: { ...sized(type.title, 26), color: colors.white },
   message: {
     ...type.helper,
     color: colors.mutedOnDark,
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  confirmText: { ...type.action, fontSize: 17, color: colors.danger },
+  confirmText: { ...sized(type.action, 17), color: colors.danger },
   cancel: {
     minHeight: TAP_TARGET,
     borderRadius: radius.pill,
@@ -130,5 +130,5 @@ const styles = StyleSheet.create({
   },
   /** The safe choice is the solid one: destructive actions shouldn't be the
    * thing your thumb lands on by default. */
-  cancelText: { ...type.action, fontSize: 17, color: colors.white },
+  cancelText: { ...sized(type.action, 17), color: colors.white },
 });

@@ -23,7 +23,7 @@ import {
   MAX_CUSTOM_APPS,
 } from '../state/workoutReducer';
 import { APP_NAME, APP_VERSION } from '../appInfo';
-import { colors, HAIRLINE, radius, spacing, type } from '../theme';
+import { colors, HAIRLINE, radius, spacing, type, sized } from '../theme';
 
 /**
  * App-wide preferences — and only those.
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     gap: spacing.xxl,
   },
   eyebrow: { ...type.tag, color: colors.accentText, marginBottom: spacing.sm },
-  masthead: { ...type.display, fontSize: 46, color: colors.white },
+  masthead: { ...sized(type.display, 46), color: colors.white },
   stop: { color: colors.accent },
   intro: {
     ...type.helper,
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dangerOff: { borderColor: colors.hairline },
-  dangerText: { ...type.action, fontSize: 17, color: colors.danger },
+  dangerText: { ...sized(type.action, 17), color: colors.danger },
   dangerTextOff: { color: colors.faintOnDark },
 
   about: {

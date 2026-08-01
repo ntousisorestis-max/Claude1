@@ -2,7 +2,7 @@ import React from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { usePressScale } from '../hooks/usePressScale';
-import { colors, HAIRLINE, spacing, type } from '../theme';
+import { colors, HAIRLINE, spacing, type, sized } from '../theme';
 
 export type Tab = 'workout' | 'settings';
 
@@ -104,5 +104,5 @@ const styles = StyleSheet.create({
   },
   tab: { flex: 1, paddingVertical: spacing.sm },
   tabInner: { alignItems: 'center', justifyContent: 'center', gap: 5 },
-  label: { ...type.tag, fontSize: 11 },
+  label: { ...sized(type.tag, 11) },
 });

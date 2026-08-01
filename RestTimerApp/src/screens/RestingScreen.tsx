@@ -15,7 +15,7 @@ import { useEnter } from '../hooks/useEnter';
 import { useReduceMotion } from '../hooks/useReduceMotion';
 import { pickRestLine } from '../restLines';
 import { useWorkout } from '../state/WorkoutContext';
-import { colors, formatMMSS, spacing, tabular, type } from '../theme';
+import { colors, formatMMSS, spacing, tabular, type, sized } from '../theme';
 
 /** Under this many seconds left, the clock starts ticking visibly. */
 const URGENT_AT = 5;
@@ -152,9 +152,9 @@ const styles = StyleSheet.create({
   },
   head: { paddingTop: spacing.sm },
   // Smaller than it was: the ring outranks it now.
-  title: { ...type.display, fontSize: 34, color: colors.white },
+  title: { ...sized(type.display, 34), color: colors.white },
   dial: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.lg },
-  clock: { ...type.mega, ...tabular, fontSize: 84, color: colors.white },
+  clock: { ...sized(type.mega, 84), ...tabular, color: colors.white },
   until: { ...type.tag, color: colors.mutedOnAccent, marginTop: spacing.xs },
   line: {
     ...type.body,
