@@ -27,6 +27,7 @@ const SOURCE = join(root, 'assets', 'logo.png');
  * screen with no box around it.
  */
 const OPAQUE_BACKGROUND = { r: 15, g: 11, b: 26, alpha: 1 }; // colors.ink
+const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 };
 
 const ANDROID_DENSITIES = {
   'mipmap-mdpi': 48,
@@ -34,6 +35,22 @@ const ANDROID_DENSITIES = {
   'mipmap-xhdpi': 96,
   'mipmap-xxhdpi': 144,
   'mipmap-xxxhdpi': 192,
+};
+
+/**
+ * The notification small icon, at 24dp across the density buckets.
+ *
+ * Android draws this as a **silhouette**: it keeps the alpha channel and throws
+ * the colours away, tinting what's left with `android.color`. Handing it the
+ * full-colour launcher icon gives you a solid white blob, so this is generated
+ * separately — the logo's alpha, filled white.
+ */
+const ANDROID_NOTIFICATION_DENSITIES = {
+  'drawable-mdpi': 24,
+  'drawable-hdpi': 36,
+  'drawable-xhdpi': 48,
+  'drawable-xxhdpi': 72,
+  'drawable-xxxhdpi': 96,
 };
 
 /**
@@ -102,6 +119,32 @@ async function main() {
       .toFile(join(out, 'ic_launcher_round.png'));
 
     console.log(`android  ${dir}/ (${size}px)`);
+  }
+
+  // ---- Android notification icon -------------------------------------------
+  for (const [dir, size] of Object.entries(ANDROID_NOTIFICATION_DENSITIES)) {
+    const out = join(root, 'android', 'app', 'src', 'main', 'res', dir);
+    mkdirSync(out, { recursive: true });
+
+    // Material wants the glyph inset inside the 24dp box rather than bleeding
+    // to its edges, so it's drawn at ~80% and padded back out.
+    const glyph = Math.round(size * 0.8);
+    const pad = Math.round((size - glyph) / 2);
+
+    const alpha = await sharp(SOURCE)
+      .resize(glyph, glyph, { fit: 'contain', background: TRANSPARENT })
+      .extend({ top: pad, bottom: size - glyph - pad, left: pad, right: size - glyph - pad, background: TRANSPARENT })
+      .extractChannel('alpha')
+      .toBuffer();
+
+    await sharp({
+      create: { width: size, height: size, channels: 3, background: '#ffffff' },
+    })
+      .joinChannel(alpha)
+      .png()
+      .toFile(join(out, 'ic_notification.png'));
+
+    console.log(`android  ${dir}/ic_notification.png (${size}px)`);
   }
 
   // ---- Web -----------------------------------------------------------------

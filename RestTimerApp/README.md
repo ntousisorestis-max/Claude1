@@ -310,8 +310,22 @@ Two details worth knowing before you change things:
   tick, because JS timers get throttled or suspended the moment the user leaves
   for TikTok — which is the entire point of the rest period. If the deadline
   passed while the app was suspended, the re-lock fires on the next foreground.
-- **The rest-over notification is scheduled with the OS**, not fired by a JS
+- **The "Time's up!" notification is scheduled with the OS**, not fired by a JS
   timer, for the same reason.
+- **Tapping it is routed into the state machine, not left to the OS.** The
+  handler dispatches `END_REST`, which is exactly the "rest is over, next set"
+  transition — so a tap lands you on the set you were about to do rather than
+  on whatever screen the app happened to be showing. The reducer ignores
+  `END_REST` unless the phase is still `resting`, which makes a stale or
+  duplicated tap a no-op instead of a skipped set. See
+  `onRestNotificationPress` in `notifications.ts` for the three arrival routes
+  (foreground, background, cold start).
+- **A cold start can't resume the workout**, because the workout is
+  deliberately never persisted — only the exercise list and preferences are.
+  Tap the alert after the OS has killed the app and you land on your list, not
+  mid-set. Fixing that means persisting the live workout with a freshness
+  window, so a session from eight hours ago isn't resumed; it's a design
+  decision, not an oversight.
 
 ## Android notes
 
@@ -320,7 +334,12 @@ passes under Android module resolution (`npm run test:android`). Specifics:
 
 - **The violet flip and simulated shield work identically on Android.** They're
   plain RN views, not a Screen Time feature. Only *real* blocking is iOS-first.
-- **Rest-over notifications use AlarmManager, not WorkManager.** Notifee's
+- **The notification's small icon is generated, not the launcher icon.** Android
+  silhouettes the small icon — alpha kept, colours discarded — so pointing it at
+  the full-colour launcher icon gives a white blob. `npm run icons` writes a
+  white-on-transparent `ic_notification.png` into the five `drawable-*`
+  buckets, and `android.color` tints it violet in the shade.
+- **"Time's up!" notifications use AlarmManager, not WorkManager.** Notifee's
   default for timestamp triggers is WorkManager, which the OS batches — hopeless
   for a 30–120s rest. See `notifications.ts`. Delivery is inexact but
   Doze-exempt, which is accurate enough while the screen is on. If you later

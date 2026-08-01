@@ -8,7 +8,8 @@
  * being backgrounded, which is the entire point of the native version. Rather
  * than fake it with a `setTimeout` that silently dies, these are honest no-ops:
  * the in-app countdown and the re-lock work exactly as they do on device, you
- * just don't get the backup alert.
+ * just don't get the backup alert — and with no alert there is nothing to tap,
+ * so the press plumbing is a no-op too.
  */
 
 export async function requestNotificationPermission(): Promise<boolean> {
@@ -26,4 +27,13 @@ export async function scheduleRestOverNotification(
 
 export async function cancelRestOverNotification(): Promise<void> {
   // No-op: nothing was ever scheduled.
+}
+
+/** Returns an unsubscribe, so callers need no platform check. */
+export function onRestNotificationPress(_handler: () => void): () => void {
+  return () => {};
+}
+
+export function registerBackgroundNotificationHandler(): void {
+  // No-op: a browser tab has no headless background context to run one in.
 }

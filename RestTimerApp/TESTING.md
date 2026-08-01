@@ -176,12 +176,32 @@ Not broken — impossible in a browser:
 - **No real app blocking.** Nothing stops you opening TikTok. The lock is
   simulated; the chip and the 🔒 preview stand in for it. Real blocking is
   Phase 2 and iOS-only.
-- **No notifications.** On a phone you'd get an alert when rest ends even if
-  you'd navigated away. On web there's nothing.
+- **No notifications, so nothing to tap.** On a phone, rest ending while you're
+  in another app fires **"Time's up!"**, and tapping it opens the app on the
+  set you were about to do. A browser tab has no OS-scheduled alarm that
+  survives being backgrounded — that's the entire point of the native version —
+  so `notifications.web.ts` is an honest no-op rather than a `setTimeout` that
+  quietly dies. See below for what to check on a real device.
 - **No haptics.** The buzz on finishing a set is Android-only anyway.
 
 Everything else — the timer, the state machine, the layout, the animations — is
 exactly what runs on a phone.
+
+### Only a real device can confirm these
+
+The tap *behaviour* is covered by an automated test — it fires the same
+listener notifee calls and asserts you land on the next set. What a test can't
+prove is the OS half:
+
+| Check | How |
+|---|---|
+| The alert actually fires while you're in another app | Start a workout, finish a set, switch to TikTok, wait out the rest |
+| Delivery is close enough to on-time | It uses inexact AlarmManager — expect within a few seconds, not to the millisecond |
+| Tapping brings the app **to the front** and lands on the set | Tap the alert from the shade, not from the app |
+| The small icon is a clean violet glyph, not a white blob | Look at the notification shade |
+| Sound follows the Settings toggle | Toggle it, then run a rest period each way |
+| Android 13+ permission prompt | Fires on *Start*; decline it and the loop must still work |
+| **Cold start is a known gap** | Kill the app during rest, then tap. You land on your exercise list, not mid-set — the workout is deliberately never persisted |
 
 ---
 

@@ -20,9 +20,14 @@ jest.mock('@notifee/react-native', () => ({
     requestPermission: jest.fn(async () => ({ authorizationStatus: 1 })),
     createTriggerNotification: jest.fn(async () => undefined),
     cancelTriggerNotification: jest.fn(async () => undefined),
+    // Returns an unsubscribe, exactly as the real one does — the app stores it.
+    onForegroundEvent: jest.fn(() => () => {}),
+    onBackgroundEvent: jest.fn(),
+    getInitialNotification: jest.fn(async () => null),
   },
-  AndroidImportance: { HIGH: 4 },
+  AndroidImportance: { HIGH: 4, DEFAULT: 3 },
   AuthorizationStatus: { AUTHORIZED: 1 },
+  EventType: { DISMISSED: 0, PRESS: 1, ACTION_PRESS: 2, DELIVERED: 3 },
   TriggerType: { TIMESTAMP: 0 },
   AlarmType: {
     SET: 0,

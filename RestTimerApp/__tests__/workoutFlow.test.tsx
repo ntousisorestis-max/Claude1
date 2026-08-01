@@ -5,9 +5,25 @@
  */
 import React from 'react';
 import ReactTestRenderer, { type ReactTestInstance } from 'react-test-renderer';
+import notifee, { EventType } from '@notifee/react-native';
 import App from '../App';
 import { MockBlocker } from '../src/blocking';
 import { createMemoryStorage } from '../src/state/storage';
+
+/**
+ * Fires the "Time's up!" notification press through the same listener notifee
+ * would call, so the test exercises the real wiring rather than a shortcut.
+ */
+const pressNotification = (id = 'rest-over') => {
+  const calls = (notifee.onForegroundEvent as jest.Mock).mock.calls;
+  const observer = calls[calls.length - 1]?.[0];
+  if (!observer) {
+    throw new Error('Nothing subscribed to notifee foreground events');
+  }
+  ReactTestRenderer.act(() => {
+    observer({ type: EventType.PRESS, detail: { notification: { id } } });
+  });
+};
 
 const press = (root: ReactTestInstance, accessibilityLabel: string) => {
   const [node] = root.findAll(
@@ -189,6 +205,36 @@ describe('full workout loop', () => {
     press(root, 'Delete it');
     expect(hasText(root, 'Squat')).toBe(true);
     expect(hasText(root, 'Rows')).toBe(false);
+  });
+
+  it('lands on the active set when the notification is tapped', async () => {
+    const root = await launch();
+
+    addExercise(root, 'Rows');
+    press(root, 'Start Rows');
+    press(root, 'Done with set');
+    expect(hasText(root, 'Scroll away.')).toBe(true);
+    expect(MockBlocker.isLocked()).toBe(false);
+
+    // Tapping it should put the user on the set they were about to do — not
+    // just open the app on whatever screen it happened to be showing.
+    pressNotification();
+
+    expect(hasLabel(root, 'Set 2 of 3')).toBe(true);
+    expect(hasText(root, 'Rows')).toBe(true);
+    expect(MockBlocker.isLocked()).toBe(true);
+  });
+
+  it('ignores a tap on somebody else’s notification', async () => {
+    const root = await launch();
+
+    addExercise(root, 'Rows');
+    press(root, 'Start Rows');
+    press(root, 'Done with set');
+
+    pressNotification('some-other-app');
+    expect(hasText(root, 'Scroll away.')).toBe(true);
+    expect(MockBlocker.isLocked()).toBe(false);
   });
 
   it('re-locks immediately when rest is skipped', async () => {

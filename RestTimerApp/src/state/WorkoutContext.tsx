@@ -10,6 +10,7 @@ import { blocker } from '../blocking';
 import { lockedShut, setBanked, workoutDone, workoutStarted } from '../haptics';
 import {
   cancelRestOverNotification,
+  onRestNotificationPress,
   requestNotificationPermission,
   scheduleRestOverNotification,
 } from '../notifications';
@@ -186,6 +187,15 @@ export function WorkoutProvider({
     state.config.totalSets,
     state.defaults.soundEnabled,
   ]);
+
+  // Tapping "Time's up!" should put you on the set you were about to do, not
+  // just open the app. END_REST is exactly that transition, and the reducer
+  // ignores it unless we're actually resting — so a stale tap, or one that
+  // arrives after the countdown already ended rest itself, can't skip a set.
+  useEffect(
+    () => onRestNotificationPress(() => dispatch({ type: 'END_REST', now: Date.now() })),
+    [],
+  );
 
   const actions = useMemo<WorkoutActions>(
     () => ({
