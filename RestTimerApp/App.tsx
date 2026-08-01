@@ -18,6 +18,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { GlowBackground } from './src/components/GlowBackground';
 import { ScreenFade } from './src/components/ScreenFade';
 import { TabBar, type Tab } from './src/components/TabBar';
 import { useReduceMotion } from './src/hooks/useReduceMotion';
@@ -84,6 +85,8 @@ function Ground() {
   // Diagonal, so the disc still covers the corners at scale 1.
   const diameter = Math.ceil(Math.hypot(width, height)) + 2;
   const reveal = useRef(new Animated.Value(free ? 1 : 0)).current;
+  /** The dark-ground glow is simply the inverse: one fades out as the other in. */
+  const dimGlow = reveal.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
 
   useEffect(() => {
     if (reduceMotion) {
@@ -132,6 +135,19 @@ function Ground() {
           },
         ]}
       />
+
+      {/* The glow sits above the disc and below everything else, so it reads on
+          both grounds. Two of them, cross-faded on the same value that drives
+          the reveal: violet on the near-black, light on the violet. A violet
+          bloom on a violet ground would be invisible, and the screen would go
+          flat at exactly the moment it floods. */}
+      <Animated.View pointerEvents="none" style={[styles.glow, { opacity: dimGlow }]}>
+        <GlowBackground tone="onInk" />
+      </Animated.View>
+      <Animated.View pointerEvents="none" style={[styles.glow, { opacity: reveal }]}>
+        <GlowBackground tone="onAccent" />
+      </Animated.View>
+
       {/* Content is light on both grounds now, so the bar never flips. */}
       <StatusBar barStyle="light-content" backgroundColor={free ? colors.accentDeep : colors.ink} />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -180,6 +196,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.ink, overflow: 'hidden' },
   screen: { flex: 1 },
   disc: { position: 'absolute', backgroundColor: colors.accentDeep },
+  glow: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   safe: { flex: 1 },
 });
 

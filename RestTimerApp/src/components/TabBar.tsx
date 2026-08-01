@@ -49,7 +49,7 @@ function TabButton({
   active: boolean;
   onPress: (tab: Tab) => void;
 }) {
-  const tint = active ? colors.accent : colors.faintOnDark;
+  const tint = active ? colors.accentText : colors.faintOnDark;
   const pressScale = usePressScale({ depth: 0.92, haptic: true });
 
   return (

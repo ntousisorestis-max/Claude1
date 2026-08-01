@@ -23,8 +23,20 @@ export const colors = {
   raised: '#201A38', // interactive surfaces sitting on a card
   hairline: '#2E2647', // borders and empty tick marks
 
-  /** Primary actions and selected states. */
+  /**
+   * Primary actions and selected states. **A fill, not an ink.**
+   *
+   * At 12–17px on any of this app's grounds it lands at 3.9–4.3:1, under the
+   * 4.5:1 that WCAG AA wants for text that size — and the background glow costs
+   * a little more on top. So it paints buttons, borders, ticks and the giant
+   * set numeral; anything small and violet uses `accentText`.
+   */
   accent: '#8B5CF6',
+  /**
+   * The same violet, lifted for small text. Clears 4.5:1 on every ground it
+   * lands on — glowed ink, card surface and raised — with room to spare.
+   */
+  accentText: '#9E76F7',
   /** The full-screen "unlocked" ground, and the slab's extruded shadow. */
   accentDeep: '#6D42D9',
   /** Pressed/active tick — one step down from the accent. */
@@ -34,11 +46,23 @@ export const colors = {
   white: '#FFFFFF',
   /** Purple-leaning greys — a neutral grey next to violet reads as dirty. */
   mutedOnDark: '#A29BBC',
-  faintOnDark: '#6C6489',
+  /**
+   * The de-emphasised tier. Lifted from #6C6489, which sat at 3.0–3.3:1 on this
+   * app's grounds — under AA before the glow existed, and worse after. This
+   * clears 4.5:1 everywhere while staying a clear step down from `mutedOnDark`,
+   * which is the only job it has.
+   */
+  faintOnDark: '#8F88AA',
 
-  /** Content on the flooded violet ground. */
-  mutedOnAccent: 'rgba(255, 255, 255, 0.76)',
-  faintOnAccent: 'rgba(255, 255, 255, 0.52)',
+  /**
+   * Content on the flooded violet ground.
+   *
+   * Raised from 0.76/0.52: the deep violet is a light ground by contrast
+   * standards, and at the old alphas these sat at 4.2:1 and 2.8:1 — under AA
+   * before the glow touched them, and further under after.
+   */
+  mutedOnAccent: 'rgba(255, 255, 255, 0.88)',
+  faintOnAccent: 'rgba(255, 255, 255, 0.68)',
 
   danger: '#FF6B81',
 } as const;

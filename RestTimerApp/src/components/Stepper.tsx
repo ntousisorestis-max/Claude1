@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  symbol: { fontSize: 28, fontWeight: '600', color: colors.accent },
+  symbol: { fontSize: 28, fontWeight: '600', color: colors.accentText },
   disabled: { opacity: 0.25 },
   value: {
     flex: 1,

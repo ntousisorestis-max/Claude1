@@ -150,7 +150,11 @@ npm run test:android # same suite, Platform.OS === 'android'
 npm run build:web    # also a real compile check for the shared code
 npx tsc --noEmit
 npm run lint
+npm run contrast     # WCAG check of the palette against the background glow
 ```
+
+`npm run contrast` needs a built bundle being served on `:8099`. It drives a
+real browser, so it catches what the maths alone would miss.
 
 **Nothing native has ever been compiled yet** — no `Podfile.lock`, no Gradle
 build. The web bundle builds and runs; iOS and Android are unproven until
@@ -177,6 +181,22 @@ can't tell the two apart.
 
 The flip is a violet disc scaling out from the centre of the screen, drawn at the
 root so it covers the safe-area insets rather than leaving dark bands.
+
+Under all of it sits a soft, deliberately off-centre glow — a large violet
+bloom high and left, a smaller fainter one low and right. It's drawn once at
+the root rather than per screen, which is what makes it read as one surface the
+app sits on instead of decoration each screen happens to have. There are two
+copies cross-faded on the same value that drives the flip: violet on the
+near-black, light on the violet, because a violet bloom on a violet ground
+would vanish at exactly the moment the screen floods.
+
+**The glow has a contrast budget.** Every point of background lightness is
+contrast taken from the text on top, so `GlowBackground.tsx` has fixed peak
+opacities and `npm run contrast` checks the whole palette against them — once
+analytically at the worst case, once by sampling real pixels in a browser.
+Raising a peak means re-running it. Fitting inside that budget is why `accent`
+is a fill with a separate lighter `accentText` for small type: at 12–17px the
+button violet lands at 3.9–4.3:1, under AA, glow or no glow.
 
 **2. Every button says exactly what it does.** "Done with set", "Skip rest",
 "End workout". Printed text and screen-reader text are the same string, with one

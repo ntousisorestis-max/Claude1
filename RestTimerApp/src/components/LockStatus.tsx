@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   detail: { ...type.helper, fontSize: 13, lineHeight: 18 },
   detailOnInk: { color: colors.mutedOnDark },
   detailOnAccent: { color: colors.mutedOnAccent },
-  peek: { ...type.tag, fontSize: 10, color: colors.faintOnDark },
+  peek: { ...type.tag, fontSize: 10, color: colors.mutedOnDark },
 
   shield: {
     flex: 1,

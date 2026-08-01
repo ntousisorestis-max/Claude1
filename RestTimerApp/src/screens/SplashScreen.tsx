@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, Image, StyleSheet } from 'react-native';
+import { GlowBackground } from '../components/GlowBackground';
 import { useReduceMotion } from '../hooks/useReduceMotion';
 import { colors, spacing } from '../theme';
 
@@ -74,6 +75,10 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
 
   return (
     <Animated.View style={screenStyle} pointerEvents="none">
+      {/* Its own copy: the splash is overlaid on top of the app rather than
+          living inside it, so the root glow is behind this screen's ground. */}
+      <GlowBackground />
+
       <Animated.View style={logoStyle}>
         <Image
           source={require('../../assets/logo.png')}

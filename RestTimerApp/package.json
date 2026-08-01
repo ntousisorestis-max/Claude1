@@ -11,7 +11,8 @@
     "test:android": "jest --config jest.config.android.js",
     "web": "webpack serve --mode development",
     "build:web": "webpack --mode production",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "contrast": "node scripts/check-contrast.mjs"
   },
   "dependencies": {
     "@notifee/react-native": "^9.1.8",

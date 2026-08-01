@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
   headText: { flex: 1, gap: 2 },
   name: { ...type.title, fontSize: 26, color: colors.white },
-  summary: { ...type.body, fontWeight: '700', color: colors.accent },
+  summary: { ...type.body, fontWeight: '700', color: colors.accentText },
   dot: { color: colors.faintOnDark },
   blocked: { ...type.helper, fontSize: 13, color: colors.mutedOnDark, lineHeight: 18 },
 
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '800',
-    color: colors.accent,
+    color: colors.accentText,
   },
 
   controls: {

@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     ...type.body,
     ...tabular,
     fontWeight: '800',
-    color: colors.accent,
+    color: colors.accentText,
     flexShrink: 1,
     textAlign: 'right',
   },

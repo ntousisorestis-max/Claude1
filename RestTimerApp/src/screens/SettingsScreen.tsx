@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
     gap: spacing.xxl,
   },
-  eyebrow: { ...type.tag, color: colors.accent, marginBottom: spacing.sm },
+  eyebrow: { ...type.tag, color: colors.accentText, marginBottom: spacing.sm },
   masthead: { ...type.display, fontSize: 46, color: colors.white },
   stop: { color: colors.accent },
   intro: {

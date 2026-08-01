@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   },
 
   head: { gap: spacing.sm },
-  eyebrow: { ...type.tag, color: colors.accent },
+  eyebrow: { ...type.tag, color: colors.accentText },
   masthead: { ...type.display, fontSize: 42, color: colors.white },
   stop: { color: colors.accent },
 
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addOff: { opacity: 0.4 },
-  addText: { ...type.action, fontSize: 17, color: colors.accent },
+  addText: { ...type.action, fontSize: 17, color: colors.accentText },
   addTextOff: { color: colors.faintOnDark },
 
   note: { ...type.helper, fontSize: 13, color: colors.faintOnDark, lineHeight: 18 },
