@@ -5,7 +5,6 @@ import { AppPill } from './AppPill';
 import { ConfirmDialog } from './ConfirmDialog';
 import { GradientButton } from './GradientButton';
 import { Icon, type IconName } from './Icon';
-import { SectionLabel } from './SectionLabel';
 import { Segmented } from './Segmented';
 import { Stepper } from './Stepper';
 import { useEnter } from '../hooks/useEnter';
@@ -22,23 +21,30 @@ import type { BlockableApp, Exercise } from '../state/types';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+/** The three things a card can open. Each keeps its own open/closed state. */
+type Section = 'sets' | 'rest' | 'apps';
+
+const ALL_CLOSED: Record<Section, boolean> = {
+  sets: false,
+  rest: false,
+  apps: false,
+};
+
 /**
  * One saved lift.
  *
  * Collapsed it's a name, its three settings as labelled rows, and one gradient
- * action — the state you want when you're standing at the rack. Tapping any
- * row opens the controls in place, and every number they edit belongs to this
- * exercise alone.
+ * action — the state you want when you're standing at the rack.
  *
- * The rows are readable at a glance *and* are the way in to editing, which is
- * why the values sit on the right with a chevron: it's the same affordance the
- * rest of the phone uses for "there's more behind this".
+ * **Each row opens on its own.** The three sections are independent booleans,
+ * not one card-wide flag, so opening Rest time leaves Sets exactly as you left
+ * it. They also don't reach across cards: one card's rows can't close another's.
+ * Anything else makes a tap on one arrow move controls the user wasn't looking
+ * at.
  */
 export function ExerciseCard({
   exercise,
   apps,
-  expanded,
-  onToggleExpanded,
   onStart,
   onSets,
   onRest,
@@ -48,19 +54,24 @@ export function ExerciseCard({
   exercise: Exercise;
   /** The full blockable list, presets plus custom. */
   apps: BlockableApp[];
-  expanded: boolean;
-  onToggleExpanded: () => void;
   onStart: () => void;
   onSets: (sets: number) => void;
   onRest: (seconds: number) => void;
   onToggleApp: (appId: string) => void;
   onDelete: () => void;
 }) {
+  const [open, setOpen] = useState<Record<Section, boolean>>(ALL_CLOSED);
   const [confirming, setConfirming] = useState(false);
+
+  // Only the named key moves; the other two are carried through untouched.
+  const toggle = (section: Section) =>
+    setOpen(current => ({ ...current, [section]: !current[section] }));
+
   const blocked = apps.filter(app => exercise.selectedAppIds.includes(app.id));
+  const anyOpen = open.sets || open.rest || open.apps;
 
   return (
-    <View style={[styles.card, expanded && styles.cardOpen]}>
+    <View style={[styles.card, anyOpen && styles.cardOpen]}>
       <View style={styles.head}>
         <View style={styles.headText}>
           <View style={styles.eyebrowRow}>
@@ -76,44 +87,97 @@ export function ExerciseCard({
       </View>
 
       <View style={styles.rows}>
-        <SettingRow
-          icon="reps"
-          label="Sets"
-          exercise={exercise.name}
-          value={String(exercise.totalSets)}
-          expanded={expanded}
-          onPress={onToggleExpanded}
-        />
-        <SettingRow
-          icon="timer"
-          label="Rest time"
-          exercise={exercise.name}
-          value={`${exercise.restSeconds}s`}
-          expanded={expanded}
-          onPress={onToggleExpanded}
-        />
-        <SettingRow
-          icon="lock"
-          label="Blocked apps"
-          exercise={exercise.name}
-          value={
-            blocked.length ? blocked.map(app => app.name).join(', ') : 'None'
-          }
-          expanded={expanded}
-          onPress={onToggleExpanded}
-          last
-        />
+        <Section divided>
+          <SettingRow
+            icon="reps"
+            label="Sets"
+            exercise={exercise.name}
+            value={String(exercise.totalSets)}
+            open={open.sets}
+            onPress={() => toggle('sets')}
+          />
+          {open.sets ? (
+            <Panel>
+              <Stepper
+                label={`sets for ${exercise.name}`}
+                value={exercise.totalSets}
+                onChange={onSets}
+                min={MIN_SETS}
+                max={MAX_SETS}
+              />
+            </Panel>
+          ) : null}
+        </Section>
+
+        <Section divided>
+          <SettingRow
+            icon="timer"
+            label="Rest time"
+            exercise={exercise.name}
+            value={`${exercise.restSeconds}s`}
+            open={open.rest}
+            onPress={() => toggle('rest')}
+          />
+          {open.rest ? (
+            <Panel>
+              <Stepper
+                label={`rest for ${exercise.name}`}
+                value={exercise.restSeconds}
+                onChange={onRest}
+                step={5}
+                min={MIN_REST_SECONDS}
+                max={MAX_REST_SECONDS}
+                unit="SECONDS"
+              />
+              <Segmented
+                label={`rest for ${exercise.name}`}
+                options={REST_PRESETS}
+                value={exercise.restSeconds}
+                onChange={onRest}
+                format={n => `${n}s`}
+              />
+            </Panel>
+          ) : null}
+        </Section>
+
+        <Section>
+          <SettingRow
+            icon="lock"
+            label="Blocked apps"
+            exercise={exercise.name}
+            value={
+              blocked.length ? blocked.map(app => app.name).join(', ') : 'None'
+            }
+            open={open.apps}
+            onPress={() => toggle('apps')}
+          />
+          {open.apps ? (
+            <Panel>
+              <View style={styles.apps}>
+                {apps.map(app => (
+                  <AppPill
+                    key={app.id}
+                    app={app}
+                    checked={exercise.selectedAppIds.includes(app.id)}
+                    label={`${app.name} during ${exercise.name}`}
+                    onPress={() => onToggleApp(app.id)}
+                  />
+                ))}
+              </View>
+            </Panel>
+          ) : null}
+        </Section>
       </View>
 
-      {expanded ? (
-        <Controls
-          exercise={exercise}
-          apps={apps}
-          onSets={onSets}
-          onRest={onRest}
-          onToggleApp={onToggleApp}
-          onDelete={() => setConfirming(true)}
-        />
+      {/* Shown whenever anything is open, rather than living inside one of the
+          three sections — deleting the exercise belongs to none of them. */}
+      {anyOpen ? (
+        <View style={styles.footer}>
+          <Text style={styles.estimate}>
+            {estimate(exercise.totalSets, exercise.restSeconds)}
+          </Text>
+          <DeleteLink name={exercise.name} onPress={() => setConfirming(true)} />
+        </View>
       ) : null}
 
       <GradientButton
@@ -137,6 +201,24 @@ export function ExerciseCard({
       />
     </View>
   );
+}
+
+/** A row and whatever it opens, hairlined off from the next one. */
+function Section({
+  divided = false,
+  children,
+}: {
+  divided?: boolean;
+  children: React.ReactNode;
+}) {
+  return <View style={divided ? styles.divided : undefined}>{children}</View>;
+}
+
+/** The controls one row reveals, tucked under it. */
+function Panel({ children }: { children: React.ReactNode }) {
+  const enter = useEnter();
+
+  return <Animated.View style={[styles.panel, enter]}>{children}</Animated.View>;
 }
 
 /**
@@ -169,9 +251,8 @@ function SettingRow({
   label,
   exercise,
   value,
-  expanded,
+  open,
   onPress,
-  last = false,
 }: {
   icon: IconName;
   label: string;
@@ -179,9 +260,8 @@ function SettingRow({
    * identical "Sets, 3. Edit" buttons. */
   exercise: string;
   value: string;
-  expanded: boolean;
+  open: boolean;
   onPress: () => void;
-  last?: boolean;
 }) {
   const press = usePressScale({ depth: 0.99, haptic: true });
 
@@ -190,100 +270,20 @@ function SettingRow({
       {...press.handlers}
       accessibilityRole="button"
       accessibilityLabel={`${label} for ${exercise}, ${value}. ${
-        expanded ? 'Done editing' : 'Edit'
+        open ? 'Close' : 'Edit'
       }`}
-      accessibilityState={{ expanded }}
+      accessibilityState={{ expanded: open }}
       onPress={onPress}
-      style={[styles.row, !last && styles.rowDivided, press.style]}>
+      style={[styles.row, press.style]}>
       <Icon name={icon} color={colors.accentText} size={17} />
       <Text style={styles.rowLabel}>{label}</Text>
       <Text style={styles.rowValue} numberOfLines={1}>
         {value}
       </Text>
-      <View style={expanded ? styles.chevronOpen : undefined}>
+      <View style={open ? styles.chevronOpen : undefined}>
         <Icon name="chevron" color={colors.faintOnDark} size={16} />
       </View>
     </AnimatedPressable>
-  );
-}
-
-/** The per-exercise editor. Mounted only while the card is open. */
-function Controls({
-  exercise,
-  apps,
-  onSets,
-  onRest,
-  onToggleApp,
-  onDelete,
-}: {
-  exercise: Exercise;
-  apps: BlockableApp[];
-  onSets: (sets: number) => void;
-  onRest: (seconds: number) => void;
-  onToggleApp: (appId: string) => void;
-  onDelete: () => void;
-}) {
-  const enter = useEnter();
-
-  return (
-    <Animated.View style={[styles.controls, enter]}>
-      <View style={styles.block}>
-        <SectionLabel icon="reps">SETS</SectionLabel>
-        <View style={styles.well}>
-          <Stepper
-            label={`sets for ${exercise.name}`}
-            value={exercise.totalSets}
-            onChange={onSets}
-            min={MIN_SETS}
-            max={MAX_SETS}
-          />
-        </View>
-      </View>
-
-      <View style={styles.block}>
-        <SectionLabel icon="timer">REST BETWEEN SETS</SectionLabel>
-        <View style={styles.well}>
-          <Stepper
-            label={`rest for ${exercise.name}`}
-            value={exercise.restSeconds}
-            onChange={onRest}
-            step={5}
-            min={MIN_REST_SECONDS}
-            max={MAX_REST_SECONDS}
-            unit="SECONDS"
-          />
-          <Segmented
-            label={`rest for ${exercise.name}`}
-            options={REST_PRESETS}
-            value={exercise.restSeconds}
-            onChange={onRest}
-            format={n => `${n}s`}
-          />
-        </View>
-      </View>
-
-      <View style={styles.block}>
-        <SectionLabel icon="lock">APPS TO BLOCK</SectionLabel>
-        <View style={styles.apps}>
-          {apps.map(app => (
-            <AppPill
-              key={app.id}
-              app={app}
-              checked={exercise.selectedAppIds.includes(app.id)}
-              label={`${app.name} during ${exercise.name}`}
-              onPress={() => onToggleApp(app.id)}
-            />
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.footer}>
-        <Text style={styles.estimate}>
-          {estimate(exercise.totalSets, exercise.restSeconds)}
-        </Text>
-        <DeleteLink name={exercise.name} onPress={onDelete} />
-      </View>
-    </Animated.View>
   );
 }
 
@@ -348,6 +348,8 @@ const styles = StyleSheet.create({
 
   /** One step darker than the card, so the rows read as sunk into it. */
   rows: { backgroundColor: colors.ink, borderRadius: radius.md, overflow: 'hidden' },
+  /** On the section, not the row: the hairline belongs under the panel too. */
+  divided: { borderBottomWidth: HAIRLINE, borderBottomColor: colors.hairline },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -355,7 +357,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: 15,
   },
-  rowDivided: { borderBottomWidth: HAIRLINE, borderBottomColor: colors.hairline },
   rowLabel: { ...type.helper, color: colors.mutedOnDark },
   rowValue: {
     ...type.body,
@@ -366,19 +367,10 @@ const styles = StyleSheet.create({
   },
   chevronOpen: { transform: [{ rotate: '90deg' }] },
 
-  controls: {
-    gap: spacing.lg,
-    borderTopWidth: HAIRLINE,
-    borderTopColor: colors.hairline,
-    paddingTop: spacing.md,
-  },
-  block: { gap: spacing.sm },
-  /** One step darker than the card, so the controls read as sunk into it. */
-  well: {
-    backgroundColor: colors.ink,
-    borderRadius: radius.md,
-    padding: spacing.md,
+  panel: {
     gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
   },
   apps: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
 

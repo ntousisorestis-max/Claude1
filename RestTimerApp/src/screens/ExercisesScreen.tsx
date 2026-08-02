@@ -46,9 +46,6 @@ export function ExercisesScreen() {
     startWorkout,
   } = useWorkout();
 
-  // One card open at a time: two sets of steppers on screen at once is how you
-  // end up editing the wrong exercise.
-  const [openId, setOpenId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const enter = useEnter();
 
@@ -103,10 +100,6 @@ export function ExercisesScreen() {
                 key={exercise.id}
                 exercise={exercise}
                 apps={apps}
-                expanded={openId === exercise.id}
-                onToggleExpanded={() =>
-                  setOpenId(id => (id === exercise.id ? null : exercise.id))
-                }
                 onStart={() => startWorkout(exercise.id)}
                 onSets={sets => setExerciseSets(exercise.id, sets)}
                 onRest={seconds => setExerciseRest(exercise.id, seconds)}

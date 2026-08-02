@@ -186,10 +186,10 @@ describe('full workout loop', () => {
     press(root, 'Add exercise');
     addExercise(root, 'Rows');
 
-    // Squat gets 90s rest; Rows must not move.
-    pressStartingWith(root, 'Sets for Squat');
+    // Squat gets 65s rest; Rows must not move.
+    pressStartingWith(root, 'Rest time for Squat');
     press(root, 'Increase rest for Squat');
-    pressStartingWith(root, 'Sets for Squat');
+    pressStartingWith(root, 'Rest time for Squat');
 
     expect(labelStartingWith(root, 'Rest time for Squat')).toContain('65s');
     expect(labelStartingWith(root, 'Rest time for Rows')).toContain('60s');
@@ -198,6 +198,44 @@ describe('full workout loop', () => {
     press(root, 'Start Rows');
     expect(hasText(root, 'Rows')).toBe(true);
     expect(hasLabel(root, 'Set 1 of 3')).toBe(true);
+  });
+
+  it('opens each settings row independently of the others', async () => {
+    // Regression: all three rows shared one card-wide `expanded` flag, so
+    // tapping any arrow opened all three sections at once.
+    const root = await launch();
+
+    addExercise(root, 'Squat');
+    press(root, 'Add exercise');
+    addExercise(root, 'Rows');
+
+    const canEdit = (control: string) =>
+      root.findAll(n => n.props?.accessibilityLabel === control).length > 0;
+
+    // Nothing open to start with.
+    expect(canEdit('Increase sets for Squat')).toBe(false);
+    expect(canEdit('Increase rest for Squat')).toBe(false);
+
+    // Opening Sets opens Sets, and only Sets.
+    pressStartingWith(root, 'Sets for Squat');
+    expect(canEdit('Increase sets for Squat')).toBe(true);
+    expect(canEdit('Increase rest for Squat')).toBe(false);
+    expect(canEdit('TikTok during Squat')).toBe(false);
+
+    // Opening Rest time leaves Sets exactly where it was.
+    pressStartingWith(root, 'Rest time for Squat');
+    expect(canEdit('Increase sets for Squat')).toBe(true);
+    expect(canEdit('Increase rest for Squat')).toBe(true);
+
+    // Closing Rest time again leaves Sets alone too.
+    pressStartingWith(root, 'Rest time for Squat');
+    expect(canEdit('Increase sets for Squat')).toBe(true);
+    expect(canEdit('Increase rest for Squat')).toBe(false);
+
+    // And no row on one card reaches across to another card's rows.
+    pressStartingWith(root, 'Blocked apps for Rows');
+    expect(canEdit('TikTok during Rows')).toBe(true);
+    expect(canEdit('Increase sets for Squat')).toBe(true);
   });
 
   it('ends the workout through the confirm dialog', async () => {
