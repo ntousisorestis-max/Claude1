@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   Animated,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -12,7 +13,6 @@ import {
 } from 'react-native';
 import { ExerciseCard } from '../components/ExerciseCard';
 import { HeroHourglass } from '../components/HeroHourglass';
-import { Icon } from '../components/Icon';
 import { SectionLabel } from '../components/SectionLabel';
 import { SessionStats } from '../components/SessionStats';
 import { useEnter } from '../hooks/useEnter';
@@ -23,6 +23,7 @@ import {
   MAX_EXERCISE_NAME_LENGTH,
   MAX_EXERCISES,
 } from '../state/workoutReducer';
+import { APP_NAME } from '../appInfo';
 import { colors, HAIRLINE, radius, spacing, type, sized } from '../theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -62,7 +63,17 @@ export function ExercisesScreen() {
         keyboardShouldPersistTaps="handled">
         <Animated.View style={[styles.hero, enter]}>
           <View style={styles.brandRow}>
-            <Icon name="dumbbell" color={colors.accentText} size={24} />
+            {/* The real mark, not the line-icon dumbbell — that one is drawn
+                for 15px next to a label and reads as a capital H at this size.
+                Same file the app icon and splash use, so replacing
+                assets/logo.png updates all three. */}
+            <Image
+              source={require('../../assets/logo.png')}
+              style={styles.brandLogo}
+              resizeMode="contain"
+              accessibilityRole="image"
+              accessibilityLabel={`${APP_NAME} logo`}
+            />
           </View>
 
           <View style={styles.heroBody}>
@@ -263,6 +274,9 @@ const styles = StyleSheet.create({
 
   hero: { gap: spacing.md },
   brandRow: { flexDirection: 'row', alignItems: 'center' },
+  /** The mark is wide and short inside a square canvas, so the box is sized
+   * for the height it actually paints rather than for the file. */
+  brandLogo: { width: 40, height: 40 },
   /** Text and illustration share the row; the text takes what's left. */
   heroBody: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   heroText: { flex: 1, gap: 2 },
