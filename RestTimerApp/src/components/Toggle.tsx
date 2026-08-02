@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { usePressScale } from '../hooks/usePressScale';
+import { useReduceMotion } from '../hooks/useReduceMotion';
 import { colors, radius, spacing, type } from '../theme';
 
 /**
@@ -26,6 +27,26 @@ export function Toggle({
 }) {
   // Flipping a setting is worth a tick; it's the only feedback that it took.
   const pressScale = usePressScale({ depth: 0.98, haptic: true });
+  const reduceMotion = useReduceMotion();
+  // The thumb used to jump between two static positions. It now travels, which
+  // is the difference between a checkbox and a switch.
+  const slide = useRef(new Animated.Value(value ? 1 : 0)).current;
+
+  useEffect(() => {
+    const target = value ? 1 : 0;
+    if (reduceMotion) {
+      slide.setValue(target);
+      return;
+    }
+    const animation = Animated.spring(slide, {
+      toValue: target,
+      speed: 16,
+      bounciness: 8,
+      useNativeDriver: true,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [value, slide, reduceMotion]);
 
   return (
     <Pressable
@@ -46,7 +67,22 @@ export function Toggle({
 
       <Animated.View
         style={[styles.track, value && styles.trackOn, pressScale.style]}>
-        <View style={[styles.thumb, value && styles.thumbOn]} />
+        <Animated.View
+          style={[
+            styles.thumb,
+            value && styles.thumbOn,
+            {
+              transform: [
+                {
+                  translateX: slide.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, TRACK_W - THUMB - 6],
+                  }),
+                },
+              ],
+            },
+          ]}
+        />
       </Animated.View>
     </Pressable>
   );
@@ -85,9 +121,6 @@ const styles = StyleSheet.create({
     borderRadius: THUMB / 2,
     backgroundColor: colors.faintOnDark,
   },
-  thumbOn: {
-    backgroundColor: colors.white,
-    // Slides right by the track's free space.
-    transform: [{ translateX: TRACK_W - THUMB - 6 }],
-  },
+  /** Position is animated above; this is only the colour change. */
+  thumbOn: { backgroundColor: colors.white },
 });

@@ -147,3 +147,25 @@ export function formatMMSS(totalSeconds: number): string {
 export function pad2(n: number): string {
   return String(Math.max(0, n)).padStart(2, '0');
 }
+
+/**
+ * A duration in the largest unit that doesn't lie about it.
+ *
+ * Returns the parts separately so the number can be counted up on its own
+ * while its unit sits still — animating "14 minutes" as one string would mean
+ * the word jittering in and out of the plural.
+ *
+ * Under a minute stays in seconds: "0 minutes" is a worse thing to show
+ * someone at the end of a workout than "40 seconds".
+ */
+export function describeDuration(totalSeconds: number): {
+  value: number;
+  unit: string;
+} {
+  const safe = Math.max(0, Math.round(totalSeconds));
+  if (safe < 60) {
+    return { value: safe, unit: safe === 1 ? 'second' : 'seconds' };
+  }
+  const minutes = Math.round(safe / 60);
+  return { value: minutes, unit: minutes === 1 ? 'minute' : 'minutes' };
+}

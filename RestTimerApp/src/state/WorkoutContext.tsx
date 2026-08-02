@@ -217,12 +217,12 @@ export function WorkoutProvider({
       removeCustomApp: appId => dispatch({ type: 'REMOVE_CUSTOM_APP', appId }),
       startWorkout: id => {
         requestNotificationPermission();
-        dispatch({ type: 'START_WORKOUT', id });
+        dispatch({ type: 'START_WORKOUT', id, now: Date.now() });
       },
       // No haptics here — see the phase-change effect above.
       finishSet: () => dispatch({ type: 'FINISH_SET', now: Date.now() }),
       endRest: () => dispatch({ type: 'END_REST', now: Date.now() }),
-      endWorkout: () => dispatch({ type: 'END_WORKOUT' }),
+      endWorkout: () => dispatch({ type: 'END_WORKOUT', now: Date.now() }),
       newWorkout: () => dispatch({ type: 'NEW_WORKOUT' }),
     }),
     [],

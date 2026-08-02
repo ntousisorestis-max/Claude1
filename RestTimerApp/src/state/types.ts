@@ -97,6 +97,16 @@ export type WorkoutState = {
   restEndsAt: number | null;
   /** Total seconds actually spent resting, accumulated across the workout. */
   totalRestSeconds: number;
+  /** Wall-clock ms when the current locked stretch began. Null while unlocked. */
+  lockedSince: number | null;
+  /**
+   * Total seconds the apps were locked this workout — the time the phone was
+   * out of reach. Shown on the summary as "time reclaimed".
+   *
+   * Session-only, like everything else about a workout: it is reset by
+   * START_WORKOUT and never persisted.
+   */
+  totalLockedSeconds: number;
   /** True whenever the blocker should be shielding the user's apps. */
   appsLocked: boolean;
 };
@@ -123,12 +133,12 @@ export type WorkoutAction =
   | { type: 'REMOVE_CUSTOM_APP'; appId: string }
   /* --- The workout loop -------------------------------------------------- */
   /** Runs one saved exercise. Ignored if the id isn't in the list. */
-  | { type: 'START_WORKOUT'; id: string }
+  | { type: 'START_WORKOUT'; id: string; now: number }
   /** User tapped "Done with set" — begins rest, or completes the workout. */
   | { type: 'FINISH_SET'; now: number }
   /** Rest ran out, or the user tapped "Skip rest". */
   | { type: 'END_REST'; now: number }
-  | { type: 'END_WORKOUT' }
+  | { type: 'END_WORKOUT'; now: number }
   | { type: 'NEW_WORKOUT' }
   /**
    * Exercises and preferences restored from storage on launch.

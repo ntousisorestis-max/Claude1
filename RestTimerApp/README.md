@@ -224,10 +224,15 @@ Six pieces of motion, all RN `Animated`, no library:
 | **Heartbeat** | clock pulses once per second under 5s left | urgency, without a sound |
 | **Sweep** | ring glides between the countdown's 4Hz updates | at ring size, stepping four times a second reads as a stutter |
 | **Pick** | app pills spring as you toggle them | picking should feel alive too |
+| **Beat** | the padlock swells and blooms a halo when it locks or unlocks | the two moments the app exists for |
+| **Release** | the ring swells and drops its track in the last second | the countdown hands over to the lock instead of being cut off |
+| **Throw** | the settings toggle's thumb travels rather than jumping | the difference between a switch and a checkbox |
+| **Count** | time reclaimed counts up on the summary | the one number worth watching arrive |
 
-Everything except the ring sweep runs on the native driver.
-`strokeDashoffset` isn't a transform so it can't — it's one value at 4Hz, which
-the JS thread handles comfortably.
+Everything except the ring sweep and the count-up runs on the native driver.
+`strokeDashoffset` isn't a transform so it can't, and the count-up animates a
+*number* rather than a style so it has to come back through JS — both are one
+value on an otherwise still screen, which the JS thread handles comfortably.
 
 Three rules keep it from getting silly:
 
@@ -367,6 +372,11 @@ One `useReducer` at the root, no backend. Three slices:
 - **`defaults`** — app-wide preferences: the sound switch, the pool of
   blockable apps, and which of them a *newly created* exercise starts with
   ticked. Toggling one never reaches an exercise that already exists.
+- **`totalLockedSeconds`** — how long the apps were locked this workout, which
+  is the time the phone was genuinely out of reach. Revealed on the summary as
+  "time reclaimed" and deliberately never shown while it accrues: a live
+  counter would put a number on screen at exactly the moment the app wants you
+  looking away from it. Session-only, reset by the next `START_WORKOUT`.
 - **`config`** — a snapshot of the exercise being run, taken by `START_WORKOUT`.
   Not a reference: editing the card mid-workout must not move the goalposts
   under the set you're on, and the summary has to describe the workout that

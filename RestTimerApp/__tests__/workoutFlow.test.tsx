@@ -138,6 +138,10 @@ describe('full workout loop', () => {
     expect(hasText(root, '2 of 2')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(false);
 
+    // Time reclaimed is revealed here and nowhere else — the rest screens
+    // deliberately never showed it accruing.
+    expect(hasText(root, 'You kept your phone down for')).toBe(true);
+
     // --- And back to the list, exercise intact -------------------------
     press(root, 'New workout');
     expect(hasText(root, 'Your lifts')).toBe(true);

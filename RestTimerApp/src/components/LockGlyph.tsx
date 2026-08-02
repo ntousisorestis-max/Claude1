@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, Easing, StyleSheet, View } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { useReduceMotion } from '../hooks/useReduceMotion';
 
@@ -57,6 +57,9 @@ export function LockGlyph({
 }) {
   const reduceMotion = useReduceMotion();
   const open = useRef(new Animated.Value(locked ? 0 : 1)).current;
+  /** 0 at rest, 1 at the peak of the beat that marks a change of state. */
+  const beat = useRef(new Animated.Value(0)).current;
+  const first = useRef(true);
 
   useEffect(() => {
     const target = locked ? 0 : 1;
@@ -74,14 +77,76 @@ export function LockGlyph({
     return () => animation.stop();
   }, [locked, open, reduceMotion]);
 
+  // A single beat when the state actually changes — the whole glyph swells and
+  // a soft halo blooms out behind it. This fires on the two moments the app
+  // exists for: the set starting, and rest running out. Not on mount, or every
+  // screen that shows a lock would announce itself for no reason.
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    if (reduceMotion) {
+      return;
+    }
+    beat.setValue(0);
+    const animation = Animated.sequence([
+      Animated.timing(beat, {
+        toValue: 1,
+        duration: 160,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.spring(beat, {
+        toValue: 0,
+        speed: 9,
+        bounciness: 6,
+        useNativeDriver: true,
+      }),
+    ]);
+    animation.start();
+    return () => animation.stop();
+  }, [locked, beat, reduceMotion]);
+
   const scale = size / BOX;
   const lift = (distance: number) =>
     open.interpolate({ inputRange: [0, 1], outputRange: [0, distance * scale] });
 
+  const swell = beat.interpolate({ inputRange: [0, 1], outputRange: [1, 1.14] });
+
   return (
     // Purely decorative: it carries no text, and the panel around it owns the
     // accessibility label that says the same thing in words.
-    <View style={[styles.box, { width: size, height: size }]}>
+    <Animated.View
+      style={[
+        styles.box,
+        { width: size, height: size, transform: [{ scale: swell }] },
+      ]}>
+      {/* The halo. Sits furthest back and never takes a tap; it only ever
+          exists for the ~400ms of a beat, so it costs nothing at rest. */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.halo,
+          {
+            borderRadius: size,
+            backgroundColor: color,
+            opacity: beat.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, 0.28],
+            }),
+            transform: [
+              {
+                scale: beat.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.7, 1.5],
+                }),
+              },
+            ],
+          },
+        ]}
+      />
+
       {/* Behind the body, so both legs disappear into it when shut. */}
       <Animated.View
         style={[
@@ -109,11 +174,12 @@ export function LockGlyph({
           <Rect {...BODY} fill={color} />
         </Svg>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   box: { alignItems: 'center', justifyContent: 'center' },
   layer: { position: 'absolute', top: 0, left: 0 },
+  halo: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
 });

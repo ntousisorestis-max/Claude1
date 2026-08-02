@@ -6,6 +6,8 @@ import { useReduceMotion } from '../hooks/useReduceMotion';
 import { colors, HAIRLINE, radius, spacing, type } from '../theme';
 import type { BlockableApp } from '../state/types';
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 /**
  * One app, on or off.
  *
@@ -93,18 +95,26 @@ export function AppPill({
           {app.name}
         </Text>
 
-        {onRemove ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Remove ${app.name}`}
-            onPress={onRemove}
-            hitSlop={8}
-            style={styles.remove}>
-            <Text style={styles.removeMark}>×</Text>
-          </Pressable>
-        ) : null}
+        {onRemove ? <RemoveMark name={app.name} onPress={onRemove} /> : null}
       </Pressable>
     </Animated.View>
+  );
+}
+
+/** The one tappable in the app that had no press feel of its own. */
+function RemoveMark({ name, onPress }: { name: string; onPress: () => void }) {
+  const press = usePressScale({ depth: 0.82, haptic: true });
+
+  return (
+    <AnimatedPressable
+      {...press.handlers}
+      accessibilityRole="button"
+      accessibilityLabel={`Remove ${name}`}
+      onPress={onPress}
+      hitSlop={8}
+      style={[styles.remove, press.style]}>
+      <Text style={styles.removeMark}>×</Text>
+    </AnimatedPressable>
   );
 }
 

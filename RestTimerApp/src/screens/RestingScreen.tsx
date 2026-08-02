@@ -61,6 +61,9 @@ export function RestingScreen() {
           progress={secondsLeft / config.restSeconds}
           size={ring}
           strokeWidth={18}
+          // The last second, so the ring releases into the re-lock instead of
+          // being cut off by it.
+          finishing={secondsLeft <= 1}
           color={colors.white}
           trackColor="rgba(255,255,255,0.22)">
           <Animated.Text style={[styles.clock, { transform: [{ scale: beat }] }]}>

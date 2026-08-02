@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { AppPill } from './AppPill';
 import { BigButton } from './BigButton';
+import { Icon } from './Icon';
+import { SectionLabel } from './SectionLabel';
 import { ConfirmDialog } from './ConfirmDialog';
 import { Segmented } from './Segmented';
 import { Stepper } from './Stepper';
@@ -67,9 +69,12 @@ export function ExerciseCard({
         onPress={onToggleExpanded}
         style={[styles.head, headPress.style]}>
         <View style={styles.headText}>
-          <Text style={styles.name} numberOfLines={2}>
-            {exercise.name}
-          </Text>
+          <View style={styles.nameRow}>
+            <Icon name="dumbbell" color={colors.accentText} size={19} />
+            <Text style={styles.name} numberOfLines={2}>
+              {exercise.name}
+            </Text>
+          </View>
           <Text style={styles.summary}>
             {exercise.totalSets} set{exercise.totalSets === 1 ? '' : 's'}
             <Text style={styles.dot}> · </Text>
@@ -144,7 +149,7 @@ function Controls({
   return (
     <Animated.View style={[styles.controls, enter]}>
       <View style={styles.block}>
-        <Text style={styles.label}>SETS</Text>
+        <SectionLabel icon="reps">SETS</SectionLabel>
         <View style={styles.well}>
           <Stepper
             label={`sets for ${exercise.name}`}
@@ -157,7 +162,7 @@ function Controls({
       </View>
 
       <View style={styles.block}>
-        <Text style={styles.label}>REST BETWEEN SETS</Text>
+        <SectionLabel icon="timer">REST BETWEEN SETS</SectionLabel>
         <View style={styles.well}>
           <Stepper
             label={`rest for ${exercise.name}`}
@@ -179,7 +184,7 @@ function Controls({
       </View>
 
       <View style={styles.block}>
-        <Text style={styles.label}>APPS TO BLOCK</Text>
+        <SectionLabel icon="phone">APPS TO BLOCK</SectionLabel>
         <View style={styles.apps}>
           {apps.map(app => (
             <AppPill
@@ -244,7 +249,8 @@ const styles = StyleSheet.create({
 
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
   headText: { flex: 1, gap: 2 },
-  name: { ...sized(type.title, 26), color: colors.white },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  name: { ...sized(type.title, 26), color: colors.white, flexShrink: 1 },
   summary: { ...type.body, fontWeight: '700', color: colors.accentText },
   dot: { color: colors.faintOnDark },
   blocked: { ...type.helper, fontSize: 13, color: colors.mutedOnDark, lineHeight: 18 },

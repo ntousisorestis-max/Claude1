@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { ExerciseCard } from '../components/ExerciseCard';
+import { SectionLabel } from '../components/SectionLabel';
 import { useEnter } from '../hooks/useEnter';
 import { usePressScale } from '../hooks/usePressScale';
 import { useWorkout } from '../state/WorkoutContext';
@@ -160,7 +161,7 @@ function AddExercise({
 
   return (
     <Animated.View style={[styles.composer, enter]}>
-      <Text style={styles.label}>NEW EXERCISE</Text>
+      <SectionLabel icon="dumbbell">NEW EXERCISE</SectionLabel>
       <TextInput
         value={draft}
         onChangeText={setDraft}

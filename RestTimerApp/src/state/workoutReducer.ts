@@ -97,6 +97,8 @@ export const initialState: WorkoutState = {
   restStartedAt: null,
   restEndsAt: null,
   totalRestSeconds: 0,
+  lockedSince: null,
+  totalLockedSeconds: 0,
   appsLocked: false,
 };
 
@@ -109,6 +111,28 @@ function restElapsed(state: WorkoutState, now: number): number {
     return 0;
   }
   return Math.max(0, Math.round((now - state.restStartedAt) / 1000));
+}
+
+/**
+ * Seconds the apps have been locked since the current set began, floored at 0.
+ *
+ * Measured from wall-clock stamps rather than counted up by a timer, for the
+ * same reason the countdown is: the JS thread is suspended for most of a set
+ * on a phone in a pocket, and a tick-counter would simply lose that time.
+ */
+function lockedElapsed(state: WorkoutState, now: number): number {
+  if (state.lockedSince == null) {
+    return 0;
+  }
+  return Math.max(0, Math.round((now - state.lockedSince) / 1000));
+}
+
+/** Banks the stretch of locked time that is ending now. */
+function bankLocked(state: WorkoutState, now: number) {
+  return {
+    totalLockedSeconds: state.totalLockedSeconds + lockedElapsed(state, now),
+    lockedSince: null,
+  };
 }
 
 /**
@@ -235,6 +259,9 @@ export function workoutReducer(
         restStartedAt: null,
         restEndsAt: null,
         totalRestSeconds: 0,
+        // The clock on "time reclaimed" starts here, with the first lock.
+        lockedSince: action.now,
+        totalLockedSeconds: 0,
         appsLocked: true,
       };
     }
@@ -245,10 +272,14 @@ export function workoutReducer(
       }
       const setsCompleted = state.setsCompleted + 1;
 
+      // Either way the set just ended, so the locked stretch ends with it.
+      const banked = bankLocked(state, action.now);
+
       // Last set: no rest period, straight to the summary with apps unlocked.
       if (setsCompleted >= state.config.totalSets) {
         return {
           ...state,
+          ...banked,
           phase: 'complete',
           setsCompleted,
           restStartedAt: null,
@@ -259,6 +290,7 @@ export function workoutReducer(
 
       return {
         ...state,
+        ...banked,
         phase: 'resting',
         setsCompleted,
         restStartedAt: action.now,
@@ -278,6 +310,8 @@ export function workoutReducer(
         totalRestSeconds: state.totalRestSeconds + restElapsed(state, action.now),
         restStartedAt: null,
         restEndsAt: null,
+        // Locked again, so a new stretch of reclaimed time starts.
+        lockedSince: action.now,
         appsLocked: true,
       };
     }
@@ -286,14 +320,18 @@ export function workoutReducer(
       if (state.phase !== 'active' && state.phase !== 'resting') {
         return state;
       }
-      const now = Date.now();
+      // `now` comes in on the action rather than being read here — a reducer
+      // that calls Date.now() isn't a pure function of its inputs, which makes
+      // it untestable at the exact boundaries that matter.
+      const resting = state.phase === 'resting';
       return {
         ...state,
+        // Ending mid-set still counts the part of it you did.
+        ...bankLocked(state, action.now),
         phase: 'complete',
-        totalRestSeconds:
-          state.phase === 'resting'
-            ? state.totalRestSeconds + restElapsed(state, now)
-            : state.totalRestSeconds,
+        totalRestSeconds: resting
+          ? state.totalRestSeconds + restElapsed(state, action.now)
+          : state.totalRestSeconds,
         restStartedAt: null,
         restEndsAt: null,
         appsLocked: false,

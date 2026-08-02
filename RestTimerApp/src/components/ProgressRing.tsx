@@ -13,6 +13,12 @@ type Props = {
   color?: string;
   /** The unfilled remainder — must be set when drawing on a accent ground. */
   trackColor?: string;
+  /**
+   * The countdown is about to hit zero. The ring eases open — swelling a
+   * little and letting its track go — so the hand-off to the lock is a release
+   * rather than a cut.
+   */
+  finishing?: boolean;
   children?: React.ReactNode;
 };
 
@@ -31,9 +37,11 @@ export function ProgressRing({
   strokeWidth = 14,
   color = colors.accent,
   trackColor = colors.hairline,
+  finishing = false,
   children,
 }: Props) {
   const reduceMotion = useReduceMotion();
+  const release = useRef(new Animated.Value(0)).current;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const clamped = Math.min(1, Math.max(0, progress));
@@ -55,17 +63,54 @@ export function ProgressRing({
     return () => animation.stop();
   }, [clamped, swept, reduceMotion]);
 
+  useEffect(() => {
+    if (reduceMotion) {
+      release.setValue(finishing ? 1 : 0);
+      return;
+    }
+    const animation = Animated.timing(release, {
+      toValue: finishing ? 1 : 0,
+      duration: finishing ? 900 : 200,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [finishing, release, reduceMotion]);
+
   return (
-    <View style={{ width: size, height: size }}>
-      <Svg width={size} height={size}>
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={trackColor}
-          strokeWidth={strokeWidth}
-          fill="none"
-        />
+    <Animated.View
+      style={{
+        width: size,
+        height: size,
+        transform: [
+          {
+            scale: release.interpolate({
+              inputRange: [0, 1],
+              outputRange: [1, 1.05],
+            }),
+          },
+        ],
+      }}>
+      {/* The track fades as the ring releases — one less thing on screen at
+          the moment the countdown hands over to the lock. */}
+      <Animated.View
+        style={{
+          opacity: release.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+        }}>
+        <Svg width={size} height={size}>
+          <Circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke={trackColor}
+            strokeWidth={strokeWidth}
+            fill="none"
+          />
+        </Svg>
+      </Animated.View>
+
+      <Svg style={styles.center} width={size} height={size}>
         <AnimatedCircle
           cx={size / 2}
           cy={size / 2}
@@ -84,7 +129,7 @@ export function ProgressRing({
         />
       </Svg>
       <View style={styles.center}>{children}</View>
-    </View>
+    </Animated.View>
   );
 }
 

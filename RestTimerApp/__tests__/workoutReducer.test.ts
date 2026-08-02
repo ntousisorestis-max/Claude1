@@ -8,6 +8,7 @@ import {
   NEW_EXERCISE_SETS,
   workoutReducer,
 } from '../src/state/workoutReducer';
+import { describeDuration } from '../src/theme';
 import type { Exercise, WorkoutState } from '../src/state/types';
 
 const T0 = 1_700_000_000_000;
@@ -28,7 +29,7 @@ const withBench = (over: Partial<WorkoutState> = {}): WorkoutState => ({
 });
 
 const start = (state = withBench()) =>
-  workoutReducer(state, { type: 'START_WORKOUT', id: BENCH.id });
+  workoutReducer(state, { type: 'START_WORKOUT', id: BENCH.id, now: T0 });
 
 describe('the exercise list', () => {
   const add = (state: WorkoutState, name: string, id = `ex_${name}`) =>
@@ -132,7 +133,7 @@ describe('workout loop', () => {
 
   it('ignores a start for an exercise that is not in the list', () => {
     const s = withBench();
-    expect(workoutReducer(s, { type: 'START_WORKOUT', id: 'gone' })).toBe(s);
+    expect(workoutReducer(s, { type: 'START_WORKOUT', id: 'gone', now: T0 })).toBe(s);
   });
 
   it('does not let a mid-workout edit rewrite the running workout', () => {
@@ -189,7 +190,7 @@ describe('workout loop', () => {
   });
 
   it('lifts the block when the workout is ended early', () => {
-    const ended = workoutReducer(start(), { type: 'END_WORKOUT' });
+    const ended = workoutReducer(start(), { type: 'END_WORKOUT', now: T0 });
 
     expect(ended.phase).toBe('complete');
     expect(ended.appsLocked).toBe(false);
@@ -209,13 +210,54 @@ describe('workout loop', () => {
   });
 
   it('returns to the list, with the exercise still saved', () => {
-    let s = workoutReducer(start(), { type: 'END_WORKOUT' });
+    let s = workoutReducer(start(), { type: 'END_WORKOUT', now: T0 });
     s = workoutReducer(s, { type: 'NEW_WORKOUT' });
 
     expect(s.phase).toBe('setup');
     expect(s.exercises).toEqual([BENCH]);
     expect(s.setsCompleted).toBe(0);
     expect(s.appsLocked).toBe(false);
+  });
+});
+
+describe('time reclaimed', () => {
+  // The number the summary is built around: how long the apps were *locked*,
+  // which is the time the phone was genuinely out of reach.
+  it('counts the sets, not the rests', () => {
+    // 40s doing set 1, 60s resting, 50s doing set 2.
+    let s = start();
+    s = workoutReducer(s, { type: 'FINISH_SET', now: T0 + 40_000 });
+    s = workoutReducer(s, { type: 'END_REST', now: T0 + 100_000 });
+    s = workoutReducer(s, { type: 'FINISH_SET', now: T0 + 150_000 });
+
+    expect(s.phase).toBe('complete');
+    expect(s.totalLockedSeconds).toBe(90);
+    // Rest is the other side of the same coin, and stays separate.
+    expect(s.totalRestSeconds).toBe(60);
+  });
+
+  it('counts the part of a set you did before ending early', () => {
+    const s = workoutReducer(start(), { type: 'END_WORKOUT', now: T0 + 25_000 });
+    expect(s.totalLockedSeconds).toBe(25);
+  });
+
+  it('adds nothing for a workout ended during rest', () => {
+    let s = workoutReducer(start(), { type: 'FINISH_SET', now: T0 + 30_000 });
+    s = workoutReducer(s, { type: 'END_WORKOUT', now: T0 + 90_000 });
+
+    // The 30s set counts; the 60s of scrolling does not.
+    expect(s.totalLockedSeconds).toBe(30);
+    expect(s.totalRestSeconds).toBe(60);
+  });
+
+  it('starts from zero on the next workout', () => {
+    let s = workoutReducer(start(), { type: 'END_WORKOUT', now: T0 + 25_000 });
+    s = workoutReducer(s, { type: 'NEW_WORKOUT' });
+    expect(s.totalLockedSeconds).toBe(0);
+
+    s = workoutReducer(s, { type: 'START_WORKOUT', id: BENCH.id, now: T0 });
+    expect(s.totalLockedSeconds).toBe(0);
+    expect(s.lockedSince).toBe(T0);
   });
 });
 
@@ -289,5 +331,25 @@ describe('custom apps', () => {
     expect(s.defaults.customApps).toHaveLength(0);
     expect(s.defaults.selectedAppIds).not.toContain(id);
     expect(s.exercises[0].selectedAppIds).not.toContain(id);
+  });
+});
+
+describe('describeDuration', () => {
+  // Drives the summary's phrasing, so the plural has to be right at 1.
+  it('stays in seconds under a minute', () => {
+    expect(describeDuration(0)).toEqual({ value: 0, unit: 'seconds' });
+    expect(describeDuration(1)).toEqual({ value: 1, unit: 'second' });
+    expect(describeDuration(45)).toEqual({ value: 45, unit: 'seconds' });
+  });
+
+  it('rounds to whole minutes above that', () => {
+    expect(describeDuration(60)).toEqual({ value: 1, unit: 'minute' });
+    expect(describeDuration(89)).toEqual({ value: 1, unit: 'minute' });
+    expect(describeDuration(90)).toEqual({ value: 2, unit: 'minutes' });
+    expect(describeDuration(14 * 60)).toEqual({ value: 14, unit: 'minutes' });
+  });
+
+  it('never reports a negative duration', () => {
+    expect(describeDuration(-5)).toEqual({ value: 0, unit: 'seconds' });
   });
 });

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { AppPill } from '../components/AppPill';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { SectionLabel } from '../components/SectionLabel';
 import { Toggle } from '../components/Toggle';
 import { useEnter } from '../hooks/useEnter';
 import { usePressScale } from '../hooks/usePressScale';
@@ -83,7 +84,7 @@ export function SettingsScreen() {
         </Animated.View>
 
         <View style={styles.block}>
-          <Text style={styles.label}>ALERTS</Text>
+          <SectionLabel icon="bell">ALERTS</SectionLabel>
           <View style={styles.card}>
             <Toggle
               label="Sound"
@@ -98,7 +99,7 @@ export function SettingsScreen() {
         </View>
 
         <View style={styles.block}>
-          <Text style={styles.label}>APPS TO BLOCK</Text>
+          <SectionLabel icon="phone">APPS TO BLOCK</SectionLabel>
           <Text style={styles.help}>
             These start ticked on a new exercise. Changing them here leaves the
             exercises you already have alone.
@@ -147,7 +148,7 @@ export function SettingsScreen() {
         </View>
 
         <View style={styles.block}>
-          <Text style={styles.label}>EXERCISES</Text>
+          <SectionLabel icon="trash">EXERCISES</SectionLabel>
           <DangerButton
             label="Delete all exercises"
             disabled={count === 0}

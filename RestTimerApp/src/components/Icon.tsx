@@ -1,0 +1,113 @@
+import React from 'react';
+import Svg, { Path } from 'react-native-svg';
+
+/**
+ * The line-icon set.
+ *
+ * Deliberately thin, open and monochrome: they sit beside labels as a hint at
+ * what a row is about, not as decoration competing with it. Everything is
+ * stroked on a 24-unit grid with round caps, so the whole set reads as one
+ * hand — a mix of filled and outlined glyphs is what makes an app look like a
+ * clip-art bin.
+ *
+ * The brand marks in `BrandIcon` are the deliberate exception: those are
+ * somebody else's logos and have to look like themselves.
+ */
+export type IconName =
+  | 'dumbbell'
+  | 'reps'
+  | 'timer'
+  | 'phone'
+  | 'bell'
+  | 'trash'
+  | 'clock'
+  | 'check';
+
+/**
+ * A stroke of a glyph. `w` multiplies the icon's stroke width for this stroke
+ * alone — used only by the dumbbell, whose plates have to out-weigh its bar or
+ * the whole thing reads as a capital H.
+ */
+type Stroke = string | { d: string; w?: number; fill?: boolean };
+
+/** Each glyph is one or more strokes, drawn on a 0 0 24 24 grid. */
+const PATHS: Record<IconName, Stroke[]> = {
+  /**
+   * The app's own mark, reduced to strokes. Marks anything that is a lift.
+   *
+   * Three strokes, not the logo's five: at 15px the outer collars are ~3px
+   * tall and turn into specks, so the glyph read as noise.
+   *
+   * The plates are **filled** capsules rather than strokes — the one place in
+   * the set that breaks the outline rule, and it earns it. At 15px a stroked
+   * dumbbell is indistinguishable from a capital H however the proportions or
+   * stroke weights are pushed; mass on the ends is the only thing that reads.
+   */
+  dumbbell: [
+    { d: 'M6.3 8.7a1.7 1.7 0 0 1 3.4 0v6.6a1.7 1.7 0 0 1-3.4 0z', fill: true },
+    { d: 'M14.3 8.7a1.7 1.7 0 0 1 3.4 0v6.6a1.7 1.7 0 0 1-3.4 0z', fill: true },
+    { d: 'M9 12h6', w: 0.9 },
+  ],
+  /** Three rising bars — how many times you do it. */
+  reps: ['M6 16v4', 'M12 11v9', 'M18 6v14'],
+  /** A stopwatch: rest between sets. */
+  timer: [
+    'M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16z',
+    'M12 9.5V13l2.5 1.5',
+    'M9.5 3h5',
+  ],
+  /** A handset — the thing being taken away, and given back. */
+  phone: [
+    'M7.5 2.5h9a1.5 1.5 0 0 1 1.5 1.5v16a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 20V4a1.5 1.5 0 0 1 1.5-1.5z',
+    'M10.5 18.5h3',
+  ],
+  bell: [
+    'M18 8.5a6 6 0 1 0-12 0c0 6.5-2.5 8.5-2.5 8.5h17S18 15 18 8.5z',
+    'M13.7 20.5a2 2 0 0 1-3.4 0',
+  ],
+  trash: [
+    'M3.5 6h17',
+    'M9 6V3.5h6V6',
+    'M18.5 6l-1 14.5h-11L5.5 6',
+    'M10 10.5v6',
+    'M14 10.5v6',
+  ],
+  clock: ['M12 21.5a9.5 9.5 0 1 0 0-19 9.5 9.5 0 0 0 0 19z', 'M12 6.5V12l4 2.5'],
+  check: [
+    'M21 11.2V12a9.5 9.5 0 1 1-5.6-8.7',
+    'M21.5 4.5 12 14.02l-2.8-2.8',
+  ],
+};
+
+export function Icon({
+  name,
+  color,
+  size = 18,
+  strokeWidth = 1.8,
+}: {
+  name: IconName;
+  color: string;
+  size?: number;
+  strokeWidth?: number;
+}) {
+  return (
+    // Decorative throughout: every icon in this app sits next to the words it
+    // illustrates, so announcing it too would just repeat them.
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      {PATHS[name].map(stroke => {
+        const part = typeof stroke === 'string' ? { d: stroke } : stroke;
+        return (
+          <Path
+            key={part.d}
+            d={part.d}
+            stroke={part.fill ? 'none' : color}
+            strokeWidth={strokeWidth * (part.w ?? 1)}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill={part.fill ? color : 'none'}
+          />
+        );
+      })}
+    </Svg>
+  );
+}
