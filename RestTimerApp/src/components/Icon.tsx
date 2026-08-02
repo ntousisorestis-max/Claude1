@@ -29,7 +29,9 @@ export type IconName =
   | 'chevron'
   | 'speaker'
   | 'bellOff'
-  | 'plus';
+  | 'plus'
+  | 'user'
+  | 'signOut';
 
 /**
  * A stroke of a glyph. `w` multiplies the icon's stroke width for this stroke
@@ -120,6 +122,21 @@ const PATHS: Record<IconName, Stroke[]> = {
     'M3.5 3.5l17 17',
   ],
   plus: ['M12 5.5v13', 'M5.5 12h13'],
+  /** Head and shoulders — an account, and eventually a leaderboard row. */
+  user: [
+    'M12 11.5a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
+    'M4.5 20.5a7.5 7.5 0 0 1 15 0',
+  ],
+  /**
+   * Out through a door. The arrow points left, away from the frame: the same
+   * glyph mirrored is universally read as signing *in*, so the direction is the
+   * whole meaning here.
+   */
+  signOut: [
+    'M14 3.5h4.5A1.5 1.5 0 0 1 20 5v14a1.5 1.5 0 0 1-1.5 1.5H14',
+    'M9.5 8 5.5 12l4 4',
+    'M5.5 12H15',
+  ],
 };
 
 export function Icon({

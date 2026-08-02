@@ -11,6 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { AccountCard } from '../components/AccountCard';
 import { AppPill } from '../components/AppPill';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { HeroDumbbell } from '../components/HeroDumbbell';
@@ -95,6 +96,10 @@ export function SettingsScreen() {
         </Animated.View>
 
         <Animated.View style={[styles.sections, enterBody]}>
+          {/* First, because it's the only thing here that decides whether
+              anything you do in this app outlives the app being closed. */}
+          <AccountCard />
+
           <SettingsSection
             icon="bell"
             title="Alerts"
@@ -220,8 +225,8 @@ export function SettingsScreen() {
           </View>
 
           <Text style={styles.note}>
-            Nothing is saved between launches yet — exercises and settings reset
-            when the app restarts.
+            Exercises and settings still reset when the app restarts — only your
+            focus totals are saved, and only while you’re signed in.
           </Text>
         </Animated.View>
 

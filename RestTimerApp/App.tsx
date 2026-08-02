@@ -18,6 +18,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { AccountProvider } from './src/cloud/AccountContext';
+import { WorkoutSync } from './src/cloud/WorkoutSync';
 import { GlowBackground } from './src/components/GlowBackground';
 import { ScreenFade } from './src/components/ScreenFade';
 import { TabBar, type Tab } from './src/components/TabBar';
@@ -30,6 +32,7 @@ import { SplashScreen } from './src/screens/SplashScreen';
 import { ExercisesScreen } from './src/screens/ExercisesScreen';
 import { useWorkout, WorkoutProvider } from './src/state/WorkoutContext';
 import { colors } from './src/theme';
+import type { CloudBackend } from './src/cloud/types';
 import type { AppStorage } from './src/state/storage';
 import type { Phase } from './src/state/types';
 
@@ -174,20 +177,34 @@ function App({
    * src/state/storage.ts.
    */
   storage,
+  /**
+   * The cloud the account layer talks to. Left undefined it's Firebase when
+   * src/cloud/firebaseConfig.ts has been filled in, and a do-nothing local
+   * backend when it hasn't — which is the state the tests run in unless they
+   * pass a fake. See src/cloud/firebaseBackend.ts.
+   */
+  backend,
 }: {
   storage?: AppStorage;
+  backend?: CloudBackend;
 } = {}) {
   const [splashDone, setSplashDone] = useState(false);
   const dismissSplash = useCallback(() => setSplashDone(true), []);
 
   return (
     <SafeAreaProvider>
-      <WorkoutProvider storage={storage}>
-        <Ground />
-        {/* Overlaid rather than swapped, so the app is already laid out
-            underneath by the time the logo fades. */}
-        {splashDone ? null : <SplashScreen onDone={dismissSplash} />}
-      </WorkoutProvider>
+      {/* Outside the workout, deliberately. Who is signed in outlives any one
+          workout, and the workout state machine knows nothing about accounts —
+          the dependency runs one way, through <WorkoutSync/> below. */}
+      <AccountProvider backend={backend}>
+        <WorkoutProvider storage={storage}>
+          <WorkoutSync />
+          <Ground />
+          {/* Overlaid rather than swapped, so the app is already laid out
+              underneath by the time the logo fades. */}
+          {splashDone ? null : <SplashScreen onDone={dismissSplash} />}
+        </WorkoutProvider>
+      </AccountProvider>
     </SafeAreaProvider>
   );
 }

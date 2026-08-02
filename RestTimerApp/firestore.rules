@@ -1,0 +1,99 @@
+rules_version = '2';
+
+// Security rules for the Focusboard's data.
+//
+// Paste these into the Firebase console: Firestore Database -> Rules -> replace
+// everything in the box -> Publish. FIREBASE_SETUP.md step 5 has the clicks.
+//
+// This file is the only thing standing between your database and the open
+// internet. The API key in src/cloud/firebaseConfig.ts is not a secret and does
+// not protect anything — these rules do. Firebase's "test mode" default lets
+// anybody read and write everything, and it expires after 30 days, at which
+// point the app silently stops saving. Publish these instead.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // A person's profile and their running totals.
+    match /users/{uid} {
+
+      // Readable by any signed-in user, because that is what a leaderboard is.
+      // Nothing sensitive is stored here on purpose — no email address, no
+      // password, just a display name and three numbers. Signed-out visitors
+      // get nothing.
+      allow read: if request.auth != null;
+
+      // Only ever your own row, and only in ways that keep it a valid row.
+      allow create: if isOwner(uid) && isValidProfile();
+      allow update: if isOwner(uid) && isValidProfile() && countsOnlyGoUp();
+
+      // Account deletion needs to clear the workouts subcollection too, which
+      // rules cannot do. It belongs in a Cloud Function, so it is refused here
+      // rather than left half-working.
+      allow delete: if false;
+
+      // The individual finished workouts that add up to the totals above.
+      match /workouts/{workoutId} {
+
+        // Yours alone. The totals are the public part; what you lifted and
+        // when is not.
+        allow read: if isOwner(uid);
+
+        // Write-once. The app writes a workout and increments the totals in one
+        // transaction, keyed on this document not already existing — that is
+        // what stops a retried request counting the same session twice. Letting
+        // a client edit or delete one afterwards would reopen exactly that hole.
+        allow create: if isOwner(uid) && isValidWorkout();
+        allow update, delete: if false;
+      }
+    }
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    /** Shapes the profile doc: right fields, right types, sane sizes. */
+    function isValidProfile() {
+      let d = request.resource.data;
+      return d.displayName is string
+        && d.displayName.size() > 0
+        && d.displayName.size() <= 24
+        && d.focusSeconds is number && d.focusSeconds >= 0
+        && d.setsCompleted is number && d.setsCompleted >= 0
+        && d.workoutsFinished is number && d.workoutsFinished >= 0;
+    }
+
+    /**
+     * Totals are a ratchet.
+     *
+     * Every legitimate write is an increment, so a client that tries to lower
+     * one is either broken or gaming the board. Rejecting it here means the
+     * leaderboard cannot be walked backwards even by someone driving the SDK by
+     * hand with a valid login.
+     *
+     * It does not stop someone inflating their own numbers — no rule can, since
+     * a real client's increments are indistinguishable from a fake one's. That
+     * needs the write to move server-side into a Cloud Function, which is the
+     * right thing to do before the board is competitive and overkill before it
+     * exists.
+     */
+    function countsOnlyGoUp() {
+      let before = resource.data;
+      let after = request.resource.data;
+      return after.focusSeconds >= before.focusSeconds
+        && after.setsCompleted >= before.setsCompleted
+        && after.workoutsFinished >= before.workoutsFinished;
+    }
+
+    /** Shapes a workout doc. */
+    function isValidWorkout() {
+      let d = request.resource.data;
+      return d.exerciseName is string
+        && d.exerciseName.size() <= 32
+        && d.focusSeconds is number && d.focusSeconds >= 0
+        && d.setsCompleted is number && d.setsCompleted >= 0
+        && d.restSeconds is number && d.restSeconds >= 0
+        && d.endedAt is number;
+    }
+  }
+}

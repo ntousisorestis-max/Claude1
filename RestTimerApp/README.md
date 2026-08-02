@@ -280,6 +280,16 @@ Unverified because no native build has run yet:
   It reads from `rootProject.ext`, so it should inherit — but it's untested.
 - **iOS deployment target.** Notifee's podspec says 10.0 against the project's
   15.1. Harmless, may warn during `pod install`.
+- **Firebase auth persistence on native.** `@firebase/auth` keeps the signed-in
+  session in AsyncStorage on React Native, picked up automatically because
+  `@react-native-async-storage/async-storage` is installed as its optional peer
+  dependency. That resolution has only been proven on web, where the browser
+  build uses `localStorage` instead. If a native build signs the user out on
+  every launch, this is why — and it needs `pod install` on iOS.
+- **Bundle weight.** The Firebase SDK takes the production web bundle from
+  ~0.6 MB to ~1.4 MB. `getBackend()` avoids *evaluating* it when no project is
+  configured, but bundlers still include it; splitting it out would mean an
+  async `import()` and is only worth doing if load time becomes a complaint.
 
 ## Layout
 
@@ -295,6 +305,13 @@ src/
     MockBlocker.ts           Phase 1 — drives the in-app overlay
     ScreenTimeBlocker.ts     Phase 2 — FamilyControls/ManagedSettings bridge (not wired)
     index.ts                 picks the real blocker if the native module exists
+  cloud/
+    types.ts                 CloudBackend, AuthUser, FocusTotals — no Firebase import
+    backend.ts               picks the backend; the local no-op one; error copy
+    firebaseBackend.ts       the only file that imports firebase/*
+    AccountContext.tsx       who's signed in, lifetime totals, the sync outbox
+    WorkoutSync.tsx          the one seam: workout 'complete' -> recordWorkout
+    firebaseConfig.ts        your project's six values (see FIREBASE_SETUP.md)
   screens/                   Exercises / ActiveSet / Resting / Complete
   components/                ExerciseCard, SessionStats, SettingsSection,
                              HeroHourglass, HeroDumbbell, GradientButton, Icon,
@@ -369,6 +386,39 @@ passes under Android module resolution (`npm run test:android`). Specifics:
 
 Not handled yet, equally on both platforms: the screen can sleep mid-set (no
 keep-awake), and the hardware back button doesn't intercept an active workout.
+
+## Accounts and the Focusboard
+
+Optional, and off until someone fills in `src/cloud/firebaseConfig.ts` — see
+**[FIREBASE_SETUP.md](FIREBASE_SETUP.md)** for the click-by-click walkthrough.
+With it blank the app behaves exactly as it did before accounts existed, which
+is the state the whole test suite runs in.
+
+What exists today is the foundation, not the feature: email/password accounts,
+and each finished workout synced to Firestore so there is real data to rank
+people by. There is no leaderboard screen and no friends list yet.
+
+Three decisions worth knowing:
+
+- **The Firebase JS SDK, not `@react-native-firebase`.** The latter is the more
+  usual pick for a bare RN app and has better offline behaviour, but it is
+  native-only — and no native build has ever compiled in this project (see
+  [Known risks](#known-risks)). A backend that can't be exercised would ship
+  unverified. The JS SDK runs on web *and* React Native from one codebase, so
+  every line of it is covered by the browser build.
+- **Two totals, deliberately not merged.** `session` counts since launch and is
+  never saved; the Firestore doc counts lifetime and is what a leaderboard would
+  read. The Workout tab's stats card shows the first, the Settings account card
+  shows the second, and each says which it is.
+- **Writes are idempotent.** A workout id is minted once when the workout ends
+  and reused by every retry. The workout doc and the `increment` on the totals
+  go up in one transaction that bails if that id is already on file — `increment`
+  on its own is not idempotent, and a retried write would count the same session
+  twice, which on a leaderboard is indistinguishable from cheating.
+
+`firestore.rules` is the security model and has to be pasted into the Firebase
+console by hand; the API key in `firebaseConfig.ts` protects nothing and is
+meant to be committed.
 
 ## State & persistence
 
@@ -451,4 +501,5 @@ names apps from one list, and each has a count to fall back to.
 ## Not in scope (yet)
 
 Motion detection, camera exercise recognition, Android blocking (Phase 3),
-accounts, backend, payments, workout history.
+payments, workout history, friends, and the Focusboard leaderboard screen
+itself.
