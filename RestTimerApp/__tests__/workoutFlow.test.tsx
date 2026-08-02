@@ -37,6 +37,36 @@ const press = (root: ReactTestInstance, accessibilityLabel: string) => {
   ReactTestRenderer.act(() => node.props.onPress());
 };
 
+/**
+ * Presses the first tappable whose label starts with `prefix`.
+ *
+ * The exercise-card rows announce their current value ("Sets for Squat, 3.
+ * Edit"), which is right for a screen reader and wrong to hard-code in a test
+ * that is about to change that value.
+ */
+const pressStartingWith = (root: ReactTestInstance, prefix: string) => {
+  const [node] = root.findAll(
+    n =>
+      typeof n.props?.accessibilityLabel === 'string' &&
+      n.props.accessibilityLabel.startsWith(prefix) &&
+      typeof n.props?.onPress === 'function',
+  );
+  if (!node) {
+    throw new Error(`No pressable whose label starts with "${prefix}"`);
+  }
+  ReactTestRenderer.act(() => node.props.onPress());
+};
+
+/** The full label of the first tappable whose label starts with `prefix`. */
+const labelStartingWith = (root: ReactTestInstance, prefix: string): string => {
+  const [node] = root.findAll(
+    n =>
+      typeof n.props?.accessibilityLabel === 'string' &&
+      n.props.accessibilityLabel.startsWith(prefix),
+  );
+  return node?.props.accessibilityLabel ?? '';
+};
+
 const type = (root: ReactTestInstance, placeholder: string, value: string) => {
   const [input] = root.findAll(n => n.props?.placeholder === placeholder);
   ReactTestRenderer.act(() => input.props.onChangeText(value));
@@ -99,12 +129,12 @@ describe('full workout loop', () => {
 
     addExercise(root, 'Squat');
     expect(hasText(root, 'Squat')).toBe(true);
-    expect(hasText(root, '3 sets')).toBe(true);
+    expect(labelStartingWith(root, 'Sets for Squat')).toContain(', 3.');
 
     // --- Tune this exercise down to two sets ----------------------------
-    press(root, 'Squat, edit');
+    pressStartingWith(root, 'Sets for Squat');
     press(root, 'Decrease sets for Squat');
-    expect(hasText(root, '2 sets')).toBe(true);
+    expect(labelStartingWith(root, 'Sets for Squat')).toContain(', 2.');
 
     press(root, 'Start Squat');
 
@@ -144,9 +174,9 @@ describe('full workout loop', () => {
 
     // --- And back to the list, exercise intact -------------------------
     press(root, 'New workout');
-    expect(hasText(root, 'Your lifts')).toBe(true);
+    expect(hasText(root, 'Lift more')).toBe(true);
     expect(hasText(root, 'Squat')).toBe(true);
-    expect(hasText(root, '2 sets')).toBe(true);
+    expect(labelStartingWith(root, 'Sets for Squat')).toContain(', 2.');
   });
 
   it('keeps each exercise’s settings to itself', async () => {
@@ -157,12 +187,12 @@ describe('full workout loop', () => {
     addExercise(root, 'Rows');
 
     // Squat gets 90s rest; Rows must not move.
-    press(root, 'Squat, edit');
+    pressStartingWith(root, 'Sets for Squat');
     press(root, 'Increase rest for Squat');
-    press(root, 'Squat, done editing');
+    pressStartingWith(root, 'Sets for Squat');
 
-    expect(hasText(root, '65s rest')).toBe(true);
-    expect(hasText(root, '60s rest')).toBe(true);
+    expect(labelStartingWith(root, 'Rest time for Squat')).toContain('65s');
+    expect(labelStartingWith(root, 'Rest time for Rows')).toContain('60s');
 
     // And starting one runs that one.
     press(root, 'Start Rows');
@@ -202,7 +232,7 @@ describe('full workout loop', () => {
     press(root, 'Add exercise');
     addExercise(root, 'Squat');
 
-    press(root, 'Rows, edit');
+    pressStartingWith(root, 'Sets for Rows');
     press(root, 'Delete Rows');
     expect(hasText(root, 'Delete Rows?')).toBe(true);
 

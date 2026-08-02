@@ -2,7 +2,7 @@ import React from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { usePressScale } from '../hooks/usePressScale';
-import { colors, HAIRLINE, spacing, type, sized } from '../theme';
+import { colors, HAIRLINE, radius, sized, spacing, type } from '../theme';
 
 export type Tab = 'workout' | 'settings';
 
@@ -61,9 +61,18 @@ function TabButton({
       onPress={() => onPress(tab)}
       style={styles.tab}>
       <Animated.View style={[styles.tabInner, pressScale.style]}>
-        <Svg width={24} height={24} viewBox="0 0 24 24">
-          {tab === 'workout' ? <DumbbellGlyph tint={tint} /> : <SlidersGlyph tint={tint} />}
-        </Svg>
+        {/* The glyph sits in a violet pill when selected. It's the only
+            treatment here — a bar that grows an underline, a dot and a colour
+            change is three ways of saying one thing. */}
+        <View style={[styles.glyph, active && styles.glyphOn]}>
+          <Svg width={24} height={24} viewBox="0 0 24 24">
+            {tab === 'workout' ? (
+              <DumbbellGlyph tint={tint} />
+            ) : (
+              <SlidersGlyph tint={tint} />
+            )}
+          </Svg>
+        </View>
         <Text style={[styles.label, { color: tint }]}>{label}</Text>
       </Animated.View>
     </Pressable>
@@ -104,5 +113,11 @@ const styles = StyleSheet.create({
   },
   tab: { flex: 1, paddingVertical: spacing.sm },
   tabInner: { alignItems: 'center', justifyContent: 'center', gap: 5 },
+  glyph: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+  },
+  glyphOn: { backgroundColor: colors.accentWash },
   label: { ...sized(type.tag, 11) },
 });

@@ -296,9 +296,10 @@ src/
     ScreenTimeBlocker.ts     Phase 2 — FamilyControls/ManagedSettings bridge (not wired)
     index.ts                 picks the real blocker if the native module exists
   screens/                   Exercises / ActiveSet / Resting / Complete
-  components/                ExerciseCard, AppPill, ConfirmDialog, BigButton,
-                             Stepper, Segmented, ProgressRing, SetTicks,
-                             LockStatus, LockGlyph
+  components/                ExerciseCard, SessionStats, HeroHourglass,
+                             GradientButton, Icon, SectionLabel, AppPill,
+                             ConfirmDialog, BigButton, Stepper, Segmented,
+                             ProgressRing, SetTicks, LockStatus, LockGlyph
   hooks/useCountdown.ts      wall-clock countdown
   hooks/useEnter.ts          screen entry animation
   hooks/usePressScale.ts     shared press-in spring for every tappable
@@ -377,6 +378,8 @@ One `useReducer` at the root, no backend. Three slices:
   "time reclaimed" and deliberately never shown while it accrues: a live
   counter would put a number on screen at exactly the moment the app wants you
   looking away from it. Session-only, reset by the next `START_WORKOUT`.
+- **`session`** — running totals for every workout since launch: sets, focus
+  time, workouts done. Never persisted, so it starts at zero on each launch.
 - **`config`** — a snapshot of the exercise being run, taken by `START_WORKOUT`.
   Not a reference: editing the card mid-workout must not move the goalposts
   under the set you're on, and the summary has to describe the workout that

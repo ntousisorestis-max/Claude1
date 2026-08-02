@@ -1,5 +1,6 @@
 import type {
   AppDefaults,
+  SessionTotals,
   BlockableApp,
   CustomApp,
   Exercise,
@@ -87,8 +88,15 @@ const EMPTY_CONFIG: WorkoutConfig = {
   selectedAppIds: [],
 };
 
+const NO_SESSION: SessionTotals = {
+  setsCompleted: 0,
+  lockedSeconds: 0,
+  workoutsFinished: 0,
+};
+
 export const initialState: WorkoutState = {
   phase: 'setup',
+  session: NO_SESSION,
   exercises: [],
   config: EMPTY_CONFIG,
   defaults: FACTORY_DEFAULTS,
@@ -127,11 +135,20 @@ function lockedElapsed(state: WorkoutState, now: number): number {
   return Math.max(0, Math.round((now - state.lockedSince) / 1000));
 }
 
-/** Banks the stretch of locked time that is ending now. */
+/**
+ * Banks the stretch of locked time that is ending now, into both the workout's
+ * total and the session's. Returns them together so no caller can update one
+ * and forget the other.
+ */
 function bankLocked(state: WorkoutState, now: number) {
+  const justLocked = lockedElapsed(state, now);
   return {
-    totalLockedSeconds: state.totalLockedSeconds + lockedElapsed(state, now),
-    lockedSince: null,
+    totalLockedSeconds: state.totalLockedSeconds + justLocked,
+    lockedSince: null as number | null,
+    session: {
+      ...state.session,
+      lockedSeconds: state.session.lockedSeconds + justLocked,
+    },
   };
 }
 
@@ -274,12 +291,14 @@ export function workoutReducer(
 
       // Either way the set just ended, so the locked stretch ends with it.
       const banked = bankLocked(state, action.now);
+      const session = { ...banked.session, setsCompleted: state.session.setsCompleted + 1 };
 
       // Last set: no rest period, straight to the summary with apps unlocked.
       if (setsCompleted >= state.config.totalSets) {
         return {
           ...state,
           ...banked,
+          session: { ...session, workoutsFinished: session.workoutsFinished + 1 },
           phase: 'complete',
           setsCompleted,
           restStartedAt: null,
@@ -291,6 +310,7 @@ export function workoutReducer(
       return {
         ...state,
         ...banked,
+        session,
         phase: 'resting',
         setsCompleted,
         restStartedAt: action.now,
@@ -324,10 +344,17 @@ export function workoutReducer(
       // that calls Date.now() isn't a pure function of its inputs, which makes
       // it untestable at the exact boundaries that matter.
       const resting = state.phase === 'resting';
+      // Ending mid-set still counts the part of it you did.
+      const banked = bankLocked(state, action.now);
       return {
         ...state,
-        // Ending mid-set still counts the part of it you did.
-        ...bankLocked(state, action.now),
+        ...banked,
+        session: {
+          ...banked.session,
+          // A workout you bailed on before banking a single set isn't one.
+          workoutsFinished:
+            banked.session.workoutsFinished + (state.setsCompleted > 0 ? 1 : 0),
+        },
         phase: 'complete',
         totalRestSeconds: resting
           ? state.totalRestSeconds + restElapsed(state, action.now)
@@ -414,6 +441,9 @@ export function workoutReducer(
         ...initialState,
         exercises: state.exercises,
         defaults: state.defaults,
+        // Survives, deliberately: the stats card counts the whole session, not
+        // the last workout in it.
+        session: state.session,
       };
 
     case 'HYDRATE': {

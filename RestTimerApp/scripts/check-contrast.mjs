@@ -93,6 +93,11 @@ check('white — Scroll away., clock', WHITE, glowedAccent, LARGE);
 checkAlpha('mutedOnAccent (white @ .88)', 0.88, glowedAccent, BODY);
 checkAlpha('faintOnAccent (white @ .68)', 0.68, glowedAccent, LARGE);
 
+console.log('\nThe gradient Start button, at both ends of its ramp:');
+// 19px bold is "large text", so 3.0 — see GradientButton.tsx.
+check('white on the gradient, dark end', WHITE, ACCENT_DEEP, LARGE);
+check('white on the gradient, light end', WHITE, ACCENT, LARGE);
+
 console.log('\nNon-text contrast (WCAG 1.4.11 wants 3.0 for UI):');
 check('accent fill vs dark ground', ACCENT, glowedInk, LARGE);
 check('white on the accent button', WHITE, ACCENT, LARGE);

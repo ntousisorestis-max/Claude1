@@ -353,3 +353,39 @@ describe('describeDuration', () => {
     expect(describeDuration(-5)).toEqual({ value: 0, unit: 'seconds' });
   });
 });
+
+describe('session totals', () => {
+  // What the stats card reads. Never persisted — zero again on every launch.
+  it('accumulates sets, focus time and workouts across the session', () => {
+    let s = start();
+    s = workoutReducer(s, { type: 'FINISH_SET', now: T0 + 40_000 });
+    s = workoutReducer(s, { type: 'END_REST', now: T0 + 100_000 });
+    s = workoutReducer(s, { type: 'FINISH_SET', now: T0 + 150_000 });
+
+    expect(s.session).toEqual({
+      setsCompleted: 2,
+      lockedSeconds: 90,
+      workoutsFinished: 1,
+    });
+
+    // A second workout adds to the same running totals.
+    s = workoutReducer(s, { type: 'NEW_WORKOUT' });
+    expect(s.session.setsCompleted).toBe(2);
+
+    s = workoutReducer(s, { type: 'START_WORKOUT', id: BENCH.id, now: T0 });
+    s = workoutReducer(s, { type: 'FINISH_SET', now: T0 + 20_000 });
+
+    expect(s.session.setsCompleted).toBe(3);
+    expect(s.session.lockedSeconds).toBe(110);
+    // The workout's own total restarted, though.
+    expect(s.totalLockedSeconds).toBe(20);
+  });
+
+  it('does not count a workout abandoned before a single set', () => {
+    const s = workoutReducer(start(), { type: 'END_WORKOUT', now: T0 + 5_000 });
+
+    expect(s.session.workoutsFinished).toBe(0);
+    // The time still counts — you were locked out for it either way.
+    expect(s.session.lockedSeconds).toBe(5);
+  });
+});

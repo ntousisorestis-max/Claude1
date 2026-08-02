@@ -81,8 +81,26 @@ export type AppDefaults = {
   customApps: CustomApp[];
 };
 
+/**
+ * Running totals for the whole app session — every workout since launch.
+ *
+ * Explicitly *not* a history: nothing here is written to storage, so it starts
+ * at zero on every launch. That's the honest scope for a stats row in an app
+ * with no accounts and no backend, and it's why the card is labelled "this
+ * session" rather than "today" — a day would imply the numbers survive a
+ * restart, which they don't.
+ */
+export type SessionTotals = {
+  setsCompleted: number;
+  /** Seconds the apps were locked, summed across workouts. */
+  lockedSeconds: number;
+  /** Workouts that got at least one set done. */
+  workoutsFinished: number;
+};
+
 export type WorkoutState = {
   phase: Phase;
+  session: SessionTotals;
   /** The saved list, in the order they were added. */
   exercises: Exercise[];
   /** Snapshot of the exercise being run. Meaningless while phase is 'setup'. */

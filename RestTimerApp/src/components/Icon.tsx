@@ -21,7 +21,12 @@ export type IconName =
   | 'bell'
   | 'trash'
   | 'clock'
-  | 'check';
+  | 'check'
+  | 'flame'
+  | 'trophy'
+  | 'lock'
+  | 'play'
+  | 'chevron';
 
 /**
  * A stroke of a glyph. `w` multiplies the icon's stroke width for this stroke
@@ -77,6 +82,27 @@ const PATHS: Record<IconName, Stroke[]> = {
     'M21 11.2V12a9.5 9.5 0 1 1-5.6-8.7',
     'M21.5 4.5 12 14.02l-2.8-2.8',
   ],
+  /** Focus time. Outer flame plus an inner one, so it reads at a glance. */
+  flame: [
+    // The kink where the two sides meet at the tip is what separates a flame
+    // from a teardrop; a symmetrical curve reads as water every time.
+    'M12 2.5c-.7 2.2-2 3.6-3.2 5-1.5 1.7-3.1 4.2-3.1 7.4a6.3 6.3 0 0 0 12.6 0c0-3.2-1.6-5.7-3.1-7.4-1.2-1.4-2.5-2.8-3.2-5z',
+    'M12 13c-.4 1-1 1.6-1.6 2.3-.7.8-1.2 1.8-1.2 3a2.8 2.8 0 0 0 5.6 0c0-1.2-.5-2.2-1.2-3-.6-.7-1.2-1.3-1.6-2.3z',
+  ],
+  trophy: [
+    'M7 4h10v4.5a5 5 0 0 1-10 0V4z',
+    'M7 5.5H4.5V7a3.5 3.5 0 0 0 3.2 3.5',
+    'M17 5.5h2.5V7a3.5 3.5 0 0 1-3.2 3.5',
+    'M12 13.5v3.5',
+    'M8.5 20.5h7',
+  ],
+  /** The static padlock for list rows. `LockGlyph` is the animated one. */
+  lock: [
+    'M7 10.5h10a1.5 1.5 0 0 1 1.5 1.5v6.5a1.5 1.5 0 0 1-1.5 1.5H7a1.5 1.5 0 0 1-1.5-1.5V12A1.5 1.5 0 0 1 7 10.5z',
+    'M8.75 10.5V7.75a3.25 3.25 0 0 1 6.5 0v2.75',
+  ],
+  play: [{ d: 'M9.5 6.2v11.6L18.5 12z', fill: true }],
+  chevron: ['m10 6 6 6-6 6'],
 };
 
 export function Icon({

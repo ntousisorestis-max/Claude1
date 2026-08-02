@@ -11,7 +11,10 @@ import {
   View,
 } from 'react-native';
 import { ExerciseCard } from '../components/ExerciseCard';
+import { HeroHourglass } from '../components/HeroHourglass';
+import { Icon } from '../components/Icon';
 import { SectionLabel } from '../components/SectionLabel';
+import { SessionStats } from '../components/SessionStats';
 import { useEnter } from '../hooks/useEnter';
 import { usePressScale } from '../hooks/usePressScale';
 import { useWorkout } from '../state/WorkoutContext';
@@ -34,7 +37,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  */
 export function ExercisesScreen() {
   const {
-    state: { exercises, defaults },
+    state: { exercises, defaults, session },
     addExercise,
     removeExercise,
     setExerciseSets,
@@ -60,12 +63,30 @@ export function ExercisesScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled">
-        <Animated.View style={[styles.head, enter]}>
-          <Text style={styles.eyebrow}>READY TO TRAIN</Text>
-          <Text style={styles.masthead}>
-            Your lifts<Text style={styles.stop}>.</Text>
-          </Text>
+        <Animated.View style={[styles.hero, enter]}>
+          <View style={styles.brandRow}>
+            <Icon name="dumbbell" color={colors.accentText} size={24} />
+          </View>
+
+          <View style={styles.heroBody}>
+            <View style={styles.heroText}>
+              <Text style={styles.eyebrow}>READY TO TRAIN</Text>
+              <Text style={styles.masthead}>
+                Focus up<Text style={styles.stop}>.</Text>
+              </Text>
+              <Text style={[styles.masthead, styles.mastheadAccent]}>
+                Lift more<Text style={styles.stop}>.</Text>
+              </Text>
+              <Text style={styles.heroSub}>
+                Block the noise. Stay in the set. Your phone can wait.
+              </Text>
+            </View>
+
+            <HeroHourglass size={132} />
+          </View>
         </Animated.View>
+
+        <SessionStats session={session} />
 
         {empty ? (
           <View style={styles.emptyState}>
@@ -247,10 +268,22 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
   },
 
-  head: { gap: spacing.sm },
-  eyebrow: { ...type.tag, color: colors.accentText },
-  masthead: { ...sized(type.display, 42), color: colors.white },
+  hero: { gap: spacing.md },
+  brandRow: { flexDirection: 'row', alignItems: 'center' },
+  /** Text and illustration share the row; the text takes what's left. */
+  heroBody: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  heroText: { flex: 1, gap: 2 },
+  eyebrow: { ...type.tag, color: colors.accentText, marginBottom: spacing.xs },
+  /** Two lines, tight, one white and one violet — the header's whole idea. */
+  masthead: { ...sized(type.display, 38), color: colors.white },
+  mastheadAccent: { color: colors.accentText },
   stop: { color: colors.accent },
+  heroSub: {
+    ...type.helper,
+    color: colors.mutedOnDark,
+    lineHeight: 21,
+    marginTop: spacing.sm,
+  },
 
   list: { gap: spacing.md },
 
