@@ -26,7 +26,10 @@ export type IconName =
   | 'trophy'
   | 'lock'
   | 'play'
-  | 'chevron';
+  | 'chevron'
+  | 'speaker'
+  | 'bellOff'
+  | 'plus';
 
 /**
  * A stroke of a glyph. `w` multiplies the icon's stroke width for this stroke
@@ -103,6 +106,20 @@ const PATHS: Record<IconName, Stroke[]> = {
   ],
   play: [{ d: 'M9.5 6.2v11.6L18.5 12z', fill: true }],
   chevron: ['m10 6 6 6-6 6'],
+  /** A speaker with two waves — the sound the rest-over alert makes. */
+  speaker: [
+    'M4 9.5h3.2L12 5.6v12.8L7.2 14.5H4z',
+    'M15.4 9.6a3.4 3.4 0 0 1 0 4.8',
+    'M18 7a7 7 0 0 1 0 10',
+  ],
+  /** The same bell, struck through: alerts still arrive, just quietly. */
+  bellOff: [
+    'M9.6 3.7A6 6 0 0 1 18 8.5c0 3 .5 5.1 1.1 6.5',
+    'M6.1 6.4A6 6 0 0 0 6 8.5c0 6.5-2.5 8.5-2.5 8.5h12.4',
+    'M13.7 20.5a2 2 0 0 1-3.4 0',
+    'M3.5 3.5l17 17',
+  ],
+  plus: ['M12 5.5v13', 'M5.5 12h13'],
 };
 
 export function Icon({

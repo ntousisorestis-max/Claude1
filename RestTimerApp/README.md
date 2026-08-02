@@ -296,10 +296,11 @@ src/
     ScreenTimeBlocker.ts     Phase 2 — FamilyControls/ManagedSettings bridge (not wired)
     index.ts                 picks the real blocker if the native module exists
   screens/                   Exercises / ActiveSet / Resting / Complete
-  components/                ExerciseCard, SessionStats, HeroHourglass,
-                             GradientButton, Icon, SectionLabel, AppPill,
-                             ConfirmDialog, BigButton, Stepper, Segmented,
-                             ProgressRing, SetTicks, LockStatus, LockGlyph
+  components/                ExerciseCard, SessionStats, SettingsSection,
+                             HeroHourglass, HeroDumbbell, GradientButton, Icon,
+                             SectionLabel, AppPill, ConfirmDialog, BigButton,
+                             Stepper, Segmented, ProgressRing, SetTicks,
+                             LockStatus, LockGlyph
   hooks/useCountdown.ts      wall-clock countdown
   hooks/useEnter.ts          screen entry animation
   hooks/usePressScale.ts     shared press-in spring for every tappable
@@ -318,6 +319,12 @@ Two details worth knowing before you change things:
   passed while the app was suspended, the re-lock fires on the next foreground.
 - **The "Time's up!" notification is scheduled with the OS**, not fired by a JS
   timer, for the same reason.
+- **Silent mode and the Sound toggle are one setting, not two.** They're
+  inverses, so two independent flags could be set to contradict each other and
+  neither would be the truth. Both write `soundEnabled`. The behaviour under
+  them — alert still delivered, just without a sound — is why
+  `notifications.ts` keeps two Android channels: a channel's sound can't be
+  changed once it exists, so silencing means posting to a different one.
 - **Tapping it is routed into the state machine, not left to the OS.** The
   handler dispatches `END_REST`, which is exactly the "rest is over, next set"
   transition — so a tap lands you on the set you were about to do rather than

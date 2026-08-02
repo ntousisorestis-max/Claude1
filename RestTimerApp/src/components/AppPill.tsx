@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { BrandIcon } from './BrandIcon';
+import { Icon } from './Icon';
 import { usePressScale } from '../hooks/usePressScale';
 import { useReduceMotion } from '../hooks/useReduceMotion';
 import { colors, HAIRLINE, radius, spacing, type } from '../theme';
@@ -95,6 +96,12 @@ export function AppPill({
           {app.name}
         </Text>
 
+        {/* A tick, not just a border colour. On a wrapped grid of five, "which
+            of these is on" has to be answerable without comparing outlines. */}
+        <View style={[styles.mark, checked && styles.markOn]}>
+          {checked ? <Icon name="check" color={colors.white} size={11} strokeWidth={2.6} /> : null}
+        </View>
+
         {onRemove ? <RemoveMark name={app.name} onPress={onRemove} /> : null}
       </Pressable>
     </Animated.View>
@@ -142,6 +149,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   monogramText: { fontSize: 11, fontWeight: '800' },
+  mark: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1.5,
+    borderColor: colors.hairline,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  markOn: { backgroundColor: colors.accent, borderColor: colors.accent },
   remove: { paddingLeft: spacing.xs },
   removeMark: { fontSize: 20, lineHeight: 22, color: colors.faintOnDark },
 });

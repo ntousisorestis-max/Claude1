@@ -90,6 +90,12 @@ const hasText = (root: ReactTestInstance, needle: string) =>
 const hasLabel = (root: ReactTestInstance, label: string) =>
   root.findAll(n => n.props?.accessibilityLabel === label).length > 0;
 
+/** The checked/unchecked state a switch or checkbox is announcing. */
+const isChecked = (root: ReactTestInstance, label: string): boolean => {
+  const [node] = root.findAll(n => n.props?.accessibilityLabel === label);
+  return node?.props?.accessibilityState?.checked === true;
+};
+
 /** Types a name into the composer and saves it. */
 const addExercise = (root: ReactTestInstance, name: string) => {
   type(root, 'Bench press', name);
@@ -307,6 +313,43 @@ describe('full workout loop', () => {
     pressNotification('some-other-app');
     expect(hasText(root, 'Scroll away.')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(false);
+  });
+
+  it('silent mode mutes the alert without losing it', async () => {
+    const root = await launch();
+    addExercise(root, 'Rows');
+
+    (notifee.createChannel as jest.Mock).mockClear();
+    (notifee.createTriggerNotification as jest.Mock).mockClear();
+
+    press(root, 'Settings');
+    expect(isChecked(root, 'Sound')).toBe(true);
+    expect(isChecked(root, 'Silent mode')).toBe(false);
+
+    press(root, 'Silent mode');
+
+    // One setting, two faces: they can never be set to disagree.
+    expect(isChecked(root, 'Silent mode')).toBe(true);
+    expect(isChecked(root, 'Sound')).toBe(false);
+
+    // Run a rest period and check what actually got scheduled.
+    press(root, 'Workout');
+    press(root, 'Start Rows');
+    press(root, 'Done with set');
+    // The notification is posted behind an await on the channel, so let the
+    // microtasks settle before asking what was scheduled.
+    await ReactTestRenderer.act(async () => {});
+
+    const channels = (notifee.createChannel as jest.Mock).mock.calls.map(c => c[0]);
+    expect(channels.some(c => c.sound === 'none')).toBe(true);
+
+    // The point of the feature: the notification is still posted.
+    expect(notifee.createTriggerNotification as jest.Mock).toHaveBeenCalled();
+    const [notification] = (notifee.createTriggerNotification as jest.Mock).mock
+      .calls[0];
+    expect(notification.title).toBe('Time’s up!');
+    // And iOS gets no sound key at all, which is how it delivers silently.
+    expect(notification.ios.sound).toBeUndefined();
   });
 
   it('re-locks immediately when rest is skipped', async () => {
