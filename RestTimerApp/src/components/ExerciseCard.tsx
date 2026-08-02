@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
-import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { AppPill } from './AppPill';
 import { ConfirmDialog } from './ConfirmDialog';
 import { GradientButton } from './GradientButton';
@@ -73,17 +72,13 @@ export function ExerciseCard({
   return (
     <View style={[styles.card, anyOpen && styles.cardOpen]}>
       <View style={styles.head}>
-        <View style={styles.headText}>
-          <View style={styles.eyebrowRow}>
-            <Icon name="dumbbell" color={colors.accentText} size={15} />
-            <Text style={styles.eyebrow}>EXERCISE</Text>
-          </View>
-          <Text style={styles.name} numberOfLines={2}>
-            {exercise.name}
-          </Text>
+        <View style={styles.eyebrowRow}>
+          <Icon name="dumbbell" color={colors.accentText} size={15} />
+          <Text style={styles.eyebrow}>EXERCISE</Text>
         </View>
-
-        <ExerciseTile />
+        <Text style={styles.name} numberOfLines={2}>
+          {exercise.name}
+        </Text>
       </View>
 
       <View style={styles.rows}>
@@ -221,30 +216,6 @@ function Panel({ children }: { children: React.ReactNode }) {
   return <Animated.View style={[styles.panel, enter]}>{children}</Animated.View>;
 }
 
-/**
- * The card's little illustration.
- *
- * A gradient tile with the app's own mark on it, rather than a picture of the
- * muscle group — the app has no idea which lift this is, and guessing from a
- * free-text name would be wrong as often as right.
- */
-function ExerciseTile() {
-  return (
-    <View style={styles.tile}>
-      <Svg style={styles.tileFill} width="100%" height="100%">
-        <Defs>
-          <LinearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor={colors.accent} stopOpacity={0.34} />
-            <Stop offset="1" stopColor={colors.accent} stopOpacity={0.06} />
-          </LinearGradient>
-        </Defs>
-        <Rect x={0} y={0} width="100%" height="100%" rx={radius.md} fill="url(#tile)" />
-      </Svg>
-      <Icon name="dumbbell" color={colors.white} size={30} strokeWidth={1.7} />
-    </View>
-  );
-}
-
 /** One labelled value, and the way in to changing it. */
 function SettingRow({
   icon,
@@ -315,8 +286,6 @@ function DeleteLink({ name, onPress }: { name: string; onPress: () => void }) {
   );
 }
 
-const TILE = 68;
-
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
@@ -328,23 +297,10 @@ const styles = StyleSheet.create({
   },
   cardOpen: { borderColor: colors.accent },
 
-  head: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  headText: { flex: 1, gap: spacing.xs },
+  head: { gap: spacing.xs },
   eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   eyebrow: { ...type.tag, color: colors.accentText },
   name: { ...sized(type.title, 28), color: colors.white },
-
-  tile: {
-    width: TILE,
-    height: TILE,
-    borderRadius: radius.md,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  tileFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
 
   /** One step darker than the card, so the rows read as sunk into it. */
   rows: { backgroundColor: colors.ink, borderRadius: radius.md, overflow: 'hidden' },
