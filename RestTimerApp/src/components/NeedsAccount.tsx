@@ -16,19 +16,26 @@ import { colors, HAIRLINE, radius, sized, spacing, type } from '../theme';
  * place, on Settings, and a second entry point into the same sheet is a second
  * thing to keep in step for no benefit.
  */
-export function NeedsAccount({ what }: { what: string }) {
+export function NeedsAccount({
+  /** What this tab says when signed out. Written per screen — see src/copy.ts. */
+  empty,
+}: {
+  empty: { title: string; body: string };
+}) {
   const { status } = useAccount();
 
-  const [title, body] =
+  // The unconfigured case is instructions rather than voice, so it's fixed here
+  // and doesn't rotate or vary by tab: there is exactly one thing to do about
+  // it, and it's the same thing on both screens.
+  const { title, body } =
     status === 'unconfigured'
-      ? [
-          'Not switched on yet',
-          `${what} needs an account to save to, and accounts need a Firebase project. FIREBASE_SETUP.md walks through it — about ten minutes, and free.`,
-        ]
-      : [
-          'Sign in to start tracking',
-          `${what} is saved to your account, so there is nothing to show until you have one. Head to Settings to sign in or create one — it takes a moment.`,
-        ];
+      ? {
+          title: 'Not switched on yet',
+          body:
+            'Accounts need a Firebase project. FIREBASE_SETUP.md walks through ' +
+            'it — about ten minutes, and free.',
+        }
+      : empty;
 
   return (
     <View style={styles.card}>

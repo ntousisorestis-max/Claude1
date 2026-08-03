@@ -5,6 +5,7 @@ import { NeedsAccount } from '../components/NeedsAccount';
 import { Pop } from '../components/Pop';
 import { WeekStrip } from '../components/WeekStrip';
 import { useAccount } from '../cloud/AccountContext';
+import { EMPTY_STREAKS } from '../copy';
 import { useEnter } from '../hooks/useEnter';
 import {
   colors,
@@ -104,7 +105,7 @@ export function StreaksScreen() {
             </Text>
           </>
         ) : (
-          <NeedsAccount what="Your streak" />
+          <NeedsAccount empty={EMPTY_STREAKS} />
         )}
       </Animated.View>
     </ScrollView>

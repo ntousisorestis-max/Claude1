@@ -130,7 +130,7 @@ describe('full workout loop', () => {
     const root = await launch();
 
     // --- An empty list, with the composer already open ------------------
-    expect(hasText(root, 'Nothing saved yet.')).toBe(true);
+    expect(hasText(root, 'Nothing here yet.')).toBe(true);
     expect(MockBlocker.isLocked()).toBe(false);
 
     addExercise(root, 'Squat');

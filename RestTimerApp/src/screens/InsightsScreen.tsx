@@ -5,6 +5,7 @@ import { SessionStats } from '../components/SessionStats';
 import { StatCard } from '../components/StatCard';
 import { useAccount } from '../cloud/AccountContext';
 import { recentDays } from '../cloud/days';
+import { EMPTY_INSIGHTS } from '../copy';
 import { useEnter } from '../hooks/useEnter';
 import { useWorkout } from '../state/WorkoutContext';
 import { colors, describeSpan, sized, spacing, type } from '../theme';
@@ -78,7 +79,7 @@ export function InsightsScreen() {
           </>
         ) : (
           <>
-            <NeedsAccount what="Your all-time totals" />
+            <NeedsAccount empty={EMPTY_INSIGHTS} />
 
             {/* Not a consolation prize: this is the same card the Workout tab
                 shows, and it is the only honest thing to put here — these

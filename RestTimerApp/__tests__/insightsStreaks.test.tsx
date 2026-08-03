@@ -195,7 +195,7 @@ describe('Insights and Streaks', () => {
     const root = await launch();
     press(root, 'Insights');
 
-    expect(hasText(root, 'Sign in to start tracking')).toBe(true);
+    expect(hasText(root, 'Nothing to count yet')).toBe(true);
     // The session card is real data, so it stays — just labelled for what it is.
     expect(hasText(root, 'THIS SESSION')).toBe(true);
     expect(hasText(root, 'Session numbers reset when the app restarts')).toBe(true);

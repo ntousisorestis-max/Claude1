@@ -58,12 +58,12 @@ export function randomSeed(): number {
 export const REST_LINES = [
   'One more rep.',
   'Earn your scroll.',
-  'Discipline beats motivation.',
-  'Rest is part of the work.',
+  'Sit down. That’s an order.',
+  'This counts as training too.',
   'Breathe. Then lift.',
   'This is the easy part.',
-  'Strength is built between sets.',
-  'Show up. Then show up again.',
+  'Nobody’s watching. Rest properly.',
+  'You’ve got sixty seconds of freedom.',
   'The bar doesn’t care how you feel.',
   'Nobody regrets the set they did.',
   'Go on, check something. It’ll wait.',
@@ -92,8 +92,8 @@ export const SKIPPED_REST_LINES = [
   'Rest? Never heard of it.',
   'Straight back in. Noted.',
   'Someone’s in a hurry.',
-  'Barely sat down.',
-  'The timer had plans for you.',
+  'You barely sat down.',
+  'The timer had plans.',
   'Impatient. Respect.',
 ] as const;
 
@@ -112,11 +112,11 @@ export const SKIPPED_REST_LINES = [
  * doesn't say what it wants is a notification you have to open to understand.
  */
 export const REST_OVER_BODIES = [
-  (set: number, total: number) => `Back to it — set ${set} of ${total} is ready.`,
+  (set: number, total: number) => `Back under it. Set ${set} of ${total}.`,
   (set: number, total: number) => `Phone down. Set ${set} of ${total}.`,
   (set: number, total: number) => `That’s your lot. Set ${set} of ${total}.`,
-  (set: number, total: number) => `Time’s up — set ${set} of ${total} is waiting.`,
-  (set: number, total: number) => `Rest over. Set ${set} of ${total}, let’s go.`,
+  (set: number, total: number) => `Break’s over. Set ${set} of ${total}.`,
+  (set: number, total: number) => `Up. Set ${set} of ${total}.`,
 ] as const;
 
 export function restOverBody(set: number, total: number, seed: number): string {
@@ -138,10 +138,10 @@ export function restOverBody(set: number, total: number, seed: number): string {
 export const FINISHED_LINES = [
   'Every set, done. Go be smug about it.',
   'All of them. Not bad.',
-  'Full house. Your phone missed you.',
-  'That’s the whole thing. Nicely done.',
-  'Clean sweep. Enjoy the walk home.',
-  'Finished what you started. Rare.',
+  'Full house. Phone survived.',
+  'That’s the lot. Well held.',
+  'Clean sweep. Go eat.',
+  'Finished what you started. Rare, that.',
 ] as const;
 
 /**
@@ -152,11 +152,11 @@ export const FINISHED_LINES = [
  * to agree with them about it.
  */
 export const CUT_SHORT_LINES = [
-  'Still counts. Everything you did is banked.',
+  'Still counts. It’s all banked.',
   'Something beats nothing, every time.',
-  'Called it. That’s a decision, not a failure.',
+  'A decision, not a failure.',
   'Banked what you did. Same time tomorrow?',
-  'Short one. The sets you did still happened.',
+  'Short one. Still happened.',
   'Good enough is still in the bank.',
 ] as const;
 
@@ -182,14 +182,31 @@ export function personalBestLine(days: number): string {
 /* -------------------------------------------------------------------------- */
 
 export const EMPTY_EXERCISES = {
-  title: 'Nothing saved yet.',
+  title: 'Nothing here yet.',
   body:
-    'Add the lifts you actually do. Each one keeps its own sets, rest and list ' +
-    'of apps to lock away — so leg day and arm day can disagree about how long ' +
-    'you need.',
+    'Add the lifts you actually do. Each one keeps its own sets, rest and ' +
+    'blocked apps.',
 } as const;
 
-export const EMPTY_STREAK = {
-  title: 'No streak yet.',
-  body: 'Finish one workout today and you’re on the board.',
+/**
+ * The two tabs that have nothing to show until there's an account.
+ *
+ * Written out per screen rather than built from a template with the subject
+ * slotted in. The template read "Your streak is saved to your account" and
+ * "Your all-time totals **is** saved to your account" — one noun phrase
+ * substituted into a sentence that had already committed to being singular.
+ * Two short strings cost less than a grammar engine.
+ */
+export const EMPTY_INSIGHTS = {
+  title: 'Nothing to count yet',
+  body:
+    'Your totals live on your account. Make one in Settings and they’ll start ' +
+    'stacking up.',
+} as const;
+
+export const EMPTY_STREAKS = {
+  title: 'No streak yet',
+  body:
+    'Your streak lives on your account. Make one in Settings and today can be ' +
+    'day one.',
 } as const;
