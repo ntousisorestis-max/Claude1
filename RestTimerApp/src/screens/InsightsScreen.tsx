@@ -1,0 +1,138 @@
+import React from 'react';
+import { Animated, ScrollView, StyleSheet, Text } from 'react-native';
+import { NeedsAccount } from '../components/NeedsAccount';
+import { SessionStats } from '../components/SessionStats';
+import { StatCard } from '../components/StatCard';
+import { useAccount } from '../cloud/AccountContext';
+import { recentDays } from '../cloud/days';
+import { useEnter } from '../hooks/useEnter';
+import { useWorkout } from '../state/WorkoutContext';
+import { colors, describeSpan, sized, spacing, type } from '../theme';
+
+/**
+ * The numbers, once they stop resetting.
+ *
+ * Everything here is the persisted twin of something the app already counted
+ * and then threw away at the end of the session. The arithmetic hasn't changed;
+ * only how long it survives has.
+ *
+ * No charts, deliberately — three numbers this far apart in units have no
+ * shared axis, and a sparkline over seven days of workout counts is five
+ * pixels of information dressed up as ten.
+ */
+export function InsightsScreen() {
+  const { status, totals, days, today } = useAccount();
+  const {
+    state: { session },
+  } = useWorkout();
+
+  const enter = useEnter();
+  const enterBody = useEnter(80);
+
+  const signedIn = status === 'signed-in';
+  const focus = describeSpan(totals.focusSeconds);
+
+  // "This week" is the same rolling seven days the Streaks strip draws, so the
+  // two tabs can never disagree about what a week is.
+  const week = new Set(recentDays(today, 7));
+  const workoutsThisWeek = days
+    .filter(day => week.has(day.day))
+    .reduce((sum, day) => sum + day.workouts, 0);
+
+  return (
+    <ScrollView contentContainerStyle={styles.content}>
+      <Animated.View style={[styles.hero, enter]}>
+        <Text style={styles.eyebrow}>YOUR NUMBERS</Text>
+        <Text style={styles.masthead}>
+          Insights<Text style={styles.stop}>.</Text>
+        </Text>
+        <Text style={styles.heroSub}>
+          Every set and every minute your phone stayed down, added up.
+        </Text>
+      </Animated.View>
+
+      <Animated.View style={[styles.body, enterBody]}>
+        {signedIn ? (
+          <>
+            <StatCard
+              icon="flame"
+              value={focus.value}
+              unit={focus.unit}
+              label="Time reclaimed"
+              caption="All-time. How long your apps were locked while you were working."
+            />
+            <StatCard
+              icon="trophy"
+              value={String(workoutsThisWeek)}
+              unit={workoutsThisWeek === 1 ? 'workout' : 'workouts'}
+              label="This week"
+              caption="Finished in the last seven days, today included."
+            />
+            <StatCard
+              icon="check"
+              value={String(totals.setsCompleted)}
+              unit={totals.setsCompleted === 1 ? 'set' : 'sets'}
+              label="Sets completed"
+              caption="All-time, across every device you sign in on."
+            />
+          </>
+        ) : (
+          <>
+            <NeedsAccount what="Your all-time totals" />
+
+            {/* Not a consolation prize: this is the same card the Workout tab
+                shows, and it is the only honest thing to put here — these
+                numbers are real, they just won't outlive the app being
+                closed. */}
+            <Text style={styles.sectionNote}>
+              In the meantime, here is what this session has counted:
+            </Text>
+            <SessionStats session={session} />
+          </>
+        )}
+
+        <Text style={styles.note}>
+          {signedIn
+            ? 'Counted from finished workouts only — a workout you end early still counts the sets you did.'
+            : 'Session numbers reset when the app restarts. Signing in is what makes them stick.'}
+        </Text>
+      </Animated.View>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xxl,
+    gap: spacing.lg,
+  },
+
+  hero: { gap: 2 },
+  eyebrow: { ...type.tag, color: colors.accentText, marginBottom: spacing.xs },
+  masthead: { ...sized(type.display, 42), color: colors.white },
+  stop: { color: colors.accent },
+  heroSub: {
+    ...type.helper,
+    fontSize: 14,
+    color: colors.mutedOnDark,
+    lineHeight: 20,
+    marginTop: spacing.sm,
+  },
+
+  body: { gap: spacing.md },
+  sectionNote: {
+    ...type.helper,
+    fontSize: 14,
+    color: colors.mutedOnDark,
+    marginTop: spacing.sm,
+  },
+  note: {
+    ...type.helper,
+    fontSize: 13,
+    color: colors.faintOnDark,
+    lineHeight: 18,
+    marginTop: spacing.xs,
+  },
+});

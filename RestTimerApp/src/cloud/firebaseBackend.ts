@@ -9,14 +9,20 @@ import {
   type Auth,
 } from 'firebase/auth';
 import {
+  collection,
   doc,
+  documentId,
   increment,
   initializeFirestore,
+  limit,
   onSnapshot,
+  orderBy,
+  query,
   runTransaction,
   serverTimestamp,
   type Firestore,
 } from 'firebase/firestore';
+import { afterTrainingOn, isDayKey, NO_STREAK, type StreakState } from './days';
 import { FIREBASE_CONFIG } from './firebaseConfig';
 import {
   NO_TOTALS,
@@ -96,17 +102,39 @@ function nameFor(displayName: string | null, email: string | null): string {
   return email?.split('@')[0] || 'Athlete';
 }
 
-/** Reads totals defensively — a doc written by an older build may be missing keys. */
+/**
+ * Reads a number off a document, defensively.
+ *
+ * Every read here has to survive a document written by an older build. The
+ * streak fields in particular did not exist before the Insights and Streaks
+ * tabs, so every account that predates them is missing all three — and reading
+ * `undefined` as `NaN` would poison the totals rather than showing a zero.
+ */
+const num = (data: Record<string, unknown> | undefined, key: string): number =>
+  typeof data?.[key] === 'number' ? (data[key] as number) : 0;
+
 function totalsFrom(data: Record<string, unknown> | undefined): FocusTotals {
-  const num = (key: keyof FocusTotals) =>
-    typeof data?.[key] === 'number' ? (data[key] as number) : 0;
   return data
     ? {
-        focusSeconds: num('focusSeconds'),
-        setsCompleted: num('setsCompleted'),
-        workoutsFinished: num('workoutsFinished'),
+        focusSeconds: num(data, 'focusSeconds'),
+        setsCompleted: num(data, 'setsCompleted'),
+        workoutsFinished: num(data, 'workoutsFinished'),
       }
     : NO_TOTALS;
+}
+
+function streakFrom(data: Record<string, unknown> | undefined): StreakState {
+  if (!data) {
+    return NO_STREAK;
+  }
+  const last = data.lastActiveDay;
+  return {
+    currentStreak: num(data, 'currentStreak'),
+    bestStreak: num(data, 'bestStreak'),
+    // Validated, not just cast: a malformed key would flow into date maths and
+    // come back as NaN days apart, which reads as "streak broken" forever.
+    lastActiveDay: isDayKey(last) ? last : null,
+  };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -125,14 +153,44 @@ export const firebaseBackend: CloudBackend = {
     });
   },
 
-  observeTotals(uid, onChange) {
+  observeAccount(uid, onChange) {
     const { db } = firebase();
     return onSnapshot(
       doc(db, 'users', uid),
-      snapshot => onChange(totalsFrom(snapshot.data())),
+      snapshot => {
+        const data = snapshot.data();
+        onChange({ totals: totalsFrom(data), streak: streakFrom(data) });
+      },
       // A listener that errors is a listener that has stopped. Say so in the
       // log rather than leaving the UI on stale numbers with no explanation.
-      err => console.warn('[focusboard] totals listener stopped', err),
+      err => console.warn('[focusboard] account listener stopped', err),
+    );
+  },
+
+  observeDays(uid, count, onChange) {
+    const { db } = firebase();
+    // Ordered by document id, which is the day key — `YYYY-MM-DD` sorts
+    // chronologically as a string, so this needs no extra field and no
+    // composite index. Newest first, so `limit` keeps the recent end.
+    const recent = query(
+      collection(db, 'users', uid, 'days'),
+      orderBy(documentId(), 'desc'),
+      limit(count),
+    );
+    return onSnapshot(
+      recent,
+      snapshot =>
+        onChange(
+          snapshot.docs
+            .filter(entry => isDayKey(entry.id))
+            .map(entry => ({
+              day: entry.id,
+              workouts: num(entry.data(), 'workouts'),
+              focusSeconds: num(entry.data(), 'focusSeconds'),
+              setsCompleted: num(entry.data(), 'setsCompleted'),
+            })),
+        ),
+      err => console.warn('[focusboard] days listener stopped', err),
     );
   },
 
@@ -157,6 +215,9 @@ export const firebaseBackend: CloudBackend = {
         focusSeconds: 0,
         setsCompleted: 0,
         workoutsFinished: 0,
+        currentStreak: 0,
+        bestStreak: 0,
+        lastActiveDay: null,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -182,11 +243,18 @@ export const firebaseBackend: CloudBackend = {
    * server but failed on the way back — a dropped connection at exactly the
    * wrong moment — would otherwise count the same 20 minutes twice, and on a
    * leaderboard that is indistinguishable from cheating.
+   *
+   * Three documents move together: the workout, the day it happened on, and
+   * the account's lifetime totals and streak. One transaction, because a
+   * streak that advanced while the day it advanced *for* failed to write would
+   * be permanently unexplainable — the calendar and the number above it would
+   * disagree, and nothing could reconcile them after the fact.
    */
   async recordWorkout(uid, record) {
     const { auth, db } = firebase();
     const userRef = doc(db, 'users', uid);
     const workoutRef = doc(db, 'users', uid, 'workouts', record.id);
+    const dayRef = doc(db, 'users', uid, 'days', record.day);
 
     await runTransaction(db, async tx => {
       // Every read before every write — Firestore requires it.
@@ -196,14 +264,34 @@ export const firebaseBackend: CloudBackend = {
       }
       const profile = await tx.get(userRef);
 
+      // The streak is folded here rather than by a scheduled job, because a
+      // streak only ever changes when a workout lands. Nothing has to run at
+      // midnight; the decay is applied at read time instead. See days.ts.
+      const streak = afterTrainingOn(streakFrom(profile.data()), record.day);
+
       tx.set(workoutRef, {
         exerciseName: record.exerciseName,
         focusSeconds: record.focusSeconds,
         setsCompleted: record.setsCompleted,
         restSeconds: record.restSeconds,
         endedAt: record.endedAt,
+        day: record.day,
         recordedAt: serverTimestamp(),
       });
+
+      // One row per day trained. Incremented rather than set, so a second
+      // workout on the same day adds to it — and so this stays correct without
+      // the transaction having had to read it first.
+      tx.set(
+        dayRef,
+        {
+          workouts: increment(1),
+          focusSeconds: increment(record.focusSeconds),
+          setsCompleted: increment(record.setsCompleted),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true },
+      );
 
       // `merge` rather than a plain set, so this can't wipe displayName or
       // createdAt off an existing profile.
@@ -220,6 +308,12 @@ export const firebaseBackend: CloudBackend = {
           focusSeconds: increment(record.focusSeconds),
           setsCompleted: increment(record.setsCompleted),
           workoutsFinished: increment(1),
+          // Written as values, not increments: a streak is not a running total
+          // — it resets to 1 after a gap — so it has to be computed from what
+          // was there and written whole.
+          currentStreak: streak.currentStreak,
+          bestStreak: streak.bestStreak,
+          lastActiveDay: streak.lastActiveDay,
           updatedAt: serverTimestamp(),
           ...(profile.exists()
             ? null

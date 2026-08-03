@@ -1,5 +1,11 @@
 # Setting up Firebase
 
+> **Already set this up once?** The security rules changed when the Insights and
+> Streaks tabs landed — there is a new `days` collection, and the old rules
+> reject writes to it. Redo **step 6** (copy `firestore.rules` into the console
+> and Publish) or finished workouts will sit on "waiting to be saved" forever.
+> Nothing else needs redoing.
+
 You have to do this part yourself, and it's unavoidable: a Firebase project is
 tied to a Google account and a billing identity, so nobody can create one on
 your behalf. It takes about ten minutes and costs nothing.
@@ -17,15 +23,17 @@ Three things, all free:
 - a **Firebase project** — a container with a name
 - **Authentication** — the part that checks emails and passwords, so you never
   store a password yourself
-- **Firestore** — a database that holds one row per person: their display name
-  and their running focus totals
+- **Firestore** — a database that holds one row per person (display name,
+  running focus totals, streak) plus one small row per workout and per day
+  trained
 
 ## What it costs
 
 Nothing, at this size. Firestore's free tier gives 50,000 reads and 20,000
-writes a day. This app writes **one document per finished workout** and reads
-one when you open Settings, so a few hundred users doing a few workouts a day
-each sits inside the free tier with room to spare. Firebase will ask for a
+writes a day. A finished workout costs **three writes** (the workout, the day,
+and your totals) and opening Insights or Streaks costs a handful of reads, so a
+few hundred users doing a few workouts a day each sits inside the free tier with
+room to spare. Firebase will ask for a
 billing card only if you choose the Blaze plan, which you should not do yet.
 
 ---
@@ -130,10 +138,11 @@ public (test mode).
 4. Click **Publish**.
 
 In plain terms, those rules say: you can only ever write to your own row; your
-totals can go up but never down; the record of an individual workout can be
-written once and never edited or deleted; and any signed-in person can read
-anyone's display name and totals, which is the thing that makes a leaderboard
-possible later. Nobody signed out can read anything at all.
+totals and your best-ever streak can go up but never down; the record of an
+individual workout can be written once and never edited or deleted; the record
+of *which days you trained* is yours alone to read; and any signed-in person can
+read anyone's display name and totals, which is the thing that makes a
+leaderboard possible later. Nobody signed out can read anything at all.
 
 ## Step 7 — Check it worked
 
@@ -146,9 +155,12 @@ possible later. Nobody signed out can read anything at all.
 4. Back on the **Workout** tab, add an exercise and run it to the end.
 5. Return to **Settings**. Under your name you should see "Everything saved"
    and your totals should have gone up.
-6. To see the actual data: Firebase console → **Firestore Database** → **Data**.
-   You'll see a `users` collection, one document with your ID, and a `workouts`
-   sub-collection inside it with the workout you just did.
+6. Check the **Streaks** tab. It should show a 1-day streak with today ticked
+   in the week strip, and **Insights** should show your time and sets.
+7. To see the actual data: Firebase console → **Firestore Database** → **Data**.
+   You'll see a `users` collection, one document with your ID, and two
+   sub-collections inside it — `workouts` with the session you just did, and
+   `days` with one document named after today's date.
 
 ---
 
@@ -164,6 +176,11 @@ the contents of `firestore.rules` and that you clicked Publish.
 
 **"Can't reach the server."** — no connection, or the values in step 4 have a
 typo. `projectId` is the one worth double-checking first.
+
+**Workouts stay stuck on "waiting to be saved", or the streak never moves** —
+almost always the rules. If you set Firebase up before the Streaks tab existed,
+your published rules have no `days` collection in them and every write is being
+refused. Redo step 6.
 
 **The Account section still says accounts aren't switched on** — the app didn't
 pick up the config. Make sure you saved `firebaseConfig.ts` and fully restarted
@@ -188,5 +205,13 @@ Worth knowing before you rely on this:
 - **Account deletion isn't wired up.** Deleting a user needs to clear their
   workouts sub-collection too, which security rules can't do on their own.
 - **Exercises and app settings still don't sync**, and still don't survive a
-  restart at all. Only the focus totals go to the cloud. See
-  `src/state/storage.ts` for where local persistence would land.
+  restart at all. Only the focus totals, streak and day records go to the cloud.
+  See `src/state/storage.ts` for where local persistence would land.
+- **Streaks start from the day you set this up.** Workouts recorded before the
+  Streaks tab existed have no day record, so they don't count towards a streak
+  and don't appear in the week strip. Backfilling them is possible — the data is
+  all in the `workouts` sub-collection — but it's a one-off script, not
+  something the app does.
+- **Days are the phone's local days.** Travel across enough time zones and a day
+  can be counted twice or skipped. It always errs towards keeping a streak
+  rather than breaking one.

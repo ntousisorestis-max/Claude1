@@ -4,14 +4,22 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { usePressScale } from '../hooks/usePressScale';
 import { colors, HAIRLINE, radius, sized, spacing, type } from '../theme';
 
-export type Tab = 'workout' | 'settings';
+export type Tab = 'workout' | 'insights' | 'streaks' | 'settings';
+
+/** In bar order. One list, so a new tab can't be added to half the app. */
+export const TABS: { tab: Tab; label: string }[] = [
+  { tab: 'workout', label: 'Workout' },
+  { tab: 'insights', label: 'Insights' },
+  { tab: 'streaks', label: 'Streaks' },
+  { tab: 'settings', label: 'Settings' },
+];
 
 /**
- * Two tabs, hand-rolled.
+ * Four tabs, hand-rolled.
  *
  * A navigation library would mean three native dependencies and a router for
  * what is a single piece of state. The workout phase still drives which screen
- * shows inside the Workout tab — this only picks between the two tabs.
+ * shows inside the Workout tab — this only picks between the four tabs.
  */
 export function TabBar({
   active,
@@ -22,18 +30,15 @@ export function TabBar({
 }) {
   return (
     <View style={styles.bar}>
-      <TabButton
-        tab="workout"
-        label="Workout"
-        active={active === 'workout'}
-        onPress={onChange}
-      />
-      <TabButton
-        tab="settings"
-        label="Settings"
-        active={active === 'settings'}
-        onPress={onChange}
-      />
+      {TABS.map(({ tab, label }) => (
+        <TabButton
+          key={tab}
+          tab={tab}
+          label={label}
+          active={active === tab}
+          onPress={onChange}
+        />
+      ))}
     </View>
   );
 }
@@ -66,17 +71,26 @@ function TabButton({
             change is three ways of saying one thing. */}
         <View style={[styles.glyph, active && styles.glyphOn]}>
           <Svg width={24} height={24} viewBox="0 0 24 24">
-            {tab === 'workout' ? (
-              <DumbbellGlyph tint={tint} />
-            ) : (
-              <SlidersGlyph tint={tint} />
-            )}
+            <Glyph tab={tab} tint={tint} />
           </Svg>
         </View>
         <Text style={[styles.label, { color: tint }]}>{label}</Text>
       </Animated.View>
     </Pressable>
   );
+}
+
+function Glyph({ tab, tint }: { tab: Tab; tint: string }) {
+  switch (tab) {
+    case 'workout':
+      return <DumbbellGlyph tint={tint} />;
+    case 'insights':
+      return <BarsGlyph tint={tint} />;
+    case 'streaks':
+      return <FlameGlyph tint={tint} />;
+    case 'settings':
+      return <SlidersGlyph tint={tint} />;
+  }
 }
 
 /** Dumbbell: two end plates and a bar. */
@@ -88,6 +102,44 @@ function DumbbellGlyph({ tint }: { tint: string }) {
       <Rect x="5.5" y="6.5" width="4" height="11" rx="1.6" fill={tint} />
       <Rect x="14.5" y="6.5" width="4" height="11" rx="1.6" fill={tint} />
       <Rect x="9" y="10.6" width="6" height="2.8" rx="1.4" fill={tint} />
+    </>
+  );
+}
+
+/**
+ * Three rising bars for Insights.
+ *
+ * Filled, like the dumbbell's plates and unlike the sliders, because the bars
+ * are thin enough at 24px that stroking them turns three shapes into six lines.
+ */
+function BarsGlyph({ tint }: { tint: string }) {
+  return (
+    <>
+      <Rect x="3.5" y="13" width="4.2" height="7.5" rx="1.6" fill={tint} />
+      <Rect x="9.9" y="8.5" width="4.2" height="12" rx="1.6" fill={tint} />
+      <Rect x="16.3" y="3.5" width="4.2" height="17" rx="1.6" fill={tint} />
+    </>
+  );
+}
+
+/**
+ * A flame for Streaks.
+ *
+ * Solid, with the inner flame knocked back out in the bar's own colour — the
+ * same trick the sliders use for their knobs. A two-stroke outline flame reads
+ * as a leaf at this size; mass is what makes it fire.
+ */
+function FlameGlyph({ tint }: { tint: string }) {
+  return (
+    <>
+      <Path
+        d="M12 1.8c-.8 2.5-2.2 4-3.5 5.6C6.8 9.3 5 12 5 15.4a7 7 0 0 0 14 0c0-3.4-1.8-6.1-3.5-8-1.3-1.6-2.7-3.1-3.5-5.6z"
+        fill={tint}
+      />
+      <Path
+        d="M12 12.4c-.45 1.1-1.1 1.8-1.75 2.6-.75.9-1.35 2-1.35 3.3a3.1 3.1 0 0 0 6.2 0c0-1.3-.6-2.4-1.35-3.3-.65-.8-1.3-1.5-1.75-2.6z"
+        fill={colors.ink}
+      />
     </>
   );
 }
@@ -114,7 +166,10 @@ const styles = StyleSheet.create({
   tab: { flex: 1, paddingVertical: spacing.sm },
   tabInner: { alignItems: 'center', justifyContent: 'center', gap: 5 },
   glyph: {
-    paddingHorizontal: spacing.lg,
+    // Narrower than it was with two tabs. At four, a quarter of a 320pt phone
+    // is 80pt, and the old 22pt side padding made a 68pt pill that touched its
+    // neighbours.
+    paddingHorizontal: spacing.md,
     paddingVertical: 5,
     borderRadius: radius.pill,
   },

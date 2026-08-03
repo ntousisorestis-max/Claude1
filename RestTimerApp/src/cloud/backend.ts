@@ -1,3 +1,4 @@
+import { NO_STREAK } from './days';
 import { isFirebaseConfigured } from './firebaseConfig';
 import { NO_TOTALS, type CloudBackend } from './types';
 
@@ -24,8 +25,12 @@ export const localOnlyBackend: CloudBackend = {
     onChange(null);
     return () => {};
   },
-  observeTotals(_uid, onChange) {
-    onChange(NO_TOTALS);
+  observeAccount(_uid, onChange) {
+    onChange({ totals: NO_TOTALS, streak: NO_STREAK });
+    return () => {};
+  },
+  observeDays(_uid, _count, onChange) {
+    onChange([]);
     return () => {};
   },
   async signUp() {

@@ -8,12 +8,14 @@ import React, {
   useState,
 } from 'react';
 import { describeAuthError, getBackend } from './backend';
+import { dayKey, NO_STREAK, streakToday, trainedToday, type StreakState } from './days';
 import { isFirebaseConfigured } from './firebaseConfig';
 import {
   NO_TOTALS,
   type AccountStatus,
   type AuthUser,
   type CloudBackend,
+  type DayTotals,
   type FocusTotals,
   type SyncStatus,
   type WorkoutRecord,
@@ -37,6 +39,22 @@ type Account = {
   user: AuthUser | null;
   /** Lifetime numbers from Firestore. All zero unless signed in. */
   totals: FocusTotals;
+  /**
+   * The streak as stored — correct as of `lastActiveDay`, not necessarily as of
+   * now. Screens want `currentStreak` below, which has the decay applied.
+   */
+  streak: StreakState;
+  /**
+   * The streak right now, with a missed day taken off. This is the number to
+   * put on screen; see `streakToday` in days.ts for why they differ.
+   */
+  currentStreak: number;
+  /** True once today has a finished workout on it. */
+  trainedToday: boolean;
+  /** Today's local day key, kept fresh across midnight. */
+  today: string;
+  /** The most recent days trained, newest first. Empty unless signed in. */
+  days: DayTotals[];
   sync: SyncStatus;
   /** Workouts finished but not yet accepted by the server. */
   pendingCount: number;
@@ -54,6 +72,15 @@ const AccountContext = createContext<Account | null>(null);
 
 /** How often to retry workouts that haven't made it up yet. */
 const RETRY_MS = 30_000;
+
+/**
+ * How many day documents to keep a listener on.
+ *
+ * The week strip needs seven. Fourteen is watched instead so that Insights'
+ * "this week" figure is still right the moment the day rolls over, and so a
+ * missed midnight tick can't drop a day off the end of the strip.
+ */
+const DAYS_WATCHED = 14;
 
 export function AccountProvider({
   children,
@@ -76,6 +103,8 @@ export function AccountProvider({
   const [user, setUser] = useState<AuthUser | null>(null);
   const [ready, setReady] = useState(!configured);
   const [totals, setTotals] = useState<FocusTotals>(NO_TOTALS);
+  const [streak, setStreak] = useState<StreakState>(NO_STREAK);
+  const [days, setDays] = useState<DayTotals[]>([]);
   const [sync, setSync] = useState<SyncStatus>('idle');
   const [pendingCount, setPendingCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -94,19 +123,65 @@ export function AccountProvider({
       setReady(true);
       if (!next) {
         setTotals(NO_TOTALS);
+        setStreak(NO_STREAK);
+        setDays([]);
         setSync('idle');
       }
     });
   }, [cloud, configured]);
 
-  /* --- Their totals ------------------------------------------------------ */
+  /* --- Their totals, streak and recent days ------------------------------- */
 
   useEffect(() => {
     if (!configured || !user) {
       return;
     }
-    return cloud.observeTotals(user.uid, setTotals);
+    return cloud.observeAccount(user.uid, data => {
+      setTotals(data.totals);
+      setStreak(data.streak);
+    });
   }, [cloud, configured, user]);
+
+  useEffect(() => {
+    if (!configured || !user) {
+      return;
+    }
+    return cloud.observeDays(user.uid, DAYS_WATCHED, setDays);
+  }, [cloud, configured, user]);
+
+  /* --- Today ------------------------------------------------------------- */
+
+  /**
+   * Which day it is, re-checked when the day actually changes.
+   *
+   * The alternative — reading `Date.now()` during render — is right at the
+   * moment it runs and quietly wrong afterwards. A phone left on the Streaks
+   * tab overnight would keep drawing yesterday's week strip and yesterday's
+   * "trained today" tick until something else happened to re-render it.
+   *
+   * Timed to the next local midnight rather than polled, so an app sitting idle
+   * schedules exactly one timer, not one a minute.
+   */
+  const [today, setToday] = useState(() => dayKey(Date.now()));
+
+  useEffect(() => {
+    const now = new Date();
+    const midnight = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+      0,
+      0,
+      5,
+    );
+    const timer = setTimeout(
+      () => setToday(dayKey(Date.now())),
+      // Five seconds past, so a timer that fires a moment early doesn't read
+      // the old day and then wait another 24 hours to correct itself.
+      Math.max(1000, midnight.getTime() - now.getTime()),
+    );
+    return () => clearTimeout(timer);
+  }, [today]);
 
   /* --- The outbox -------------------------------------------------------- */
 
@@ -239,6 +314,11 @@ export function AccountProvider({
       status,
       user,
       totals,
+      streak,
+      currentStreak: streakToday(streak, today),
+      trainedToday: trainedToday(streak, today),
+      today,
+      days,
       sync,
       pendingCount,
       error,
@@ -253,6 +333,9 @@ export function AccountProvider({
       status,
       user,
       totals,
+      streak,
+      today,
+      days,
       sync,
       pendingCount,
       error,

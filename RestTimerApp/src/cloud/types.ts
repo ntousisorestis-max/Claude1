@@ -1,3 +1,5 @@
+import type { StreakState } from './days';
+
 /**
  * Types for the account + sync layer.
  *
@@ -51,6 +53,29 @@ export type WorkoutRecord = {
   restSeconds: number;
   /** Wall-clock ms when the workout ended, on the device that ran it. */
   endedAt: number;
+  /**
+   * The local calendar day the workout ended on, as `YYYY-MM-DD`.
+   *
+   * Decided on the device and carried on the record, rather than derived from
+   * `endedAt` later. Only the phone knows which day its owner thinks it is —
+   * see the note at the top of days.ts.
+   */
+  day: string;
+};
+
+/** One day's training, as stored per account. Drives the week strip and Insights. */
+export type DayTotals = {
+  /** `YYYY-MM-DD`, local. Also the document's id. */
+  day: string;
+  workouts: number;
+  focusSeconds: number;
+  setsCompleted: number;
+};
+
+/** Everything held on the account document, in one shape. */
+export type AccountData = {
+  totals: FocusTotals;
+  streak: StreakState;
 };
 
 /** Where the account layer currently is. Drives everything the UI says. */
@@ -78,8 +103,22 @@ export type CloudBackend = {
    * null), then on every change. Returns an unsubscribe.
    */
   observeUser(onChange: (user: AuthUser | null) => void): () => void;
-  /** Watches the signed-in user's totals. Unsubscribes when they sign out. */
-  observeTotals(uid: string, onChange: (totals: FocusTotals) => void): () => void;
+  /**
+   * Watches the signed-in user's lifetime totals and streak. Unsubscribes when
+   * they sign out.
+   */
+  observeAccount(uid: string, onChange: (data: AccountData) => void): () => void;
+  /**
+   * Watches the most recent `count` days the user trained, newest first.
+   *
+   * Days with no training have no document, so this returns only the days that
+   * happened — the caller lines them up against the calendar it wants to draw.
+   */
+  observeDays(
+    uid: string,
+    count: number,
+    onChange: (days: DayTotals[]) => void,
+  ): () => void;
   signUp(email: string, password: string, displayName: string): Promise<void>;
   signIn(email: string, password: string): Promise<void>;
   signOut(): Promise<void>;

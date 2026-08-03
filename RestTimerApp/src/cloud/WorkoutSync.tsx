@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useWorkout } from '../state/WorkoutContext';
 import { useAccount } from './AccountContext';
+import { dayKey } from './days';
 
 /**
  * The one seam between the workout and the cloud.
@@ -40,6 +41,8 @@ export function WorkoutSync() {
       return;
     }
 
+    const endedAt = Date.now();
+
     recordWorkout({
       // Minted here, once, and reused by every retry of this workout. See
       // firebaseBackend.recordWorkout for why that matters.
@@ -48,7 +51,12 @@ export function WorkoutSync() {
       focusSeconds: state.totalLockedSeconds,
       setsCompleted: state.setsCompleted,
       restSeconds: state.totalRestSeconds,
-      endedAt: Date.now(),
+      endedAt,
+      // Stamped here, on the device, from the moment the workout ended — not
+      // when it finally reaches the server. A session finished at 23:58 and
+      // synced after midnight belongs to the day it was done on, or the streak
+      // it earned goes to the wrong day.
+      day: dayKey(endedAt),
     });
     // Only the phase should re-run this. The rest is read at the instant of the
     // transition, and re-firing because a total ticked would file the same

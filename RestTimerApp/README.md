@@ -9,8 +9,10 @@ Exercise list ──Start──▶ Active Set ──Done with set──▶ Resti
                             └───────────── last set ─────────────▶ Complete (unlocked)
 ```
 
-The Workout tab is a list of saved exercises. Each one carries its own sets,
-rest and blocked apps, and starting one snapshots that card into the workout.
+Four tabs: **Workout** (a list of saved exercises, each carrying its own sets,
+rest and blocked apps), **Insights** (all-time totals), **Streaks** (days
+trained in a row) and **Settings**. Starting an exercise snapshots that card
+into the workout, and the workout then owns the screen until it ends.
 
 **Want to run it? See [TESTING.md](TESTING.md)** for a step-by-step guide.
 
@@ -306,6 +308,7 @@ src/
     ScreenTimeBlocker.ts     Phase 2 — FamilyControls/ManagedSettings bridge (not wired)
     index.ts                 picks the real blocker if the native module exists
   cloud/
+    days.ts                  day keys and streak arithmetic — pure, no imports
     types.ts                 CloudBackend, AuthUser, FocusTotals — no Firebase import
     backend.ts               picks the backend; the local no-op one; error copy
     firebaseBackend.ts       the only file that imports firebase/*
@@ -313,6 +316,7 @@ src/
     WorkoutSync.tsx          the one seam: workout 'complete' -> recordWorkout
     firebaseConfig.ts        your project's six values (see FIREBASE_SETUP.md)
   screens/                   Exercises / ActiveSet / Resting / Complete
+                             Insights / Streaks / Settings
   components/                ExerciseCard, SessionStats, SettingsSection,
                              HeroHourglass, HeroDumbbell, GradientButton, Icon,
                              SectionLabel, AppPill, ConfirmDialog, BigButton,
@@ -416,9 +420,38 @@ Three decisions worth knowing:
   on its own is not idempotent, and a retried write would count the same session
   twice, which on a leaderboard is indistinguishable from cheating.
 
+### Streaks and days
+
+A day counts if at least one workout **finished** on it. Not sets, not minutes —
+the point of a streak is showing up, and one you can lose by having a short
+session punishes exactly the day you most needed a reason to go.
+
+Three things about it are load-bearing:
+
+- **The device decides what day it is.** `WorkoutSync` stamps the local day onto
+  the record the moment the workout ends, and the server stores what it's told.
+  A UTC timestamp would tell someone in Auckland their Tuesday morning session
+  happened on Monday. The trade-off — that crossing time zones can double or
+  skip a day — is documented in `days.ts` and always errs towards keeping a
+  streak rather than breaking one.
+- **The streak is folded at write time, and decayed at read time.** It only ever
+  changes when a workout lands, so there is nothing to schedule; but a stored
+  streak is only true as of the day it was written, so `streakToday()` takes off
+  a missed day when the screen asks. Yesterday still counts, or everyone's
+  streak would read zero every morning until they got to the gym.
+- **The week strip is rolling, not Monday-to-Sunday.** A calendar week puts
+  empty boxes to the right of today for most of the week, and a box you haven't
+  reached yet looks exactly like one you missed.
+
+All of that arithmetic lives in `src/cloud/days.ts` as pure functions with no
+imports, because it is the kind of logic that looks obviously right and is wrong
+at month boundaries, leap days and the two nights a year the clocks change.
+`__tests__/days.test.ts` covers each of those.
+
 `firestore.rules` is the security model and has to be pasted into the Firebase
-console by hand; the API key in `firebaseConfig.ts` protects nothing and is
-meant to be committed.
+console by hand — **including again after this change**, which added the `days`
+collection. The API key in `firebaseConfig.ts` protects nothing and is meant to
+be committed.
 
 ## State & persistence
 
@@ -501,5 +534,5 @@ names apps from one list, and each has a count to fall back to.
 ## Not in scope (yet)
 
 Motion detection, camera exercise recognition, Android blocking (Phase 3),
-payments, workout history, friends, and the Focusboard leaderboard screen
-itself.
+payments, per-workout history screens, friends, streak badges, challenges,
+charts, and the Focusboard leaderboard screen itself.

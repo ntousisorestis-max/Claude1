@@ -46,13 +46,43 @@ service cloud.firestore {
         allow create: if isOwner(uid) && isValidWorkout();
         allow update, delete: if false;
       }
+
+      // One row per calendar day trained. Drives the week strip on Streaks and
+      // the "this week" figure on Insights.
+      match /days/{day} {
+
+        // Private, like the workouts. A leaderboard ranks totals; when you
+        // trained is nobody else's business.
+        allow read: if isOwner(uid);
+
+        // The id is the local calendar day, and it has to look like one — a
+        // junk id here becomes a junk column in the week strip, and there is no
+        // way to delete it afterwards.
+        allow create: if isOwner(uid)
+          && day.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && isValidDay();
+
+        // Updated when a second workout lands on the same day, and only ever
+        // upward — these are increments, so anything else is a client that has
+        // gone wrong or is being driven by hand.
+        allow update: if isOwner(uid) && isValidDay() && dayOnlyGrows();
+
+        allow delete: if false;
+      }
     }
 
     function isOwner(uid) {
       return request.auth != null && request.auth.uid == uid;
     }
 
-    /** Shapes the profile doc: right fields, right types, sane sizes. */
+    /**
+     * Shapes the profile doc: right fields, right types, sane sizes.
+     *
+     * The streak fields are read with `get(..., default)` rather than required
+     * outright, because accounts created before the Streaks tab existed don't
+     * have them — and a rule that demanded them would lock those users out of
+     * writing anything at all.
+     */
     function isValidProfile() {
       let d = request.resource.data;
       return d.displayName is string
@@ -60,7 +90,10 @@ service cloud.firestore {
         && d.displayName.size() <= 24
         && d.focusSeconds is number && d.focusSeconds >= 0
         && d.setsCompleted is number && d.setsCompleted >= 0
-        && d.workoutsFinished is number && d.workoutsFinished >= 0;
+        && d.workoutsFinished is number && d.workoutsFinished >= 0
+        && d.get('currentStreak', 0) is number && d.get('currentStreak', 0) >= 0
+        && d.get('bestStreak', 0) is number && d.get('bestStreak', 0) >= 0
+        && d.get('currentStreak', 0) <= d.get('bestStreak', 0);
     }
 
     /**
@@ -82,7 +115,28 @@ service cloud.firestore {
       let after = request.resource.data;
       return after.focusSeconds >= before.focusSeconds
         && after.setsCompleted >= before.setsCompleted
-        && after.workoutsFinished >= before.workoutsFinished;
+        && after.workoutsFinished >= before.workoutsFinished
+        // The best streak is a record and can only ever be beaten. The *current*
+        // streak is deliberately not ratcheted: it resets to 1 after a missed
+        // day, and that reset is the feature working, not an attack.
+        && after.get('bestStreak', 0) >= before.get('bestStreak', 0);
+    }
+
+    /** Shapes a day doc. */
+    function isValidDay() {
+      let d = request.resource.data;
+      return d.workouts is number && d.workouts >= 1
+        && d.focusSeconds is number && d.focusSeconds >= 0
+        && d.setsCompleted is number && d.setsCompleted >= 0;
+    }
+
+    /** A day's counters are increments, so they never come back down. */
+    function dayOnlyGrows() {
+      let before = resource.data;
+      let after = request.resource.data;
+      return after.workouts >= before.workouts
+        && after.focusSeconds >= before.focusSeconds
+        && after.setsCompleted >= before.setsCompleted;
     }
 
     /** Shapes a workout doc. */

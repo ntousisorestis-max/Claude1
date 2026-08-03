@@ -169,3 +169,34 @@ export function describeDuration(totalSeconds: number): {
   const minutes = Math.round(safe / 60);
   return { value: minutes, unit: minutes === 1 ? 'minute' : 'minutes' };
 }
+
+/**
+ * The same idea for spans that have had months to accumulate.
+ *
+ * `describeDuration` tops out at minutes, which is right for one workout and
+ * absurd for a lifetime total — nobody reads "14,208 minutes" as an amount of
+ * time. Past an hour this switches to `4h 12m`, letters and all, so the value
+ * carries its own unit and the caller leaves `unit` off.
+ *
+ * Kept separate rather than folded into `describeDuration` because that one
+ * feeds a count-up animation on the complete screen, which needs a number it
+ * can tween. This returns a string on purpose.
+ */
+export function describeSpan(totalSeconds: number): {
+  value: string;
+  unit: string;
+} {
+  const safe = Math.max(0, Math.round(totalSeconds));
+
+  if (safe < 3600) {
+    const minutes = Math.round(safe / 60);
+    return { value: String(minutes), unit: minutes === 1 ? 'minute' : 'minutes' };
+  }
+
+  const hours = Math.floor(safe / 3600);
+  const minutes = Math.round((safe % 3600) / 60);
+  // 59m30s rounds to 60, which would render as "4h 60m".
+  return minutes === 60
+    ? { value: `${hours + 1}h`, unit: '' }
+    : { value: minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`, unit: '' };
+}

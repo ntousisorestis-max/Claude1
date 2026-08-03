@@ -12,12 +12,16 @@ import ReactTestRenderer, { type ReactTestInstance } from 'react-test-renderer';
 import App from '../App';
 import { createMemoryStorage } from '../src/state/storage';
 import type {
+  AccountData,
   AuthUser,
   CloudBackend,
+  DayTotals,
   FocusTotals,
   WorkoutRecord,
 } from '../src/cloud/types';
+
 import { NO_TOTALS } from '../src/cloud/types';
+import { NO_STREAK } from '../src/cloud/days';
 
 /* -------------------------------------------------------------------------- */
 /* A cloud that does what the test tells it to                                */
@@ -25,7 +29,8 @@ import { NO_TOTALS } from '../src/cloud/types';
 
 function createFakeCloud() {
   let notifyUser: ((user: AuthUser | null) => void) | null = null;
-  let notifyTotals: ((totals: FocusTotals) => void) | null = null;
+  let notifyAccount: ((data: AccountData) => void) | null = null;
+  let notifyDays: ((days: DayTotals[]) => void) | null = null;
 
   const recorded: WorkoutRecord[] = [];
   const attempts: WorkoutRecord[] = [];
@@ -42,11 +47,18 @@ function createFakeCloud() {
         notifyUser = null;
       };
     },
-    observeTotals(_uid, onChange) {
-      notifyTotals = onChange;
-      onChange(NO_TOTALS);
+    observeAccount(_uid, onChange) {
+      notifyAccount = onChange;
+      onChange({ totals: NO_TOTALS, streak: NO_STREAK });
       return () => {
-        notifyTotals = null;
+        notifyAccount = null;
+      };
+    },
+    observeDays(_uid, _count, onChange) {
+      notifyDays = onChange;
+      onChange([]);
+      return () => {
+        notifyDays = null;
       };
     },
     async signUp(email, _password, displayName) {
@@ -87,7 +99,15 @@ function createFakeCloud() {
       authError = { code };
     },
     pushTotals(totals: FocusTotals) {
-      ReactTestRenderer.act(() => notifyTotals?.(totals));
+      ReactTestRenderer.act(() =>
+        notifyAccount?.({ totals, streak: NO_STREAK }),
+      );
+    },
+    pushAccount(data: AccountData) {
+      ReactTestRenderer.act(() => notifyAccount?.(data));
+    },
+    pushDays(days: DayTotals[]) {
+      ReactTestRenderer.act(() => notifyDays?.(days));
     },
   };
 }

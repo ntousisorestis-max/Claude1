@@ -26,8 +26,10 @@ import { TabBar, type Tab } from './src/components/TabBar';
 import { useReduceMotion } from './src/hooks/useReduceMotion';
 import { ActiveSetScreen } from './src/screens/ActiveSetScreen';
 import { CompleteScreen } from './src/screens/CompleteScreen';
+import { InsightsScreen } from './src/screens/InsightsScreen';
 import { RestingScreen } from './src/screens/RestingScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import { StreaksScreen } from './src/screens/StreaksScreen';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { ExercisesScreen } from './src/screens/ExercisesScreen';
 import { useWorkout, WorkoutProvider } from './src/state/WorkoutContext';
@@ -66,6 +68,20 @@ function WorkoutTab() {
   }
 }
 
+/** Which screen a tab shows. The Workout tab defers to the workout's phase. */
+function TabScreen({ tab }: { tab: Tab }) {
+  switch (tab) {
+    case 'workout':
+      return <WorkoutTab />;
+    case 'insights':
+      return <InsightsScreen />;
+    case 'streaks':
+      return <StreaksScreen />;
+    case 'settings':
+      return <SettingsScreen />;
+  }
+}
+
 /**
  * The lock/unlock flip, as a circular reveal.
  *
@@ -83,7 +99,11 @@ function Ground() {
   const { width, height } = useWindowDimensions();
   const [tab, setTab] = useState<Tab>('workout');
   const free = isFree(state.phase);
-  const tabsVisible = tab === 'settings' || showsTabs(state.phase);
+  // Any tab other than Workout keeps its bar: a workout only takes the screen
+  // over on the tab it is running in. With two tabs this read `tab ===
+  // 'settings'`, which stopped being the same statement the moment there were
+  // four of them.
+  const tabsVisible = tab !== 'workout' || showsTabs(state.phase);
 
   // Diagonal, so the disc still covers the corners at scale 1.
   const diameter = Math.ceil(Math.hypot(width, height)) + 2;
@@ -157,7 +177,7 @@ function Ground() {
         <View style={styles.screen}>
           {/* Keyed on tab *and* phase, so both kinds of change transition. */}
           <ScreenFade screenKey={`${tab}:${state.phase}`}>
-            {tab === 'workout' ? <WorkoutTab /> : <SettingsScreen />}
+            <TabScreen tab={tab} />
           </ScreenFade>
         </View>
         {tabsVisible ? <TabBar active={tab} onChange={setTab} /> : null}
