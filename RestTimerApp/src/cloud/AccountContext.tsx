@@ -7,6 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { personalBest } from '../haptics';
 import { describeAuthError, getBackend } from './backend';
 import { dayKey, NO_STREAK, streakToday, trainedToday, type StreakState } from './days';
 import { isFirebaseConfigured } from './firebaseConfig';
@@ -55,6 +56,13 @@ type Account = {
   today: string;
   /** The most recent days trained, newest first. Empty unless signed in. */
   days: DayTotals[];
+  /**
+   * The new best-streak length when a workout has just beaten the record, and
+   * null otherwise. Drives the flourish on the complete screen.
+   */
+  justSetRecord: number | null;
+  /** Forgets a record that has been shown, so the next workout starts clean. */
+  clearRecord: () => void;
   sync: SyncStatus;
   /** Workouts finished but not yet accepted by the server. */
   pendingCount: number;
@@ -104,6 +112,9 @@ export function AccountProvider({
   const [ready, setReady] = useState(!configured);
   const [totals, setTotals] = useState<FocusTotals>(NO_TOTALS);
   const [streak, setStreak] = useState<StreakState>(NO_STREAK);
+  const [justSetRecord, setJustSetRecord] = useState<number | null>(null);
+  /** The last best-streak seen, so a *rise* in it can be spotted. */
+  const lastBest = useRef<number | null>(null);
   const [days, setDays] = useState<DayTotals[]>([]);
   const [sync, setSync] = useState<SyncStatus>('idle');
   const [pendingCount, setPendingCount] = useState(0);
@@ -125,6 +136,7 @@ export function AccountProvider({
         setTotals(NO_TOTALS);
         setStreak(NO_STREAK);
         setDays([]);
+        setJustSetRecord(null);
         setSync('idle');
       }
     });
@@ -139,6 +151,22 @@ export function AccountProvider({
     return cloud.observeAccount(user.uid, data => {
       setTotals(data.totals);
       setStreak(data.streak);
+
+      // A record is a *rise* in the best-ever streak, so it can only be
+      // recognised by having seen the previous value. The first snapshot after
+      // signing in therefore establishes the baseline and never counts —
+      // otherwise every launch would congratulate the user for a record they
+      // set weeks ago.
+      const previous = lastBest.current;
+      lastBest.current = data.streak.bestStreak;
+      if (previous != null && data.streak.bestStreak > previous) {
+        setJustSetRecord(data.streak.bestStreak);
+        // The one piece of feedback in the app that isn't fired from the
+        // phase-change effect in WorkoutContext, because it isn't a phase
+        // change: it depends on a server round-trip that lands some moments
+        // *after* the workout already ended.
+        personalBest();
+      }
     });
   }, [cloud, configured, user]);
 
@@ -297,9 +325,13 @@ export function AccountProvider({
     // would file one person's workout against the next person to sign in.
     outbox.current = [];
     setPendingCount(0);
+    // Belongs to the account that just left, both of them.
+    lastBest.current = null;
+    setJustSetRecord(null);
   }, [cloud]);
 
   const clearError = useCallback(() => setError(null), []);
+  const clearRecord = useCallback(() => setJustSetRecord(null), []);
 
   const status: AccountStatus = !configured
     ? 'unconfigured'
@@ -319,6 +351,8 @@ export function AccountProvider({
       trainedToday: trainedToday(streak, today),
       today,
       days,
+      justSetRecord,
+      clearRecord,
       sync,
       pendingCount,
       error,
@@ -336,6 +370,8 @@ export function AccountProvider({
       streak,
       today,
       days,
+      justSetRecord,
+      clearRecord,
       sync,
       pendingCount,
       error,

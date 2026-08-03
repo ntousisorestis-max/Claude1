@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Icon, type IconName } from './Icon';
+import { Pop } from './Pop';
 import { colors, describeDuration, HAIRLINE, radius, sized, spacing, type } from '../theme';
 import type { SessionTotals } from '../state/types';
 
@@ -56,7 +57,10 @@ function Stat({
       accessibilityRole="text"
       accessibilityLabel={`${value} ${label}`}>
       <Icon name={icon} color={colors.accent} size={22} strokeWidth={1.9} />
-      <Text style={styles.value}>{value}</Text>
+      {/* Left-anchored, so a stat that pops doesn't shove its neighbours. */}
+      <Pop value={value} style={styles.popped}>
+        <Text style={styles.value}>{value}</Text>
+      </Pop>
       <Text style={styles.label}>{label}</Text>
     </View>
   );
@@ -75,6 +79,7 @@ const styles = StyleSheet.create({
   title: { ...type.tag, color: colors.accentText },
   row: { flexDirection: 'row' },
   stat: { flex: 1, gap: spacing.sm },
+  popped: { alignSelf: 'flex-start' },
   value: { ...sized(type.title, 28), color: colors.white },
   label: { ...type.helper, fontSize: 13, color: colors.mutedOnDark },
 });

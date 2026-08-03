@@ -2,6 +2,7 @@ import React from 'react';
 import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '../components/Icon';
 import { NeedsAccount } from '../components/NeedsAccount';
+import { Pop } from '../components/Pop';
 import { WeekStrip } from '../components/WeekStrip';
 import { useAccount } from '../cloud/AccountContext';
 import { useEnter } from '../hooks/useEnter';
@@ -65,7 +66,9 @@ export function StreaksScreen() {
                   strokeWidth={1.7}
                 />
               </View>
-              <Text style={styles.currentValue}>{currentStreak}</Text>
+              <Pop value={currentStreak} depth={1.08}>
+                <Text style={styles.currentValue}>{currentStreak}</Text>
+              </Pop>
               <Text style={styles.currentUnit}>
                 {currentStreak === 1 ? 'day streak' : 'day streak'}
               </Text>
@@ -117,14 +120,14 @@ export function StreaksScreen() {
  */
 function statusLine(current: number, trainedToday: boolean): string {
   if (current === 0) {
-    return 'Finish a workout today to start one.';
+    return 'One finished workout today and you’re on the board.';
   }
   if (trainedToday) {
     return current === 1
-      ? 'Day one is done. Come back tomorrow.'
-      : 'Today is in. Nothing left to do.';
+      ? 'Day one, done. The hard part is tomorrow.'
+      : 'Today’s in the bank. Nothing left to prove.';
   }
-  return 'Still alive — one workout today keeps it going.';
+  return 'Still alive. One workout today and it stays that way.';
 }
 
 const styles = StyleSheet.create({

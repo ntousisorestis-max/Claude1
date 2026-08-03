@@ -127,6 +127,15 @@ export type WorkoutState = {
   totalLockedSeconds: number;
   /** True whenever the blocker should be shielding the user's apps. */
   appsLocked: boolean;
+  /**
+   * True when the set now under way began by cutting rest meaningfully short.
+   *
+   * Lives in state rather than being worked out on the active screen because
+   * only the reducer knows what the rest period was going to be — by the time
+   * the screen renders, `restEndsAt` is already null. Cleared the moment the
+   * set is banked, so the line it drives shows for exactly one set.
+   */
+  skippedRest: boolean;
 };
 
 /** What gets written to storage. See src/state/storage.ts. */

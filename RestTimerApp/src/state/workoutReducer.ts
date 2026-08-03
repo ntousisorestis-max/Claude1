@@ -16,6 +16,16 @@ export const MIN_REST_SECONDS = 10;
 export const MAX_REST_SECONDS = 600;
 export const REST_PRESETS = [30, 60, 90, 120];
 
+/**
+ * Rest cut shorter than this counts as skipping it.
+ *
+ * Absolute rather than a fraction of the rest period: someone who taps Skip
+ * with eight seconds left was waiting for the timer, not dodging it, and
+ * teasing them for it would be the app misreading the room. Fifteen seconds is
+ * comfortably past that and well short of any real rest period.
+ */
+export const SKIPPED_REST_THRESHOLD_MS = 15_000;
+
 export const MAX_EXERCISES = 40;
 export const MAX_EXERCISE_NAME_LENGTH = 32;
 
@@ -108,6 +118,7 @@ export const initialState: WorkoutState = {
   lockedSince: null,
   totalLockedSeconds: 0,
   appsLocked: false,
+  skippedRest: false,
 };
 
 const clamp = (n: number, min: number, max: number) =>
@@ -280,6 +291,7 @@ export function workoutReducer(
         lockedSince: action.now,
         totalLockedSeconds: 0,
         appsLocked: true,
+        skippedRest: false,
       };
     }
 
@@ -304,6 +316,7 @@ export function workoutReducer(
           restStartedAt: null,
           restEndsAt: null,
           appsLocked: false,
+          skippedRest: false,
         };
       }
 
@@ -316,6 +329,8 @@ export function workoutReducer(
         restStartedAt: action.now,
         restEndsAt: action.now + state.config.restSeconds * 1000,
         appsLocked: false,
+        // Whatever the last set was teased for, this one starts clean.
+        skippedRest: false,
       };
     }
 
@@ -333,6 +348,11 @@ export function workoutReducer(
         // Locked again, so a new stretch of reclaimed time starts.
         lockedSince: action.now,
         appsLocked: true,
+        // Worked out here because this is the last moment anything knows what
+        // the rest period was going to be.
+        skippedRest:
+          state.restEndsAt != null &&
+          state.restEndsAt - action.now > SKIPPED_REST_THRESHOLD_MS,
       };
     }
 

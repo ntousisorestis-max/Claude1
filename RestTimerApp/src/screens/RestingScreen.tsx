@@ -13,7 +13,7 @@ import { SetTicks } from '../components/SetTicks';
 import { useCountdown } from '../hooks/useCountdown';
 import { useEnter } from '../hooks/useEnter';
 import { useReduceMotion } from '../hooks/useReduceMotion';
-import { pickRestLine } from '../restLines';
+import { pick, randomSeed, REST_LINES } from '../copy';
 import { useWorkout } from '../state/WorkoutContext';
 import { colors, formatMMSS, spacing, tabular, type, sized } from '../theme';
 
@@ -112,7 +112,7 @@ function useRestLine(restEndsAt: number | null): string {
   });
 
   if (chosen.current.key !== restEndsAt) {
-    chosen.current = { key: restEndsAt, line: pickRestLine() };
+    chosen.current = { key: restEndsAt, line: pick(REST_LINES, randomSeed()) };
   }
   return chosen.current.line;
 }

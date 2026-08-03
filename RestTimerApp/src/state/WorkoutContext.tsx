@@ -7,13 +7,18 @@ import React, {
   useRef,
 } from 'react';
 import { blocker } from '../blocking';
-import { lockedShut, setBanked, workoutDone, workoutStarted } from '../haptics';
+import { setBanked, setStart, workoutDone, workoutStarted } from '../haptics';
 import {
   cancelRestOverNotification,
   onRestNotificationPress,
   requestNotificationPermission,
   scheduleRestOverNotification,
 } from '../notifications';
+import {
+  playSetComplete,
+  playWorkoutComplete,
+  setSoundEnabled as setSoundOutputEnabled,
+} from '../sound';
 import { memoryStorage, type AppStorage } from './storage';
 import {
   initialState,
@@ -142,12 +147,24 @@ export function WorkoutProvider({
     }
   }, [state.appsLocked]);
 
-  // Every haptic in the app, in one place.
+  // The sound output follows the same switch as the notification channel, so
+  // Silent mode means silent everywhere rather than in one of the two places
+  // the app can make a noise.
+  useEffect(() => {
+    setSoundOutputEnabled(state.defaults.soundEnabled);
+  }, [state.defaults.soundEnabled]);
+
+  // Every haptic and every sound in the app, in one place.
   //
-  // Each buzz-worthy moment *is* a phase change, so deriving them from the
+  // Each feedback-worthy moment *is* a phase change, so deriving them from the
   // phase rather than firing them inside the action creators means the timer
   // running out on its own feels exactly like tapping Skip rest, and finishing
   // the last set can't buzz twice on its way to the summary.
+  //
+  // Note which transitions make a *sound*: banking a set, and finishing. Not
+  // starting one — the moment a set begins is the moment the phone should stop
+  // being interesting, and a chime as you step under a bar is the app asking
+  // for attention at precisely the wrong time. That one gets a haptic only.
   const previousPhase = useRef(state.phase);
   useEffect(() => {
     const from = previousPhase.current;
@@ -159,11 +176,15 @@ export function WorkoutProvider({
     }
     if (to === 'active') {
       // Coming back from rest is a re-lock; anything else is the first set.
-      (from === 'resting' ? lockedShut : workoutStarted)();
+      (from === 'resting' ? setStart : workoutStarted)();
     } else if (to === 'resting') {
       setBanked();
+      playSetComplete();
     } else if (to === 'complete') {
       workoutDone();
+      // The last set is banked by the same transition that ends the workout, so
+      // this one sound has to stand for both. It is the bigger of the two.
+      playWorkoutComplete();
     }
   }, [state.phase]);
 

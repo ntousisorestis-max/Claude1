@@ -214,6 +214,29 @@ of steppers on screen is how you edit the wrong exercise.
 Type is oversized and heavy, everything tappable is a pill, and each set gets a
 tick that fills as you bank it.
 
+## Voice
+
+All the personality copy lives in `src/copy.ts` — rest lines, the tease for
+skipping rest, notification bodies, both endings, empty states. Together in one
+module rather than scattered through the screens, because the voice can only be
+judged by reading it end to end, which is the only way to notice when one line
+has drifted funnier than the rest.
+
+Three rules hold it in place: short (every line sits under something that is the
+actual point of the screen); never at the user's expense for *failing* (ending
+early, a broken streak and an empty list get warmth — the only thing teased is
+skipping **rest**, which is impatience rather than weakness); and no fake stakes,
+so nothing congratulates a number the app didn't measure.
+
+Rotating lines are picked by seed, not by `Math.random()` at the call site. These
+render inside components that re-render on every tick of a countdown, and a line
+that reshuffles sixty times a minute is the most annoying thing an interface can
+do. The notification's *title* deliberately never rotates — a notification whose
+title changes each time reads as a different app each time.
+
+"Personal best" means exactly one thing: a new longest streak. It's the only
+record the app keeps, so it's the only thing it can honestly call one.
+
 ## Motion & feel
 
 Six pieces of motion, all RN `Animated`, no library:
@@ -247,7 +270,29 @@ Three rules keep it from getting silly:
 - **The extrusion reserves its layout space regardless of `disabled`**, so the
   Start button doesn't resize the moment it becomes enabled.
 
-### Haptics — Android only, on purpose
+### Sound
+
+Two effects, synthesised rather than sampled: a soft bell when a set is banked,
+and an arpeggiated version of the same bell when the workout ends. Both are built
+on a perfect fifth, everything decays exponentially, and nothing sustains — a
+tone that lingers gets in the way of the next rep.
+
+`react-native-audio-api` implements the Web Audio API natively, which is why
+there is one synthesis codepath in `src/sound/index.ts` and a four-line platform
+shim beside it. Files would have meant two implementations, two sets of assets,
+and a regeneration step every time a note was wrong.
+
+The gate is `defaults.soundEnabled` — the same switch that drives the
+notification channel — so Silent mode is silent everywhere. It doesn't even
+construct an AudioContext when off, which matters on iOS: doing so takes the
+audio session away from whatever the user is actually listening to.
+
+Note which moments make a sound: banking a set, and finishing. **Not starting
+one.** The moment a set begins is the moment the phone should stop being
+interesting, and a chime as you step under a bar is the app asking for attention
+at precisely the wrong time. That one gets a haptic only.
+
+### Haptics
 
 Short buzzes when a set is banked, when the lock snaps shut, and when the
 workout ends. `Vibration` is core React Native so this costs no dependency, but
@@ -282,6 +327,13 @@ Unverified because no native build has run yet:
   It reads from `rootProject.ext`, so it should inherit — but it's untested.
 - **iOS deployment target.** Notifee's podspec says 10.0 against the project's
   15.1. Harmless, may warn during `pod install`.
+- **Haptics and sound are both optional native modules.**
+  `react-native-haptic-feedback` and `react-native-audio-api` are each loaded
+  through a guarded `require`, so a build where they aren't linked yet degrades
+  to the Android-only `Vibration` fallback and to silence rather than crashing.
+  That means the *first* native build will feel flatter than the web build until
+  `pod install` runs — and it means a linking failure is invisible rather than
+  loud. `hasNativeHaptics` is exported from src/haptics.ts to check.
 - **Firebase auth persistence on native.** `@firebase/auth` keeps the signed-in
   session in AsyncStorage on React Native, picked up automatically because
   `@react-native-async-storage/async-storage` is installed as its optional peer
@@ -298,6 +350,11 @@ Unverified because no native build has run yet:
 ```
 App.tsx                      root; the workout phase *is* the navigation
 src/
+  copy.ts                    every line of personality, in one place
+  haptics.ts                 six intents, native module with a Vibration fallback
+  sound/
+    index.ts                 the two effects, synthesised
+    audioContext.ts          native shim (.web.ts twin for the browser)
   state/
     types.ts                 domain types
     workoutReducer.ts        the whole state machine, no side effects

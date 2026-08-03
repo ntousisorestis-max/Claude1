@@ -240,7 +240,7 @@ describe('Insights and Streaks', () => {
 
     expect(hasLabel(root, 'Current streak: 3 days')).toBe(true);
     expect(hasText(root, '11')).toBe(true);
-    expect(hasText(root, 'Today is in. Nothing left to do.')).toBe(true);
+    expect(hasText(root, 'Today’s in the bank. Nothing left to prove.')).toBe(true);
 
     // Monday is today and trained; Sunday and Saturday before it are trained;
     // the four before that are not.
@@ -264,7 +264,9 @@ describe('Insights and Streaks', () => {
 
     press(root, 'Streaks');
     expect(hasLabel(root, 'Current streak: 6 days')).toBe(true);
-    expect(hasText(root, 'Still alive — one workout today keeps it going.')).toBe(true);
+    expect(hasText(root, 'Still alive. One workout today and it stays that way.')).toBe(
+      true,
+    );
   });
 
   it('shows a broken streak as zero without touching the best ever', async () => {
@@ -279,7 +281,9 @@ describe('Insights and Streaks', () => {
 
     press(root, 'Streaks');
     expect(hasLabel(root, 'Current streak: 0 days')).toBe(true);
-    expect(hasText(root, 'Finish a workout today to start one.')).toBe(true);
+    expect(hasText(root, 'One finished workout today and you’re on the board.')).toBe(
+      true,
+    );
     // The record survives the streak that set it.
     expect(hasText(root, '9')).toBe(true);
   });

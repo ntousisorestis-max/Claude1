@@ -15,6 +15,7 @@ import { ExerciseCard } from '../components/ExerciseCard';
 import { HeroHourglass } from '../components/HeroHourglass';
 import { SectionLabel } from '../components/SectionLabel';
 import { SessionStats } from '../components/SessionStats';
+import { EMPTY_EXERCISES } from '../copy';
 import { useEnter } from '../hooks/useEnter';
 import { usePressScale } from '../hooks/usePressScale';
 import { useWorkout } from '../state/WorkoutContext';
@@ -98,11 +99,8 @@ export function ExercisesScreen() {
 
         {empty ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>Nothing saved yet.</Text>
-            <Text style={styles.emptyBody}>
-              Add the lifts you actually do. Each one keeps its own sets, rest
-              and blocked apps, so you set it up once.
-            </Text>
+            <Text style={styles.emptyTitle}>{EMPTY_EXERCISES.title}</Text>
+            <Text style={styles.emptyBody}>{EMPTY_EXERCISES.body}</Text>
           </View>
         ) : (
           <View style={styles.list}>

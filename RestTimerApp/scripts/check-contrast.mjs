@@ -93,6 +93,15 @@ check('white — Scroll away., clock', WHITE, glowedAccent, LARGE);
 checkAlpha('mutedOnAccent (white @ .88)', 0.88, glowedAccent, BODY);
 checkAlpha('faintOnAccent (white @ .68)', 0.68, glowedAccent, LARGE);
 
+// The complete screen's personal-best banner: ink at 32% over the flooded
+// violet. Must match RECORD_GROUND in src/screens/CompleteScreen.tsx.
+const recordGround = toHex(composite(INK, glowedAccent, 0.32));
+
+console.log('\nThe personal-best banner, sunk into the violet:');
+check('white — the record line', WHITE, recordGround, BODY);
+checkAlpha('mutedOnAccent — PERSONAL BEST', 0.88, recordGround, BODY);
+check('white on the accent tile', WHITE, ACCENT, LARGE);
+
 console.log('\nThe gradient Start button, at both ends of its ramp:');
 // 19px bold is "large text", so 3.0 — see GradientButton.tsx.
 check('white on the gradient, dark end', WHITE, ACCENT_DEEP, LARGE);

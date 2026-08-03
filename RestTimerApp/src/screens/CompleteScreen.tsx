@@ -3,6 +3,13 @@ import { Animated, StyleSheet, Text, View } from 'react-native';
 import { BigButton } from '../components/BigButton';
 import { Icon, type IconName } from '../components/Icon';
 import { SetTicks } from '../components/SetTicks';
+import { useAccount } from '../cloud/AccountContext';
+import {
+  CUT_SHORT_LINES,
+  FINISHED_LINES,
+  personalBestLine,
+  pick,
+} from '../copy';
 import { useCountUp } from '../hooks/useCountUp';
 import { useEnter } from '../hooks/useEnter';
 import { useWorkout } from '../state/WorkoutContext';
@@ -17,18 +24,34 @@ import {
   type,
 } from '../theme';
 
+/**
+ * The record banner's ground: the app's ink at a third, over the violet flood.
+ *
+ * Kept as a named constant because `npm run contrast` checks this exact value
+ * against the text that sits on it.
+ */
+const RECORD_GROUND = 'rgba(15, 11, 26, 0.32)';
+
 /** Also flooded: the workout is over, so the phone is yours again. */
 export function CompleteScreen() {
   const {
     state: { config, setsCompleted, totalRestSeconds, totalLockedSeconds },
     newWorkout,
   } = useWorkout();
+  const { justSetRecord } = useAccount();
 
   const enterHero = useEnter();
   const enterReclaimed = useEnter(90);
   const enterCard = useEnter(170);
 
   const finishedAll = setsCompleted >= config.totalSets;
+
+  // Seeded on the workout rather than randomly, so the line holds still while
+  // the count-up animates and the record arrives.
+  const seed = setsCompleted + config.totalSets + config.exerciseName.length;
+  const subline = finishedAll
+    ? pick(FINISHED_LINES, seed)
+    : pick(CUT_SHORT_LINES, seed);
 
   return (
     <View style={styles.screen}>
@@ -40,6 +63,7 @@ export function CompleteScreen() {
           <Text style={styles.headline}>
             {finishedAll ? 'That’s the work.' : 'Called it early.'}
           </Text>
+          <Text style={styles.subline}>{subline}</Text>
 
           <SetTicks
             total={config.totalSets}
@@ -48,6 +72,11 @@ export function CompleteScreen() {
             onAccent
           />
         </Animated.View>
+
+        {/* Arrives a beat after everything else — it depends on the workout
+            reaching Firestore and the new streak coming back — so it gets its
+            own entrance rather than sharing the hero's. */}
+        {justSetRecord != null ? <RecordBanner days={justSetRecord} /> : null}
 
         <Animated.View style={enterReclaimed}>
           <TimeReclaimed seconds={totalLockedSeconds} />
@@ -104,6 +133,36 @@ function TimeReclaimed({ seconds }: { seconds: number }) {
   );
 }
 
+/**
+ * The one flourish in the app.
+ *
+ * Shown only when a workout has just pushed the best-ever streak past where it
+ * was — the single record this app actually keeps, so the only thing it can
+ * honestly call a personal best. Signed-out users never see it, because there
+ * is nothing keeping their records.
+ *
+ * It enters on its own timing because it cannot be timed with the rest of the
+ * screen: it is waiting on a server.
+ */
+function RecordBanner({ days }: { days: number }) {
+  const enter = useEnter(0);
+
+  return (
+    <Animated.View
+      style={[styles.record, enter]}
+      accessibilityRole="text"
+      accessibilityLabel={`New personal best: ${personalBestLine(days)}`}>
+      <View style={styles.recordTile}>
+        <Icon name="trophy" color={colors.white} size={18} />
+      </View>
+      <View style={styles.recordText}>
+        <Text style={styles.recordEyebrow}>PERSONAL BEST</Text>
+        <Text style={styles.recordLine}>{personalBestLine(days)}</Text>
+      </View>
+    </Animated.View>
+  );
+}
+
 function Row({
   icon,
   label,
@@ -137,11 +196,43 @@ const styles = StyleSheet.create({
   body: { flex: 1, justifyContent: 'center', gap: spacing.lg },
   hero: { gap: spacing.sm },
   badge: { fontSize: 56 },
-  headline: {
-    ...sized(type.mega, 52),
-    color: colors.white,
+  headline: { ...sized(type.mega, 52), color: colors.white },
+  subline: {
+    ...type.helper,
+    fontSize: 16,
+    color: colors.mutedOnAccent,
+    lineHeight: 22,
     marginBottom: spacing.sm,
   },
+
+  /**
+   * Sunk into the violet, not floated on top of it.
+   *
+   * A white wash was the first instinct and it was wrong twice over: it
+   * lightens a ground that white text already sits on, dropping the eyebrow to
+   * about 4:1 — under AA before the glow touches it — and it makes the one
+   * celebratory thing on the screen the *least* legible. Darkening instead
+   * takes white to roughly 9:1 and reads as a plaque rather than a smudge.
+   */
+  record: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: RECORD_GROUND,
+    borderRadius: radius.md,
+    padding: spacing.md,
+  },
+  recordTile: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.sm,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recordText: { flex: 1, gap: 2 },
+  recordEyebrow: { ...sized(type.tag, 10), color: colors.mutedOnAccent },
+  recordLine: { ...type.body, fontWeight: '700', color: colors.white },
 
   reclaimed: { gap: spacing.xs },
   reclaimedLabel: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

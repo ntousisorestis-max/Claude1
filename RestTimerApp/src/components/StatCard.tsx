@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Icon, type IconName } from './Icon';
+import { Pop } from './Pop';
 import { colors, HAIRLINE, radius, sized, spacing, tabular, type } from '../theme';
 
 /**
@@ -39,10 +40,12 @@ export function StatCard({
 
       <View style={styles.body}>
         <Text style={styles.label}>{label.toUpperCase()}</Text>
-        <View style={styles.figure}>
-          <Text style={styles.value}>{value}</Text>
-          {unit ? <Text style={styles.unit}>{unit}</Text> : null}
-        </View>
+        <Pop value={value} depth={1.1} style={styles.popped}>
+          <View style={styles.figure}>
+            <Text style={styles.value}>{value}</Text>
+            {unit ? <Text style={styles.unit}>{unit}</Text> : null}
+          </View>
+        </Pop>
         <Text style={styles.caption}>{caption}</Text>
       </View>
     </View>
@@ -72,6 +75,7 @@ const styles = StyleSheet.create({
   },
   body: { flex: 1, gap: 2 },
   label: { ...sized(type.tag, 10), color: colors.accentText },
+  popped: { alignSelf: 'flex-start' },
   // Baseline-aligned, so the unit sits on the number's feet rather than
   // floating in the middle of it.
   figure: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },

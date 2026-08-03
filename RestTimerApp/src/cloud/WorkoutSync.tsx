@@ -23,7 +23,7 @@ import { dayKey } from './days';
  */
 export function WorkoutSync() {
   const { state } = useWorkout();
-  const { recordWorkout, status } = useAccount();
+  const { recordWorkout, clearRecord, status } = useAccount();
 
   const previousPhase = useRef(state.phase);
 
@@ -32,7 +32,17 @@ export function WorkoutSync() {
     const to = state.phase;
     previousPhase.current = to;
 
-    if (from === to || to !== 'complete') {
+    if (from === to) {
+      return;
+    }
+    // A new workout starting is the moment the last one's flourish stops being
+    // true. Cleared here rather than on the complete screen's unmount, because
+    // that screen is also left by switching tabs and coming back.
+    if (to === 'active' && from === 'setup') {
+      clearRecord();
+      return;
+    }
+    if (to !== 'complete') {
       return;
     }
     // Nothing to send to. The workout still shows its summary — the local
