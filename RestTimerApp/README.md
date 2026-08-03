@@ -214,6 +214,29 @@ of steppers on screen is how you edit the wrong exercise.
 Type is oversized and heavy, everything tappable is a pill, and each set gets a
 tick that fills as you bank it.
 
+### Collapsing sections
+
+The exercise card's Sets / Rest time / Blocked apps rows animate their height
+rather than snapping. That forces one design decision worth knowing about:
+**the children stay mounted while the row is shut.** `open ? children : null`
+cannot animate — there is nothing to measure before it appears and nothing left
+to shrink once it's gone.
+
+Content squashed to zero height is still there, so `Collapsible` shuts it off
+three ways, because each platform only listens to one: `pointerEvents` (a
+zero-height box still catches taps along its edge), `accessibilityElementsHidden`
+on iOS, `importantForAccessibility` on Android — and a bare `aria-hidden`,
+because **react-native-web implements neither of the other two**. Without it the
+browser build leaves every collapsed control readable by a screen reader, which
+is the exact failure the component exists to avoid. `__tests__/motion.test.tsx`
+asserts all four.
+
+Height is the one animation in the app not on the native driver — it can't be,
+being a layout property. That's why it's used on a still screen and nowhere near
+the rest countdown. `scaleY` *would* run natively and is the wrong tool: it
+squashes the content instead of revealing it, so the text visibly stretches back
+into shape.
+
 ## Voice
 
 All the personality copy lives in `src/copy.ts` — rest lines, the tease for

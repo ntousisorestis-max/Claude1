@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { AppPill } from './AppPill';
+import { Collapsible } from './Collapsible';
 import { ConfirmDialog } from './ConfirmDialog';
 import { GradientButton } from './GradientButton';
 import { Icon, type IconName } from './Icon';
 import { Segmented } from './Segmented';
 import { Stepper } from './Stepper';
-import { useEnter } from '../hooks/useEnter';
 import { usePressScale } from '../hooks/usePressScale';
 import {
   MAX_REST_SECONDS,
@@ -91,7 +91,7 @@ export function ExerciseCard({
             open={open.sets}
             onPress={() => toggle('sets')}
           />
-          {open.sets ? (
+          <Collapsible open={open.sets}>
             <Panel>
               <Stepper
                 label={`sets for ${exercise.name}`}
@@ -101,7 +101,7 @@ export function ExerciseCard({
                 max={MAX_SETS}
               />
             </Panel>
-          ) : null}
+          </Collapsible>
         </Section>
 
         <Section divided>
@@ -113,7 +113,7 @@ export function ExerciseCard({
             open={open.rest}
             onPress={() => toggle('rest')}
           />
-          {open.rest ? (
+          <Collapsible open={open.rest}>
             <Panel>
               <Stepper
                 label={`rest for ${exercise.name}`}
@@ -132,7 +132,7 @@ export function ExerciseCard({
                 format={n => `${n}s`}
               />
             </Panel>
-          ) : null}
+          </Collapsible>
         </Section>
 
         <Section>
@@ -146,7 +146,7 @@ export function ExerciseCard({
             open={open.apps}
             onPress={() => toggle('apps')}
           />
-          {open.apps ? (
+          <Collapsible open={open.apps}>
             <Panel>
               <View style={styles.apps}>
                 {apps.map(app => (
@@ -160,7 +160,7 @@ export function ExerciseCard({
                 ))}
               </View>
             </Panel>
-          ) : null}
+          </Collapsible>
         </Section>
       </View>
 
@@ -209,11 +209,15 @@ function Section({
   return <View style={divided ? styles.divided : undefined}>{children}</View>;
 }
 
-/** The controls one row reveals, tucked under it. */
+/**
+ * The controls one row reveals, tucked under it.
+ *
+ * No entry animation of its own any more: `Collapsible` fades the whole reveal
+ * in as it grows, and two fades stacked on one gesture read as a stutter rather
+ * than as one movement.
+ */
 function Panel({ children }: { children: React.ReactNode }) {
-  const enter = useEnter();
-
-  return <Animated.View style={[styles.panel, enter]}>{children}</Animated.View>;
+  return <View style={styles.panel}>{children}</View>;
 }
 
 /** One labelled value, and the way in to changing it. */

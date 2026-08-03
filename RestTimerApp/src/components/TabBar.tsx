@@ -1,7 +1,8 @@
-import React from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { usePressScale } from '../hooks/usePressScale';
+import { useReduceMotion } from '../hooks/useReduceMotion';
 import { colors, HAIRLINE, radius, sized, spacing, type } from '../theme';
 
 export type Tab = 'workout' | 'insights' | 'streaks' | 'settings';
@@ -56,6 +57,35 @@ function TabButton({
 }) {
   const tint = active ? colors.accentText : colors.faintOnDark;
   const pressScale = usePressScale({ depth: 0.92, haptic: true });
+  const reduceMotion = useReduceMotion();
+
+  /**
+   * The selected pill, grown into place rather than switched on.
+   *
+   * A separate view behind the glyph rather than a conditional
+   * `backgroundColor`, because colour is not something the native driver can
+   * animate — opacity and scale are. The rendered result is identical; only the
+   * way it arrives changed.
+   */
+  const selected = useRef(new Animated.Value(active ? 1 : 0)).current;
+
+  useEffect(() => {
+    if (reduceMotion) {
+      selected.setValue(active ? 1 : 0);
+      return;
+    }
+    const animation = Animated.timing(selected, {
+      toValue: active ? 1 : 0,
+      // Short. This is a tab switch, and the screen behind it is already
+      // crossfading — a pill still settling when the new screen has arrived
+      // reads as lag.
+      duration: 160,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [active, selected, reduceMotion]);
 
   return (
     <Pressable
@@ -69,7 +99,24 @@ function TabButton({
         {/* The glyph sits in a violet pill when selected. It's the only
             treatment here — a bar that grows an underline, a dot and a colour
             change is three ways of saying one thing. */}
-        <View style={[styles.glyph, active && styles.glyphOn]}>
+        <View style={styles.glyph}>
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.pill,
+              {
+                opacity: selected,
+                transform: [
+                  {
+                    scale: selected.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.9, 1],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          />
           <Svg width={24} height={24} viewBox="0 0 24 24">
             <Glyph tab={tab} tint={tint} />
           </Svg>
@@ -173,6 +220,15 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: radius.pill,
   },
-  glyphOn: { backgroundColor: colors.accentWash },
+  /** Sits behind the glyph and fills the padded box the glyph defines. */
+  pill: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accentWash,
+  },
   label: { ...sized(type.tag, 11) },
 });

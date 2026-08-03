@@ -2,6 +2,7 @@ import React from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { BigButton } from '../components/BigButton';
 import { Icon, type IconName } from '../components/Icon';
+import { Pop } from '../components/Pop';
 import { SetTicks } from '../components/SetTicks';
 import { useAccount } from '../cloud/AccountContext';
 import {
@@ -124,11 +125,17 @@ function TimeReclaimed({ seconds }: { seconds: number }) {
       </View>
 
       <Text style={styles.reclaimedLead}>You kept your phone down for</Text>
-      {/* Number and unit are separate so only the number moves — animating the
-          whole string would flicker the word between singular and plural. */}
-      <Text style={styles.reclaimedValue}>
-        {counted} {unit}.
-      </Text>
+      {/* One small pop the instant the count-up arrives, so the number lands
+          rather than merely stopping. Keyed on reaching the target — not on
+          `counted` itself, which changes fifteen times on the way there. */}
+      <Pop value={counted >= value ? 'landed' : 'counting'} depth={1.06} style={styles.landed}>
+        {/* Number and unit are separate so only the number moves — animating
+            the whole string would flicker the word between singular and
+            plural. */}
+        <Text style={styles.reclaimedValue}>
+          {counted} {unit}.
+        </Text>
+      </Pop>
     </View>
   );
 }
@@ -243,6 +250,7 @@ const styles = StyleSheet.create({
     color: colors.mutedOnAccent,
     marginTop: spacing.sm,
   },
+  landed: { alignSelf: 'flex-start' },
   reclaimedValue: { ...sized(type.display, 38), ...tabular, color: colors.white },
 
   card: {

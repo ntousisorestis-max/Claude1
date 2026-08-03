@@ -215,8 +215,26 @@ describe('full workout loop', () => {
     press(root, 'Add exercise');
     addExercise(root, 'Rows');
 
+    /**
+     * Whether a control is actually reachable, not merely present in the tree.
+     *
+     * A collapsed section keeps its children mounted so its height can be
+     * animated — see Collapsible — and hides them with
+     * `accessibilityElementsHidden`. "Is it in the tree" therefore stopped
+     * being the right question; "would a screen reader or a thumb ever find
+     * it" is, and it is the stronger assertion of the two.
+     */
     const canEdit = (control: string) =>
-      root.findAll(n => n.props?.accessibilityLabel === control).length > 0;
+      root
+        .findAll(n => n.props?.accessibilityLabel === control)
+        .some(node => {
+          for (let at = node; at; at = at.parent as ReactTestInstance) {
+            if (at.props?.accessibilityElementsHidden === true) {
+              return false;
+            }
+          }
+          return true;
+        });
 
     // Nothing open to start with.
     expect(canEdit('Increase sets for Squat')).toBe(false);

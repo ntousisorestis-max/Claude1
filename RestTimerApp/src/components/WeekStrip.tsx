@@ -1,7 +1,8 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import { Icon } from './Icon';
 import { recentDays, weekdayOf } from '../cloud/days';
+import { useEnter } from '../hooks/useEnter';
 import { colors, HAIRLINE, radius, sized, spacing, type } from '../theme';
 
 /**
@@ -26,14 +27,14 @@ export function WeekStrip({
 
   return (
     <View style={styles.strip}>
-      {week.map(day => {
+      {week.map((day, index) => {
         const done = trained.has(day);
         const isToday = day === today;
 
         return (
-          <View
+          <Column
             key={day}
-            style={styles.column}
+            index={index}
             accessibilityRole="text"
             accessibilityLabel={`${weekdayOf(day)}${isToday ? ', today' : ''}: ${
               done ? 'trained' : 'no workout'
@@ -50,10 +51,38 @@ export function WeekStrip({
                 <Icon name="check" color={colors.white} size={16} strokeWidth={2.4} />
               ) : null}
             </View>
-          </View>
+          </Column>
         );
       })}
     </View>
+  );
+}
+
+/**
+ * One day, arriving a beat after the one to its left.
+ *
+ * Thirty milliseconds apart, so the row assembles left to right — the same
+ * direction it's read, ending on today. A whole week appearing at once is
+ * correct and lifeless; staggering it is the only motion on an otherwise
+ * completely still screen.
+ *
+ * On mount only. It is not keyed on the data, so a day filling in later
+ * doesn't re-run the whole row.
+ */
+function Column({
+  index,
+  children,
+  ...rest
+}: {
+  index: number;
+  children: React.ReactNode;
+} & React.ComponentProps<typeof View>) {
+  const enter = useEnter(index * 30);
+
+  return (
+    <Animated.View {...rest} style={[styles.column, enter]}>
+      {children}
+    </Animated.View>
   );
 }
 

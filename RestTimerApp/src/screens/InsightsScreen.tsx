@@ -1,5 +1,5 @@
 import React from 'react';
-import { Animated, ScrollView, StyleSheet, Text } from 'react-native';
+import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { NeedsAccount } from '../components/NeedsAccount';
 import { SessionStats } from '../components/SessionStats';
 import { StatCard } from '../components/StatCard';
@@ -28,7 +28,14 @@ export function InsightsScreen() {
   } = useWorkout();
 
   const enter = useEnter();
-  const enterBody = useEnter(80);
+  // One per block rather than one for the lot: three cards that assemble read
+  // as a screen being built, where three cards that arrive together read as a
+  // screenshot. Steps of 60ms — small enough that the whole thing is settled
+  // inside a third of a second.
+  const enterOne = useEnter(80);
+  const enterTwo = useEnter(140);
+  const enterThree = useEnter(200);
+  const enterNote = useEnter(260);
 
   const signedIn = status === 'signed-in';
   const focus = describeSpan(totals.focusSeconds);
@@ -52,52 +59,69 @@ export function InsightsScreen() {
         </Text>
       </Animated.View>
 
-      <Animated.View style={[styles.body, enterBody]}>
+      {/* A plain View, so each block below can carry its own entrance. Nesting
+          a staggered child inside an animated parent compounds both the fade
+          and the travel. */}
+      <View style={styles.body}>
         {signedIn ? (
           <>
-            <StatCard
-              icon="flame"
-              value={focus.value}
-              unit={focus.unit}
-              label="Time reclaimed"
-              caption="All-time. How long your apps were locked while you were working."
-            />
-            <StatCard
-              icon="trophy"
-              value={String(workoutsThisWeek)}
-              unit={workoutsThisWeek === 1 ? 'workout' : 'workouts'}
-              label="This week"
-              caption="Finished in the last seven days, today included."
-            />
-            <StatCard
-              icon="check"
-              value={String(totals.setsCompleted)}
-              unit={totals.setsCompleted === 1 ? 'set' : 'sets'}
-              label="Sets completed"
-              caption="All-time, across every device you sign in on."
-            />
+            <Animated.View style={enterOne}>
+              <StatCard
+                icon="flame"
+                value={focus.value}
+                unit={focus.unit}
+                label="Time reclaimed"
+                caption="All-time. How long your apps were locked while you were working."
+              />
+            </Animated.View>
+            <Animated.View style={enterTwo}>
+              <StatCard
+                icon="trophy"
+                value={String(workoutsThisWeek)}
+                unit={workoutsThisWeek === 1 ? 'workout' : 'workouts'}
+                label="This week"
+                caption="Finished in the last seven days, today included."
+              />
+            </Animated.View>
+            <Animated.View style={enterThree}>
+              <StatCard
+                icon="check"
+                value={String(totals.setsCompleted)}
+                unit={totals.setsCompleted === 1 ? 'set' : 'sets'}
+                label="Sets completed"
+                caption="All-time, across every device you sign in on."
+              />
+            </Animated.View>
           </>
         ) : (
           <>
-            <NeedsAccount empty={EMPTY_INSIGHTS} />
+            <Animated.View style={enterOne}>
+              <NeedsAccount empty={EMPTY_INSIGHTS} />
+            </Animated.View>
 
             {/* Not a consolation prize: this is the same card the Workout tab
                 shows, and it is the only honest thing to put here — these
                 numbers are real, they just won't outlive the app being
                 closed. */}
-            <Text style={styles.sectionNote}>
-              In the meantime, here is what this session has counted:
-            </Text>
-            <SessionStats session={session} />
+            <Animated.View style={enterTwo}>
+              <Text style={styles.sectionNote}>
+                In the meantime, here is what this session has counted:
+              </Text>
+            </Animated.View>
+            <Animated.View style={enterThree}>
+              <SessionStats session={session} />
+            </Animated.View>
           </>
         )}
 
-        <Text style={styles.note}>
-          {signedIn
-            ? 'Counted from finished workouts only — a workout you end early still counts the sets you did.'
-            : 'Session numbers reset when the app restarts. Signing in is what makes them stick.'}
-        </Text>
-      </Animated.View>
+        <Animated.View style={enterNote}>
+          <Text style={styles.note}>
+            {signedIn
+              ? 'Counted from finished workouts only — a workout you end early still counts the sets you did.'
+              : 'Session numbers reset when the app restarts. Signing in is what makes them stick.'}
+          </Text>
+        </Animated.View>
+      </View>
     </ScrollView>
   );
 }
