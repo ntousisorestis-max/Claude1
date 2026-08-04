@@ -305,10 +305,26 @@ there is one synthesis codepath in `src/sound/index.ts` and a four-line platform
 shim beside it. Files would have meant two implementations, two sets of assets,
 and a regeneration step every time a note was wrong.
 
-The gate is `defaults.soundEnabled` — the same switch that drives the
-notification channel — so Silent mode is silent everywhere. It doesn't even
-construct an AudioContext when off, which matters on iOS: doing so takes the
-audio session away from whatever the user is actually listening to.
+Two switches silence it, and they're different things.
+
+**In software**, `defaults.soundEnabled` — the same switch that drives the
+notification channel, so the app's Silent mode is silent everywhere. It doesn't
+even construct an AudioContext when off, which matters on iOS: doing so takes
+the audio session away from whatever the user is actually listening to.
+
+**In hardware**, the ring/silent switch on the side of the phone. iOS decides
+whether that switch applies purely from the `AVAudioSession` category, and the
+difference is stark — `playback` plays straight through a silenced phone, which
+is correct for a music app and is why audio libraries tend to default to it. A
+rest timer is not a music app, so the session is set to **`ambient`**, which
+obeys the switch, with **`mixWithOthers`** so a chime never ducks or pauses the
+music someone is lifting to. See `src/sound/audioContext.ts`.
+
+The session is configured before the first context is built, because the
+category decides how the very first sound is routed. That ordering, the
+category, the mixing option and the "configure once" behaviour are all asserted
+in `__tests__/audioSession.test.ts` — but whether iOS honours any of it is a
+question only a device can answer.
 
 Note which moments make a sound: banking a set, and finishing. **Not starting
 one.** The moment a set begins is the moment the phone should stop being

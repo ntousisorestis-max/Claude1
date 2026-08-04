@@ -12,6 +12,7 @@ const mockCreateAudioContext = jest.fn();
 
 jest.mock('../src/sound/audioContext', () => ({
   createAudioContext: () => mockCreateAudioContext(),
+  resetAudioSessionForTests: () => {},
 }));
 
 import {

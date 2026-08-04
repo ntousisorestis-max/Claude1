@@ -23,4 +23,12 @@ export function createAudioContext(): MinimalAudioContext | null {
   }
 }
 
+/**
+ * Nothing to configure in a browser.
+ *
+ * Present only so the two files export the same shape — there is no audio
+ * session on the web, and the machine's volume and mute belong to the OS.
+ */
+export function resetAudioSessionForTests() {}
+
 export type { MinimalAudioContext };
