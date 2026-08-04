@@ -10,7 +10,7 @@
 import React from 'react';
 import ReactTestRenderer, { type ReactTestInstance } from 'react-test-renderer';
 import App from '../App';
-import { createMemoryStorage } from '../src/state/storage';
+import { createReturningStorage } from '../src/state/storage';
 import type {
   AccountData,
   AuthUser,
@@ -205,7 +205,7 @@ describe('accounts and focus-stat sync', () => {
     let tree!: ReactTestRenderer.ReactTestRenderer;
     await ReactTestRenderer.act(async () => {
       tree = ReactTestRenderer.create(
-        <App storage={createMemoryStorage()} backend={cloud.backend} />,
+        <App storage={createReturningStorage()} backend={cloud.backend} />,
       );
     });
     trees.push(tree);

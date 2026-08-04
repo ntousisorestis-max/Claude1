@@ -31,7 +31,9 @@ import { RestingScreen } from './src/screens/RestingScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { StreaksScreen } from './src/screens/StreaksScreen';
 import { SplashScreen } from './src/screens/SplashScreen';
+import { WelcomeScreen } from './src/screens/WelcomeScreen';
 import { ExercisesScreen } from './src/screens/ExercisesScreen';
+import { getDeviceStorage } from './src/state/deviceStorage';
 import { useWorkout, WorkoutProvider } from './src/state/WorkoutContext';
 import { colors } from './src/theme';
 import type { CloudBackend } from './src/cloud/types';
@@ -186,17 +188,33 @@ function Ground() {
   );
 }
 
+/**
+ * The welcome screen, and the decision about whether it is owed.
+ *
+ * Renders nothing until the saved state has actually loaded. That wait is the
+ * whole feature: guessing before the answer arrives means either flashing this
+ * at somebody who tapped through it months ago, or skipping it for somebody who
+ * has never seen it. The splash is on top for the whole of it, so the wait is
+ * invisible.
+ */
+function FirstRun() {
+  const { state, hydrated, finishWelcome } = useWorkout();
+
+  if (!hydrated || state.welcomed) {
+    return null;
+  }
+  return <WelcomeScreen onDone={finishWelcome} />;
+}
+
 function App({
   /**
-   * Where exercises and preferences are kept. Left undefined the provider uses
-   * its in-memory default — which is a module-level singleton, so anything
-   * mounting more than one App (the tests) must pass its own or the second one
-   * inherits the first one's list.
+   * Where exercises, preferences and the welcome flag are kept.
    *
-   * This is also the line to change when real persistence lands. See
-   * src/state/storage.ts.
+   * Defaults to real device storage — AsyncStorage on a phone, localStorage in
+   * a browser. The tests pass their own, because the alternative is every test
+   * run inheriting whatever the last one saved.
    */
-  storage,
+  storage = getDeviceStorage(),
   /**
    * The cloud the account layer talks to. Left undefined it's Firebase when
    * src/cloud/firebaseConfig.ts has been filled in, and a do-nothing local
@@ -220,8 +238,9 @@ function App({
         <WorkoutProvider storage={storage}>
           <WorkoutSync />
           <Ground />
-          {/* Overlaid rather than swapped, so the app is already laid out
-              underneath by the time the logo fades. */}
+          {/* Both overlaid rather than swapped, so the app underneath is
+              already laid out by the time either of them clears. */}
+          <FirstRun />
           {splashDone ? null : <SplashScreen onDone={dismissSplash} />}
         </WorkoutProvider>
       </AccountProvider>

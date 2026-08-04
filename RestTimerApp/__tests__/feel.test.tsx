@@ -10,7 +10,7 @@
 import React from 'react';
 import ReactTestRenderer, { type ReactTestInstance } from 'react-test-renderer';
 import App from '../App';
-import { createMemoryStorage } from '../src/state/storage';
+import { createReturningStorage } from '../src/state/storage';
 import { NO_STREAK, type StreakState } from '../src/cloud/days';
 import {
   NO_TOTALS,
@@ -143,7 +143,7 @@ describe('personality and feedback', () => {
     let tree!: ReactTestRenderer.ReactTestRenderer;
     await ReactTestRenderer.act(async () => {
       tree = ReactTestRenderer.create(
-        <App storage={createMemoryStorage()} backend={cloud.backend} />,
+        <App storage={createReturningStorage()} backend={cloud.backend} />,
       );
     });
     trees.push(tree);

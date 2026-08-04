@@ -8,7 +8,7 @@ import ReactTestRenderer, { type ReactTestInstance } from 'react-test-renderer';
 import notifee, { EventType } from '@notifee/react-native';
 import App from '../App';
 import { MockBlocker } from '../src/blocking';
-import { createMemoryStorage } from '../src/state/storage';
+import { createReturningStorage } from '../src/state/storage';
 
 /**
  * Fires the "Time's up!" notification press through the same listener notifee
@@ -120,7 +120,7 @@ describe('full workout loop', () => {
   const launch = async () => {
     let tree!: ReactTestRenderer.ReactTestRenderer;
     await ReactTestRenderer.act(async () => {
-      tree = ReactTestRenderer.create(<App storage={createMemoryStorage()} />);
+      tree = ReactTestRenderer.create(<App storage={createReturningStorage()} />);
     });
     trees.push(tree);
     return tree.root;

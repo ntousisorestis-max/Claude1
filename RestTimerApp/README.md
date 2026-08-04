@@ -602,7 +602,12 @@ be committed.
 
 ## State & persistence
 
-One `useReducer` at the root, no backend. Three slices:
+One `useReducer` at the root. Everything below is saved to the device —
+AsyncStorage on a phone, `localStorage` in a browser, one JSON payload under
+`liftlock.state.v3`. See `src/state/deviceStorage.ts`; the tests pass their own
+store, because the alternative is every run inheriting what the last one saved.
+
+Four slices:
 
 - **`exercises`** — the saved list. Every edit goes through one helper that
   rewrites a single entry by id, so there is no code path that can change two
@@ -616,7 +621,14 @@ One `useReducer` at the root, no backend. Three slices:
   counter would put a number on screen at exactly the moment the app wants you
   looking away from it. Session-only, reset by the next `START_WORKOUT`.
 - **`session`** — running totals for every workout since launch: sets, focus
-  time, workouts done. Never persisted, so it starts at zero on each launch.
+  time, workouts done. Deliberately *not* persisted, so it starts at zero on
+  each launch; the all-time versions live on the account.
+- **`welcomed`** — whether the welcome screen has been tapped through. On the
+  same payload as everything else so a launch has one load to wait for rather
+  than two racing the splash, and coerced with `=== true` on the way in: a
+  payload written before the field existed would otherwise read as `undefined`,
+  and showing the welcome once more is a far better failure than never showing
+  it at all.
 - **`config`** — a snapshot of the exercise being run, taken by `START_WORKOUT`.
   Not a reference: editing the card mid-workout must not move the goalposts
   under the set you're on, and the summary has to describe the workout that

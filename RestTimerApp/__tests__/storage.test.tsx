@@ -60,6 +60,7 @@ describe('persistence seam', () => {
   it('restores saved exercises and preferences on launch', async () => {
     const saved: SavedState = {
       defaults: { ...FACTORY_DEFAULTS, soundEnabled: false },
+      welcomed: true,
       exercises: [BENCH],
     };
     const app = await mount(createMemoryStorage(saved));
@@ -105,6 +106,7 @@ describe('persistence seam', () => {
     // Otherwise an empty list would clobber the saved one on launch.
     const storage = createMemoryStorage({
       defaults: FACTORY_DEFAULTS,
+      welcomed: true,
       exercises: [BENCH],
     });
     const save = jest.spyOn(storage, 'save');
@@ -112,6 +114,7 @@ describe('persistence seam', () => {
 
     expect(save).not.toHaveBeenCalled();
     await expect(storage.load()).resolves.toMatchObject({
+      welcomed: true,
       exercises: [expect.objectContaining({ name: 'Bench press' })],
     });
 
@@ -142,6 +145,7 @@ describe('HYDRATE', () => {
   it('clamps stored exercise values that are out of range', () => {
     const s = hydrate({
       defaults: FACTORY_DEFAULTS,
+      welcomed: true,
       exercises: [{ ...BENCH, totalSets: 999, restSeconds: 1 }],
     });
 
@@ -152,6 +156,7 @@ describe('HYDRATE', () => {
   it('drops app ids the app no longer knows about', () => {
     const s = hydrate({
       defaults: { ...FACTORY_DEFAULTS, selectedAppIds: ['tiktok', 'myspace'] },
+      welcomed: true,
       exercises: [{ ...BENCH, selectedAppIds: ['myspace', 'x'] }],
     });
 
@@ -168,6 +173,7 @@ describe('HYDRATE', () => {
         customApps: [{ id: 'custom:strava', name: 'Strava', tint: '#A78BFA' }],
         selectedAppIds: ['tiktok', 'custom:strava'],
       },
+      welcomed: true,
       exercises: [{ ...BENCH, selectedAppIds: ['custom:strava'] }],
     });
 
@@ -178,6 +184,7 @@ describe('HYDRATE', () => {
   it('drops an exercise with no usable name', () => {
     const s = hydrate({
       defaults: FACTORY_DEFAULTS,
+      welcomed: true,
       exercises: [
         { ...BENCH, name: '  ' },
         { ...BENCH, id: 'ok' },

@@ -114,6 +114,22 @@ check('white on the accent button', WHITE, ACCENT, LARGE);
 // --- Confirm the model against what actually renders ---------------------
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 420, height: 900 } });
+
+// A fresh browser profile is a first launch, and a first launch is the welcome
+// screen — which is a violet flood, and would be measured as if it were the
+// exercise list. Seeded as somebody who has been here before, which is the
+// state every ground sampled below actually belongs to.
+await page.addInitScript(() => {
+  localStorage.setItem(
+    'liftlock.state.v3',
+    JSON.stringify({
+      welcomed: true,
+      exercises: [],
+      defaults: { selectedAppIds: [], soundEnabled: true, customApps: [] },
+    }),
+  );
+});
+
 await page.goto(BASE, { waitUntil: 'commit' });
 await page.waitForTimeout(1800);
 // Strip text so only ground + glow is left in the gutters.

@@ -178,6 +178,27 @@ export function personalBestLine(days: number): string {
 }
 
 /* -------------------------------------------------------------------------- */
+/* The welcome                                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Seen exactly once, on the first launch.
+ *
+ * It names the app because this is the one screen where the reader doesn't yet
+ * know what they've opened, and the body describes the loop — lock, rest,
+ * re-lock — rather than the problem, which anybody who downloaded this already
+ * knows they have.
+ */
+export const WELCOME = {
+  headline: 'Welcome to Liftlock.',
+  subheadline: 'Your phone, locked away between sets.',
+  body:
+    'Pick a lift, hit start, and your scrolling apps shut off until the set is ' +
+    'done. Rest earns them back. Then they lock again.',
+  action: 'Let’s lift.',
+} as const;
+
+/* -------------------------------------------------------------------------- */
 /* Empty states                                                               */
 /* -------------------------------------------------------------------------- */
 

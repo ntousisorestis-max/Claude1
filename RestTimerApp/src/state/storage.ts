@@ -1,3 +1,4 @@
+import { FACTORY_DEFAULTS } from './workoutReducer';
 import type { SavedState } from './types';
 
 /**
@@ -69,3 +70,22 @@ export function createMemoryStorage(seed: SavedState | null = null): AppStorage 
 
 /** The instance the app uses unless something else is passed in. */
 export const memoryStorage = createMemoryStorage();
+
+/**
+ * Memory storage seeded as somebody who has been here before.
+ *
+ * For tests. Once the welcome screen existed, an unseeded store meant every
+ * test was implicitly a first launch with the welcome overlaid on whatever it
+ * was checking — which passed, because a test renderer queries the whole tree
+ * regardless of what is drawn on top, and which was therefore testing a screen
+ * no real user in that situation would be looking at. Tests that mean "a
+ * returning user" should say so.
+ */
+export function createReturningStorage(saved: Partial<SavedState> = {}): AppStorage {
+  return createMemoryStorage({
+    defaults: FACTORY_DEFAULTS,
+    exercises: [],
+    welcomed: true,
+    ...saved,
+  });
+}

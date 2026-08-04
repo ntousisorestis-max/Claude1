@@ -225,8 +225,8 @@ export function SettingsScreen() {
           </View>
 
           <Text style={styles.note}>
-            Exercises and settings still reset when the app restarts — only your
-            focus totals are saved, and only while you’re signed in.
+            Your exercises and settings are saved on this device. Signing in
+            adds your focus totals and streak on top, across every device.
           </Text>
         </Animated.View>
 

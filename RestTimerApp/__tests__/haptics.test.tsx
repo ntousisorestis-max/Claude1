@@ -28,7 +28,7 @@ import ReactTestRenderer, { type ReactTestInstance } from 'react-test-renderer';
 import notifee, { EventType } from '@notifee/react-native';
 import App from '../App';
 import * as haptics from '../src/haptics';
-import { createMemoryStorage } from '../src/state/storage';
+import { createReturningStorage } from '../src/state/storage';
 
 const beats = haptics as unknown as Record<string, jest.Mock>;
 
@@ -82,7 +82,7 @@ describe('haptics', () => {
   const launch = async () => {
     let tree!: ReactTestRenderer.ReactTestRenderer;
     await ReactTestRenderer.act(async () => {
-      tree = ReactTestRenderer.create(<App storage={createMemoryStorage()} />);
+      tree = ReactTestRenderer.create(<App storage={createReturningStorage()} />);
     });
     trees.push(tree);
     return tree.root;

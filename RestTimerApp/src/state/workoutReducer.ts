@@ -119,6 +119,9 @@ export const initialState: WorkoutState = {
   totalLockedSeconds: 0,
   appsLocked: false,
   skippedRest: false,
+  // Assumed unseen until a load says otherwise, so a first launch and a launch
+  // whose storage failed both show the welcome rather than silently skipping it.
+  welcomed: false,
 };
 
 const clamp = (n: number, min: number, max: number) =>
@@ -242,6 +245,9 @@ export function workoutReducer(
 
     case 'DELETE_ALL_EXERCISES':
       return { ...state, exercises: [] };
+
+    case 'WELCOME_DONE':
+      return state.welcomed ? state : { ...state, welcomed: true };
 
     case 'RENAME_EXERCISE': {
       const name = action.name.trim().slice(0, MAX_EXERCISE_NAME_LENGTH);
@@ -479,6 +485,7 @@ export function workoutReducer(
         ...initialState,
         exercises: state.exercises,
         defaults: state.defaults,
+        welcomed: state.welcomed,
         // Survives, deliberately: the stats card counts the whole session, not
         // the last workout in it.
         session: state.session,
@@ -518,7 +525,16 @@ export function workoutReducer(
 
       // Nothing has started yet on launch. A workout in progress is never
       // disturbed, since hydration only ever happens once, on mount.
-      return { ...state, defaults, exercises };
+      //
+      // `welcomed` is coerced rather than read straight through: a payload
+      // written before the field existed has `undefined` there, and the welcome
+      // screen showing once more is a far better failure than it never showing.
+      return {
+        ...state,
+        defaults,
+        exercises,
+        welcomed: action.saved.welcomed === true,
+      };
     }
 
     default:
@@ -528,5 +544,9 @@ export function workoutReducer(
 
 /** The slice of state that gets persisted. */
 export function toSaved(state: WorkoutState): SavedState {
-  return { defaults: state.defaults, exercises: state.exercises };
+  return {
+    defaults: state.defaults,
+    exercises: state.exercises,
+    welcomed: state.welcomed,
+  };
 }

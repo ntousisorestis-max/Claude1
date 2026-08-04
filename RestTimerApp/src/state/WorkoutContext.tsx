@@ -5,6 +5,7 @@ import React, {
   useMemo,
   useReducer,
   useRef,
+  useState,
 } from 'react';
 import { blocker } from '../blocking';
 import {
@@ -45,6 +46,7 @@ function sameSaved(a: SavedState | null, b: SavedState): boolean {
     sameIds(a.defaults.selectedAppIds, b.defaults.selectedAppIds) &&
     a.defaults.customApps.length === b.defaults.customApps.length &&
     a.defaults.customApps.every((app, i) => app.id === b.defaults.customApps[i]?.id) &&
+    a.welcomed === b.welcomed &&
     a.exercises.length === b.exercises.length &&
     a.exercises.every((exercise, i) => sameExercise(exercise, b.exercises[i]))
   );
@@ -82,10 +84,12 @@ type WorkoutActions = {
   endRest: () => void;
   endWorkout: () => void;
   newWorkout: () => void;
+  /** Remembers that the welcome screen has been tapped through. */
+  finishWelcome: () => void;
 };
 
 const WorkoutContext = createContext<
-  { state: WorkoutState } & WorkoutActions | null
+  { state: WorkoutState; hydrated: boolean } & WorkoutActions | null
 >(null);
 
 export function WorkoutProvider({
@@ -106,6 +110,15 @@ export function WorkoutProvider({
   // a saved workout, which would resume a session whose rest timer expired
   // days ago.
   const hydrated = useRef(false);
+  /**
+   * The same fact as `hydrated`, as state.
+   *
+   * The ref gates *writes*, which happen in effects and must not lag a render.
+   * This gates what is *drawn*: until the load settles the app cannot know
+   * whether the welcome screen is owed, and guessing means either flashing it
+   * at someone who has seen it or skipping it for someone who hasn't.
+   */
+  const [loaded, setLoaded] = useState(false);
   const lastPersisted = useRef<SavedState | null>(null);
 
   useEffect(() => {
@@ -118,9 +131,12 @@ export function WorkoutProvider({
           dispatch({ type: 'HYDRATE', saved });
         }
       })
-      .catch(err => console.warn('[rest-timer] could not load', err))
+      .catch(err => console.warn('[liftlock] could not load', err))
       .finally(() => {
         hydrated.current = true;
+        if (alive) {
+          setLoaded(true);
+        }
       });
     return () => {
       alive = false;
@@ -264,11 +280,15 @@ export function WorkoutProvider({
       endRest: () => dispatch({ type: 'END_REST', now: Date.now() }),
       endWorkout: () => dispatch({ type: 'END_WORKOUT', now: Date.now() }),
       newWorkout: () => dispatch({ type: 'NEW_WORKOUT' }),
+      finishWelcome: () => dispatch({ type: 'WELCOME_DONE' }),
     }),
     [],
   );
 
-  const value = useMemo(() => ({ state, ...actions }), [state, actions]);
+  const value = useMemo(
+    () => ({ state, hydrated: loaded, ...actions }),
+    [state, loaded, actions],
+  );
 
   return (
     <WorkoutContext.Provider value={value}>{children}</WorkoutContext.Provider>
