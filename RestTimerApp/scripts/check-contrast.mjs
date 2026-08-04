@@ -107,6 +107,8 @@ console.log('\nThe gradient Start button, at both ends of its ramp:');
 check('white on the gradient, dark end', WHITE, ACCENT_DEEP, LARGE);
 check('white on the gradient, light end', WHITE, ACCENT, LARGE);
 
+// Both accent-on-white labels in the app are sized past 18.66px bold so this
+// 3.0 bar is the right one — at 16px it would need 4.5 and would fail.
 console.log('\nNon-text contrast (WCAG 1.4.11 wants 3.0 for UI):');
 check('accent fill vs dark ground', ACCENT, glowedInk, LARGE);
 check('white on the accent button', WHITE, ACCENT, LARGE);

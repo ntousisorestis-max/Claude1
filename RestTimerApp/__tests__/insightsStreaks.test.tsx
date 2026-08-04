@@ -8,15 +8,18 @@
 import React from 'react';
 import ReactTestRenderer, { type ReactTestInstance } from 'react-test-renderer';
 import App from '../App';
+import { EMPTY_CHART, EMPTY_RECORDS } from '../src/copy';
 import { createReturningStorage } from '../src/state/storage';
 import { NO_STREAK, type StreakState } from '../src/cloud/days';
 import {
+  NO_RECORDS,
   NO_TOTALS,
   type AccountData,
   type AuthUser,
   type CloudBackend,
   type DayTotals,
   type FocusTotals,
+  type PersonalRecords,
   type WorkoutRecord,
 } from '../src/cloud/types';
 
@@ -28,6 +31,12 @@ function createFakeCloud() {
   let notifyAccount: ((data: AccountData) => void) | null = null;
   let notifyDays: ((days: DayTotals[]) => void) | null = null;
   const recorded: WorkoutRecord[] = [];
+  /** The last snapshot pushed, so one field can be changed without the rest. */
+  let latest: AccountData = {
+    totals: NO_TOTALS,
+    streak: NO_STREAK,
+    records: NO_RECORDS,
+  };
 
   const backend: CloudBackend = {
     observeUser(onChange) {
@@ -37,7 +46,7 @@ function createFakeCloud() {
     },
     observeAccount(_uid, onChange) {
       notifyAccount = onChange;
-      onChange({ totals: NO_TOTALS, streak: NO_STREAK });
+      onChange({ totals: NO_TOTALS, streak: NO_STREAK, records: NO_RECORDS });
       return () => {};
     },
     observeDays(_uid, _count, onChange) {
@@ -63,7 +72,12 @@ function createFakeCloud() {
     backend,
     recorded,
     push(totals: FocusTotals, streak: StreakState = NO_STREAK) {
-      ReactTestRenderer.act(() => notifyAccount?.({ totals, streak }));
+      latest = { totals, streak, records: latest.records };
+      ReactTestRenderer.act(() => notifyAccount?.(latest));
+    },
+    pushRecords(records: PersonalRecords) {
+      latest = { ...latest, records };
+      ReactTestRenderer.act(() => notifyAccount?.(latest));
     },
     pushDays(days: DayTotals[]) {
       ReactTestRenderer.act(() => notifyDays?.(days));
@@ -191,44 +205,90 @@ describe('Insights and Streaks', () => {
     }
   });
 
-  it('tells a signed-out user why Insights is empty, and nothing else', async () => {
+  it('offers an account rather than numbers when signed out', async () => {
     const root = await launch();
     press(root, 'Insights');
 
-    expect(hasText(root, 'Nothing to count yet')).toBe(true);
+    expect(hasText(root, 'Save your progress')).toBe(true);
 
-    // The session card belongs to the Workout tab and only there. It used to
-    // appear here too, which put the same three numbers on two tabs and read
-    // as a bug rather than as a summary.
+    // Empty, and honest about it: an em-dash where a number will go, never a
+    // zero and never a demo figure.
+    expect(hasLabel(root, 'Time saved: nothing yet')).toBe(true);
+    expect(hasLabel(root, 'Sets finished: nothing yet')).toBe(true);
+    expect(hasText(root, EMPTY_RECORDS)).toBe(true);
+    expect(hasText(root, EMPTY_CHART)).toBe(true);
+
+    // The session card belongs to the Workout tab and only there.
     expect(hasText(root, 'THIS SESSION')).toBe(false);
-
-    // And it is still on the Workout tab, where it always was.
     press(root, 'Workout');
     expect(hasText(root, 'THIS SESSION')).toBe(true);
   });
 
-  it('shows lifetime totals and a rolling weekly count', async () => {
+  it('shows the four headline numbers once there is an account', async () => {
     const root = await launch();
     await signIn(root);
 
-    cloud.push({ focusSeconds: 15_120, setsCompleted: 214, workoutsFinished: 31 });
-    cloud.pushDays([
-      day('2026-08-03'),
-      day('2026-08-02', 2),
-      day('2026-08-01'),
-      // Eight days ago — outside the rolling week, so it must not be counted.
-      day('2026-07-27'),
-    ]);
+    cloud.push(
+      { focusSeconds: 15_120, setsCompleted: 214, workoutsFinished: 31 },
+      { currentStreak: 5, bestStreak: 9, lastActiveDay: '2026-08-03' },
+    );
 
     press(root, 'Insights');
 
     // 15,120s is 4h 12m. Not "252 minutes", which is the same number and
     // unreadable as an achievement.
-    expect(hasText(root, '4h 12m')).toBe(true);
-    expect(hasText(root, '214')).toBe(true);
-    // 1 + 2 + 1 from the last seven days; the 27 July row is excluded.
-    expect(hasText(root, '4')).toBe(true);
-    expect(hasLabel(root, 'This week: 4 workouts')).toBe(true);
+    expect(hasLabel(root, 'Time saved: 4h 12m')).toBe(true);
+    expect(hasLabel(root, 'Sets finished: 214 sets')).toBe(true);
+    expect(hasLabel(root, 'Workouts: 31 done')).toBe(true);
+    expect(hasLabel(root, 'Current streak: 5 days')).toBe(true);
+
+    // The account card has done its job and got out of the way.
+    expect(hasText(root, 'Save your progress')).toBe(false);
+  });
+
+  it('prices this week against a lifetime pace, not against itself', async () => {
+    // 3600s over 60 sets is a minute a set; a 600s week is ten sets' worth.
+    // Dividing all-time focus by all-time focus-per-set would just print 60
+    // back — the set count already on screen.
+    const root = await launch();
+    await signIn(root);
+
+    cloud.push({ focusSeconds: 3600, setsCompleted: 60, workoutsFinished: 12 });
+    cloud.pushDays([{ ...day('2026-08-03'), focusSeconds: 600 }]);
+
+    press(root, 'Insights');
+
+    expect(hasText(root, 'That’s about 10 more sets at your usual pace.')).toBe(
+      true,
+    );
+  });
+
+  it('says nothing about pace when there is no pace to know', async () => {
+    const root = await launch();
+    await signIn(root);
+
+    cloud.pushDays([{ ...day('2026-08-03'), focusSeconds: 600 }]);
+
+    press(root, 'Insights');
+
+    // No sets ever finished means no seconds-per-set, so there is nothing
+    // honest to divide by. A card reading "about 0 more sets" is worse than no
+    // card.
+    expect(hasText(root, 'at your usual pace')).toBe(false);
+  });
+
+  it('shows personal records, and an empty state before there are any', async () => {
+    const root = await launch();
+    await signIn(root);
+
+    press(root, 'Insights');
+    expect(hasText(root, EMPTY_RECORDS)).toBe(true);
+
+    cloud.pushRecords({ longestFocusSeconds: 2_760, mostSetsInWorkout: 8 });
+
+    expect(hasLabel(root, 'Longest focused workout: 46 minutes')).toBe(true);
+    expect(hasLabel(root, 'Most sets in one workout: 8')).toBe(true);
+    expect(hasText(root, EMPTY_RECORDS)).toBe(false);
   });
 
   it('shows the streak, the best ever, and ticks the days trained', async () => {

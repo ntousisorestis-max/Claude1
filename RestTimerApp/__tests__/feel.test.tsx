@@ -13,6 +13,7 @@ import App from '../App';
 import { createReturningStorage } from '../src/state/storage';
 import { NO_STREAK, type StreakState } from '../src/cloud/days';
 import {
+  NO_RECORDS,
   NO_TOTALS,
   type AccountData,
   type AuthUser,
@@ -37,7 +38,7 @@ function createFakeCloud() {
     },
     observeAccount(_uid, onChange) {
       notifyAccount = onChange;
-      onChange({ totals: NO_TOTALS, streak: NO_STREAK });
+      onChange({ totals: NO_TOTALS, streak: NO_STREAK, records: NO_RECORDS });
       return () => {};
     },
     observeDays(_uid, _count, onChange: (days: DayTotals[]) => void) {
@@ -60,7 +61,7 @@ function createFakeCloud() {
     backend,
     pushStreak(streak: StreakState) {
       ReactTestRenderer.act(() =>
-        notifyAccount?.({ totals: NO_TOTALS, streak }),
+        notifyAccount?.({ totals: NO_TOTALS, streak, records: NO_RECORDS }),
       );
     },
   };

@@ -1,6 +1,6 @@
 import { NO_STREAK } from './days';
 import { isFirebaseConfigured } from './firebaseConfig';
-import { NO_TOTALS, type CloudBackend } from './types';
+import { NO_RECORDS, NO_TOTALS, type CloudBackend } from './types';
 
 /**
  * Which cloud the app talks to, and what it says when there isn't one.
@@ -26,7 +26,7 @@ export const localOnlyBackend: CloudBackend = {
     return () => {};
   },
   observeAccount(_uid, onChange) {
-    onChange({ totals: NO_TOTALS, streak: NO_STREAK });
+    onChange({ totals: NO_TOTALS, streak: NO_STREAK, records: NO_RECORDS });
     return () => {};
   },
   observeDays(_uid, _count, onChange) {

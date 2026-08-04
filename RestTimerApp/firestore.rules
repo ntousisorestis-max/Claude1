@@ -93,7 +93,11 @@ service cloud.firestore {
         && d.workoutsFinished is number && d.workoutsFinished >= 0
         && d.get('currentStreak', 0) is number && d.get('currentStreak', 0) >= 0
         && d.get('bestStreak', 0) is number && d.get('bestStreak', 0) >= 0
-        && d.get('currentStreak', 0) <= d.get('bestStreak', 0);
+        && d.get('currentStreak', 0) <= d.get('bestStreak', 0)
+        && d.get('longestFocusSeconds', 0) is number
+        && d.get('longestFocusSeconds', 0) >= 0
+        && d.get('mostSetsInWorkout', 0) is number
+        && d.get('mostSetsInWorkout', 0) >= 0;
     }
 
     /**
@@ -119,7 +123,11 @@ service cloud.firestore {
         // The best streak is a record and can only ever be beaten. The *current*
         // streak is deliberately not ratcheted: it resets to 1 after a missed
         // day, and that reset is the feature working, not an attack.
-        && after.get('bestStreak', 0) >= before.get('bestStreak', 0);
+        && after.get('bestStreak', 0) >= before.get('bestStreak', 0)
+        // Personal records are maxima. Same argument as the best streak: the
+        // only legitimate write raises them.
+        && after.get('longestFocusSeconds', 0) >= before.get('longestFocusSeconds', 0)
+        && after.get('mostSetsInWorkout', 0) >= before.get('mostSetsInWorkout', 0);
     }
 
     /** Shapes a day doc. */

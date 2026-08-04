@@ -12,12 +12,14 @@ import { describeAuthError, getBackend } from './backend';
 import { dayKey, NO_STREAK, streakToday, trainedToday, type StreakState } from './days';
 import { isFirebaseConfigured } from './firebaseConfig';
 import {
+  NO_RECORDS,
   NO_TOTALS,
   type AccountStatus,
   type AuthUser,
   type CloudBackend,
   type DayTotals,
   type FocusTotals,
+  type PersonalRecords,
   type SyncStatus,
   type WorkoutRecord,
 } from './types';
@@ -56,6 +58,8 @@ type Account = {
   today: string;
   /** The most recent days trained, newest first. Empty unless signed in. */
   days: DayTotals[];
+  /** Best single workout ever. All zero unless signed in. */
+  records: PersonalRecords;
   /**
    * The new best-streak length when a workout has just beaten the record, and
    * null otherwise. Drives the flourish on the complete screen.
@@ -116,6 +120,7 @@ export function AccountProvider({
   /** The last best-streak seen, so a *rise* in it can be spotted. */
   const lastBest = useRef<number | null>(null);
   const [days, setDays] = useState<DayTotals[]>([]);
+  const [records, setRecords] = useState<PersonalRecords>(NO_RECORDS);
   const [sync, setSync] = useState<SyncStatus>('idle');
   const [pendingCount, setPendingCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -135,6 +140,7 @@ export function AccountProvider({
       if (!next) {
         setTotals(NO_TOTALS);
         setStreak(NO_STREAK);
+        setRecords(NO_RECORDS);
         setDays([]);
         setJustSetRecord(null);
         setSync('idle');
@@ -151,6 +157,7 @@ export function AccountProvider({
     return cloud.observeAccount(user.uid, data => {
       setTotals(data.totals);
       setStreak(data.streak);
+      setRecords(data.records);
 
       // A record is a *rise* in the best-ever streak, so it can only be
       // recognised by having seen the previous value. The first snapshot after
@@ -351,6 +358,7 @@ export function AccountProvider({
       trainedToday: trainedToday(streak, today),
       today,
       days,
+      records,
       justSetRecord,
       clearRecord,
       sync,
@@ -370,6 +378,7 @@ export function AccountProvider({
       streak,
       today,
       days,
+      records,
       justSetRecord,
       clearRecord,
       sync,

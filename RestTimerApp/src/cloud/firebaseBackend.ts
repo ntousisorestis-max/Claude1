@@ -25,10 +25,12 @@ import {
 import { afterTrainingOn, isDayKey, NO_STREAK, type StreakState } from './days';
 import { FIREBASE_CONFIG } from './firebaseConfig';
 import {
+  NO_RECORDS,
   NO_TOTALS,
   type AuthUser,
   type CloudBackend,
   type FocusTotals,
+  type PersonalRecords,
   type WorkoutRecord,
 } from './types';
 
@@ -123,6 +125,15 @@ function totalsFrom(data: Record<string, unknown> | undefined): FocusTotals {
     : NO_TOTALS;
 }
 
+function recordsFrom(data: Record<string, unknown> | undefined): PersonalRecords {
+  return data
+    ? {
+        longestFocusSeconds: num(data, 'longestFocusSeconds'),
+        mostSetsInWorkout: num(data, 'mostSetsInWorkout'),
+      }
+    : NO_RECORDS;
+}
+
 function streakFrom(data: Record<string, unknown> | undefined): StreakState {
   if (!data) {
     return NO_STREAK;
@@ -159,7 +170,11 @@ export const firebaseBackend: CloudBackend = {
       doc(db, 'users', uid),
       snapshot => {
         const data = snapshot.data();
-        onChange({ totals: totalsFrom(data), streak: streakFrom(data) });
+        onChange({
+          totals: totalsFrom(data),
+          streak: streakFrom(data),
+          records: recordsFrom(data),
+        });
       },
       // A listener that errors is a listener that has stopped. Say so in the
       // log rather than leaving the UI on stale numbers with no explanation.
@@ -218,6 +233,8 @@ export const firebaseBackend: CloudBackend = {
         currentStreak: 0,
         bestStreak: 0,
         lastActiveDay: null,
+        longestFocusSeconds: 0,
+        mostSetsInWorkout: 0,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -269,6 +286,12 @@ export const firebaseBackend: CloudBackend = {
       // midnight; the decay is applied at read time instead. See days.ts.
       const streak = afterTrainingOn(streakFrom(profile.data()), record.day);
 
+      // Records are maxima, so they are computed from what's stored rather than
+      // incremented — the same reason the streak is. `increment` would turn a
+      // personal best into a running total, which is a different (and useless)
+      // number.
+      const best = recordsFrom(profile.data());
+
       tx.set(workoutRef, {
         exerciseName: record.exerciseName,
         focusSeconds: record.focusSeconds,
@@ -314,6 +337,14 @@ export const firebaseBackend: CloudBackend = {
           currentStreak: streak.currentStreak,
           bestStreak: streak.bestStreak,
           lastActiveDay: streak.lastActiveDay,
+          longestFocusSeconds: Math.max(
+            best.longestFocusSeconds,
+            record.focusSeconds,
+          ),
+          mostSetsInWorkout: Math.max(
+            best.mostSetsInWorkout,
+            record.setsCompleted,
+          ),
           updatedAt: serverTimestamp(),
           ...(profile.exists()
             ? null

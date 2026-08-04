@@ -567,6 +567,42 @@ Three decisions worth knowing:
   on its own is not idempotent, and a retried write would count the same session
   twice, which on a leaderboard is indistinguishable from cheating.
 
+### The Insights tab
+
+Four sections, in the order the questions get asked: what have I done, what did
+this week look like, what is that worth, what is the best I've managed.
+
+**Two numbers deliberately absent.** There is no per-app breakdown, because iOS
+Screen Time hands back an opaque selection token and never tells the app which
+apps are in it — "TikTok, 12 minutes" is a figure no version of this app can
+ever have. And there is no estimate of scrolling avoided, which would need to
+know what somebody would otherwise have done with time they didn't spend.
+
+**The conversion card had to be built carefully.** "Your saved time is worth N
+more sets", computed the obvious way as `focusSeconds ÷ (focusSeconds /
+setsCompleted)`, cancels down to exactly `setsCompleted` — it prints the number
+already on screen back at you wearing a hat. The version that ships compares
+*this week's* focus against a *lifetime* seconds-per-set, so numerator and
+denominator span different windows and the answer carries information. It hides
+entirely until there is a set count to divide by.
+
+**Personal records needed new data.** Every other number on the account is a
+sum, and no amount of adding tells you the largest single entry. So
+`longestFocusSeconds` and `mostSetsInWorkout` are maintained as maxima in the
+same idempotent transaction as the totals, and ratchet upward in
+`firestore.rules` alongside `bestStreak`.
+
+**Empty states are real.** Grid tiles draw an em-dash rather than a zero, the
+chart draws its axis and a flat baseline, records say what would set them, and
+the conversion card is simply absent. No demo numbers — a placeholder that looks
+like data is a lie the user finds out about the moment they finish their first
+workout.
+
+The chart is hand-drawn SVG rather than a charting dependency: a Catmull-Rom
+spline converted to cubic beziers, with both control points clamped inside the
+plot. Without that clamp a week of `0, 0, 40min, 0` draws a curve that dips
+below the baseline — negative focus time.
+
 ### Streaks and days
 
 A day counts if at least one workout **finished** on it. Not sets, not minutes —

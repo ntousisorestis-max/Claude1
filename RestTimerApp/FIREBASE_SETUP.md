@@ -1,9 +1,9 @@
 # Setting up Firebase
 
-> **Already set this up once?** The security rules changed when the Insights and
-> Streaks tabs landed — there is a new `days` collection, and the old rules
-> reject writes to it. Redo **step 6** (copy `firestore.rules` into the console
-> and Publish) or finished workouts will sit on "waiting to be saved" forever.
+> **Already set this up once?** The security rules have changed twice since —
+> once for the `days` collection, and again for the personal-record fields on
+> the Insights tab. Redo **step 6** (copy `firestore.rules` into the console and
+> Publish) or finished workouts will sit on "waiting to be saved" forever.
 > Nothing else needs redoing.
 
 You have to do this part yourself, and it's unavoidable: a Firebase project is

@@ -199,6 +199,43 @@ export const WELCOME = {
 } as const;
 
 /* -------------------------------------------------------------------------- */
+/* Insights                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/** The account card, on the tab whose numbers an account is what preserves. */
+export const SAVE_PROGRESS = {
+  title: 'Save your progress',
+  body:
+    'An account keeps your streak, your records and every minute of focus in ' +
+    'sync across your devices — and safe if you lose this one.',
+  action: 'Sign in or create an account',
+  /** Shown instead of the button until there is a project to sign in to. */
+  setup:
+    'Accounts need a Firebase project first. FIREBASE_SETUP.md walks through ' +
+    'it — about ten minutes, and free.',
+} as const;
+
+export const EMPTY_CHART = 'Your week fills in as you train.';
+
+export const EMPTY_RECORDS =
+  'No records yet. Your first finished workout sets all of them.';
+
+/**
+ * Time saved, converted into something with a shape.
+ *
+ * Deliberately compares *this week* against a *lifetime* rate. The obvious
+ * version — all-time focus divided by all-time focus-per-set — cancels down to
+ * the set count you already have on screen, and would print your own number
+ * back at you wearing a hat. Comparing a window to a rate is the only version
+ * of this that carries information.
+ */
+export function extraSetsLine(sets: number): string {
+  return sets === 1
+    ? 'That’s about one more set at your usual pace.'
+    : `That’s about ${sets} more sets at your usual pace.`;
+}
+
+/* -------------------------------------------------------------------------- */
 /* Empty states                                                               */
 /* -------------------------------------------------------------------------- */
 
@@ -210,21 +247,13 @@ export const EMPTY_EXERCISES = {
 } as const;
 
 /**
- * The two tabs that have nothing to show until there's an account.
+ * Streaks, with nothing to show until there's an account.
  *
- * Written out per screen rather than built from a template with the subject
- * slotted in. The template read "Your streak is saved to your account" and
- * "Your all-time totals **is** saved to your account" — one noun phrase
- * substituted into a sentence that had already committed to being singular.
- * Two short strings cost less than a grammar engine.
+ * Written out rather than built from a template with the subject slotted in.
+ * The template read "Your all-time totals **is** saved to your account" — a
+ * noun phrase substituted into a sentence that had already committed to being
+ * singular. Insights has its own card now; this is the last one left.
  */
-export const EMPTY_INSIGHTS = {
-  title: 'Nothing to count yet',
-  body:
-    'Your totals live on your account. Make one in Settings and they’ll start ' +
-    'stacking up.',
-} as const;
-
 export const EMPTY_STREAKS = {
   title: 'No streak yet',
   body:

@@ -72,10 +72,31 @@ export type DayTotals = {
   setsCompleted: number;
 };
 
+/**
+ * The best single workout an account has ever had.
+ *
+ * Maxima, not sums, which is the whole reason they need their own fields: every
+ * other number on the account document is a running total, and no amount of
+ * adding tells you what the largest single entry was. Kept up to date at write
+ * time in the same transaction as the totals, exactly as the streak is.
+ */
+export type PersonalRecords = {
+  /** Longest stretch of locked time in one workout, in seconds. */
+  longestFocusSeconds: number;
+  /** Most sets banked in one workout. */
+  mostSetsInWorkout: number;
+};
+
+export const NO_RECORDS: PersonalRecords = {
+  longestFocusSeconds: 0,
+  mostSetsInWorkout: 0,
+};
+
 /** Everything held on the account document, in one shape. */
 export type AccountData = {
   totals: FocusTotals;
   streak: StreakState;
+  records: PersonalRecords;
 };
 
 /** Where the account layer currently is. Drives everything the UI says. */

@@ -20,7 +20,7 @@ import type {
   WorkoutRecord,
 } from '../src/cloud/types';
 
-import { NO_TOTALS } from '../src/cloud/types';
+import { NO_RECORDS, NO_TOTALS } from '../src/cloud/types';
 import { NO_STREAK } from '../src/cloud/days';
 
 /* -------------------------------------------------------------------------- */
@@ -49,7 +49,7 @@ function createFakeCloud() {
     },
     observeAccount(_uid, onChange) {
       notifyAccount = onChange;
-      onChange({ totals: NO_TOTALS, streak: NO_STREAK });
+      onChange({ totals: NO_TOTALS, streak: NO_STREAK, records: NO_RECORDS });
       return () => {
         notifyAccount = null;
       };
@@ -100,7 +100,7 @@ function createFakeCloud() {
     },
     pushTotals(totals: FocusTotals) {
       ReactTestRenderer.act(() =>
-        notifyAccount?.({ totals, streak: NO_STREAK }),
+        notifyAccount?.({ totals, streak: NO_STREAK, records: NO_RECORDS }),
       );
     },
     pushAccount(data: AccountData) {
