@@ -308,7 +308,15 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: colors.accent,
   },
-  primaryText: { ...type.body, fontWeight: '700', color: colors.white, flex: 1 },
+  /**
+   * 19px bold, not 16.
+   *
+   * White on `accent` measures 4.22:1. That clears AA's 3.0 bar for large text
+   * and misses the 4.5 for body text, and WCAG puts the line at 18.66px bold —
+   * so the label is sized past it rather than the button being recoloured. The
+   * same fix `GradientButton` and the Insights account button carry.
+   */
+  primaryText: { ...sized(type.action, 19), color: colors.white, flex: 1 },
 
   quiet: {
     flexDirection: 'row',

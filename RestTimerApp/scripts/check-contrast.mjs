@@ -107,8 +107,13 @@ console.log('\nThe gradient Start button, at both ends of its ramp:');
 check('white on the gradient, dark end', WHITE, ACCENT_DEEP, LARGE);
 check('white on the gradient, light end', WHITE, ACCENT, LARGE);
 
-// Both accent-on-white labels in the app are sized past 18.66px bold so this
-// 3.0 bar is the right one — at 16px it would need 4.5 and would fail.
+// White on accent is 4.22:1: over AA's 3.0 for large text, under the 4.5 for
+// body text. WCAG's line is 18.66px bold, so any label on an accent fill has to
+// be sized past it. `BigButton` (20px/800), `GradientButton`, and both account
+// buttons are. Four are not, and are known failures rather than oversights:
+// AuthSheet's submit (18px/800 — short by two thirds of a pixel),
+// ConfirmDialog's cancel (17px/800), SettingsScreen's "Add app" pill and
+// ExerciseCard's "Save name" pill (both 16px/700).
 console.log('\nNon-text contrast (WCAG 1.4.11 wants 3.0 for UI):');
 check('accent fill vs dark ground', ACCENT, glowedInk, LARGE);
 check('white on the accent button', WHITE, ACCENT, LARGE);
