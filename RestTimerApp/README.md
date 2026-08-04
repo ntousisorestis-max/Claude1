@@ -333,15 +333,47 @@ at precisely the wrong time. That one gets a haptic only.
 
 ### Haptics
 
-Short buzzes when a set is banked, when the lock snaps shut, and when the
-workout ends. `Vibration` is core React Native so this costs no dependency, but
-**iOS ignores the duration and fires a fixed ~400ms buzz** — far too heavy for a
-button tap, and it would make the app feel worse rather than better. iOS wants
-`UIImpactFeedbackGenerator`, which needs a native module.
+Seven beats, all but two fired from the same phase-change effect in
+`WorkoutContext` that drives the sounds, so no screen has to remember to buzz.
+(`tap` is one exception, belonging to the press rather than a state change;
+`personalBest` is the other, because it waits on a server round-trip.)
 
-To finish it: add `react-native-haptic-feedback` and swap the three function
-bodies in `src/haptics.ts`. Every call site already goes through those three
-functions, so nothing else changes.
+The vocabulary is small and it climbs: `tap` (light) → `restSkipped` (light) →
+`setBanked` (medium) → `restExpired` (soft + rigid) → `workoutStarted` (soft +
+medium) → `personalBest` (light, medium, heavy, accelerating) → `workoutDone`
+(medium, medium, heavy). A phone that vibrates at everything is a phone whose
+vibration means nothing.
+
+**Rest ending is two different events.** Both are the same `resting → active`
+transition, so the app tells them apart by `skippedRest` in state. Rest that
+*expires* has to reach someone who may not be looking at the phone at all, so it
+opens with a soft beat and lands on `rigid`. Rest you *skipped* was a deliberate
+press by someone already looking at the screen, so it gets one light tick and
+nothing more — anything heavier is the app telling you something you just told
+it. Tapping the "Time's up!" notification counts as a skip for the same reason.
+
+The threshold is 15 seconds: skipping with eight seconds left is waiting for the
+timer, not dodging it, so it reads as an expiry. That imprecision runs in the
+safe direction — the worst case is a slightly firmer buzz than needed.
+
+`react-native-haptic-feedback` drives `UIImpactFeedbackGenerator` on iOS and the
+modern `VibrationEffect` API on Android. It is loaded through a guarded
+`require`, so an unlinked build falls back to core RN `Vibration` patterns — on
+**Android only**, because on iOS `Vibration.vibrate` ignores the duration and
+fires a fixed ~400ms buzz, which is worse than no haptic at all.
+
+**No in-app toggle, deliberately.** The Sound switch and Silent mode are about
+sound; Silent mode's own description promises the alert still arrives. Routing
+haptics through it would make "silent" mean two things and would remove the
+feedback from exactly the person who turned sound off because they are relying
+on touch. The OS-level haptics switch *is* honoured —
+`ignoreAndroidSystemSettings: false` and `enableVibrateFallback: false` mean the
+fallback cannot route around it either.
+
+**Unverifiable here.** No native build has compiled and a browser has nothing to
+fire, so how any of this feels is unknown. `__tests__/haptics.test.tsx` pins the
+wiring — right function, right transition, once per transition, and the two
+rest-endings told apart — and that is the whole of what can be checked.
 
 ## Trying the simulated block
 

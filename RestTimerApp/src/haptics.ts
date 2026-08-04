@@ -27,8 +27,10 @@ import { Platform, Vibration } from 'react-native';
  * The vocabulary is small on purpose, and it climbs:
  *
  * - `tap` — a press landed. The lightest thing available.
- * - `setStart` — locked, go. One crisp tick: this happens once per set and the
- *   user is about to be under a bar rather than looking at a phone.
+ * - `restSkipped` — you cut rest short yourself. The lightest of the workout
+ *   beats, because you are already looking at the screen you just pressed.
+ * - `restExpired` — rest ran out on its own. Two beats, because you might not
+ *   be looking at anything.
  * - `setBanked` — a set is done. Medium, single. The workhorse.
  * - `workoutStarted` — a rising double. Same "locked" news as `setStart`, but
  *   it's the start of everything.
@@ -132,15 +134,36 @@ export function workoutStarted() {
 }
 
 /**
- * Back under the bar after rest.
+ * Rest ran out on its own.
  *
- * `rigid` rather than `light`: it's sharper without being heavier, which is the
- * right texture for a lock snapping shut. Was a two-beat buzz before there was
- * anything better to ask for.
+ * Two beats, and the only reason this differs from `restSkipped` is where the
+ * user's attention is. A rest period that expires by itself is the one moment in
+ * a workout the app has to *interrupt* someone — they may be mid-scroll, mid-
+ * conversation, or not holding the phone at all — so it opens with a soft beat
+ * to catch attention and lands on the same `rigid` tick that has always meant
+ * "shield up, go".
+ *
+ * `rigid` rather than something heavier: it's sharper without being harder,
+ * which is the right texture for a lock snapping shut.
  */
-export function setStart() {
-  impact('rigid');
-  buzz([0, 18, 70, 26]);
+export function restExpired() {
+  sequence([
+    { at: 0, style: 'soft' },
+    { at: 90, style: 'rigid' },
+  ]);
+  buzz([0, 14, 76, 26]);
+}
+
+/**
+ * Rest was cut short deliberately.
+ *
+ * One light tick, and nothing more. You pressed the button, you are looking at
+ * the screen, and you already know what happened — anything heavier is the app
+ * telling you something you just told it.
+ */
+export function restSkipped() {
+  impact('light');
+  buzz(10);
 }
 
 /** A set is banked and rest has begun. Short and affirmative. */

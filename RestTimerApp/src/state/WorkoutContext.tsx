@@ -7,7 +7,13 @@ import React, {
   useRef,
 } from 'react';
 import { blocker } from '../blocking';
-import { setBanked, setStart, workoutDone, workoutStarted } from '../haptics';
+import {
+  restExpired,
+  restSkipped,
+  setBanked,
+  workoutDone,
+  workoutStarted,
+} from '../haptics';
 import {
   cancelRestOverNotification,
   onRestNotificationPress,
@@ -175,8 +181,16 @@ export function WorkoutProvider({
       return;
     }
     if (to === 'active') {
-      // Coming back from rest is a re-lock; anything else is the first set.
-      (from === 'resting' ? setStart : workoutStarted)();
+      if (from === 'resting') {
+        // Two beats when the timer ran out, one when the user cut it short.
+        // Same transition either way, completely different situations to be in:
+        // an expired rest has to reach someone who may not be looking at the
+        // phone, where a skip was a deliberate press by someone who is.
+        (state.skippedRest ? restSkipped : restExpired)();
+      } else {
+        // Anything else is the first set of the workout.
+        workoutStarted();
+      }
     } else if (to === 'resting') {
       setBanked();
       playSetComplete();
@@ -186,7 +200,10 @@ export function WorkoutProvider({
       // this one sound has to stand for both. It is the bigger of the two.
       playWorkoutComplete();
     }
-  }, [state.phase]);
+    // `skippedRest` is read at the instant of the transition. Listing it as a
+    // dependency costs nothing — a change to it without a phase change falls
+    // straight through the `from === to` guard above.
+  }, [state.phase, state.skippedRest]);
 
   // Backup alert for rest ending while the user is inside a scrolling app.
   useEffect(() => {
