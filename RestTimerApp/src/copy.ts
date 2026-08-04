@@ -7,6 +7,10 @@
  * it does not also need to shout, and it definitely doesn't need to be cute
  * about it.
  *
+ * (The one import is a type. Nothing here reaches into a component — the
+ * welcome's feature rows just name an icon each, and this keeps a typo in one
+ * of those names a compile error rather than a blank square.)
+ *
  * Three rules that keep it on the right side of the line:
  *
  * - **Short.** Every one of these sits under or beside something that is the
@@ -22,6 +26,8 @@
  * means the voice can be read end to end, which is the only way to notice when
  * one line has drifted funnier than the rest.
  */
+
+import type { IconName } from './components/Icon';
 
 /**
  * Picks one line, deterministically per `seed`.
@@ -185,18 +191,74 @@ export function personalBestLine(days: number): string {
  * Seen exactly once, on the first launch.
  *
  * It names the app because this is the one screen where the reader doesn't yet
- * know what they've opened, and the body describes the loop — lock, rest,
- * re-lock — rather than the problem, which anybody who downloaded this already
- * knows they have.
+ * know what they've opened, and it describes the loop — lock, rest, re-lock —
+ * rather than the problem, which anybody who downloaded this already knows they
+ * have.
+ *
+ * ## Written in the present tense, for an app that doesn't do it yet
+ *
+ * "Apps lock automatically" is a promise Phase 1 can't keep: the blocking is
+ * simulated until the Screen Time entitlement lands. This screen still says it
+ * plainly, because a welcome hedged into "will eventually sort of" describes
+ * nothing, and the honest version of the caveat already exists where somebody
+ * can act on it — the note under the app list in Settings. One line explaining
+ * the product, one line admitting the state of the build, in the two places
+ * each belongs.
+ *
+ * ## The split strings
+ *
+ * `name` and `subheadline` are broken up so half of each can be violet. They
+ * are pieces of one sentence, not separate lines: keep the spaces at the seams.
  */
 export const WELCOME = {
-  headline: 'Welcome to Liftlock.',
-  subheadline: 'Your phone, locked away between sets.',
-  body:
-    'Pick a lift, hit start, and your scrolling apps shut off until the set is ' +
-    'done. Rest earns them back. Then they lock again.',
+  eyebrow: 'Hey, welcome to',
+  /** The wordmark. `lock` and its full stop carry the accent. */
+  name: { lead: 'Lift', accent: 'lock.' },
+  subheadline: {
+    lead:
+      'Your rest time is your phone time. We lock the noise while you work, ' +
+      'so you can focus on ',
+    accent: 'lifting more',
+    tail: ' and scrolling less.',
+  },
+  /**
+   * Three rows: what you get, what the app does, what it adds up to. In that
+   * order, because the first one is the part nobody expects — this is not
+   * another app that takes your phone away and leaves it there.
+   */
+  features: [
+    {
+      icon: 'timer',
+      title: 'Use your rest time',
+      body: 'Rest is yours. Scroll all you like — it’s on a timer.',
+    },
+    {
+      icon: 'lock',
+      title: 'Apps lock automatically',
+      body: 'When rest is up, the noise goes away again.',
+    },
+    {
+      // The flame, not the dumbbell that marks a lift everywhere else: on a
+      // filled tile at this size the dumbbell's plates lose against their own
+      // bar and the glyph reads as a capital H — the exact complaint that got
+      // it redrawn once already. The flame is this app's focus-time mark, and
+      // "watch the time add up" is what this row is about anyway.
+      icon: 'flame',
+      title: 'Lift more. Scroll less.',
+      body: 'Show up, bank the sets, watch the time add up.',
+    },
+  ],
   action: 'Let’s lift.',
-} as const;
+  /** The last thing read before the tap. Nothing is taken, only lent out. */
+  reassurance: 'You’re in control. You choose what gets locked.',
+} as const satisfies {
+  eyebrow: string;
+  name: { lead: string; accent: string };
+  subheadline: { lead: string; accent: string; tail: string };
+  features: readonly { icon: IconName; title: string; body: string }[];
+  action: string;
+  reassurance: string;
+};
 
 /* -------------------------------------------------------------------------- */
 /* Insights                                                                   */

@@ -61,9 +61,14 @@ describe('the welcome screen', () => {
   it('greets somebody opening the app for the first time', async () => {
     const root = await launch(createMemoryStorage());
 
-    expect(hasText(root, WELCOME.headline)).toBe(true);
-    expect(hasText(root, WELCOME.subheadline)).toBe(true);
-    expect(hasText(root, WELCOME.body)).toBe(true);
+    expect(hasText(root, WELCOME.eyebrow)).toBe(true);
+    expect(hasText(root, WELCOME.name.accent)).toBe(true);
+    expect(hasText(root, WELCOME.subheadline.accent)).toBe(true);
+    expect(hasText(root, WELCOME.reassurance)).toBe(true);
+    WELCOME.features.forEach(feature => {
+      expect(hasText(root, feature.title)).toBe(true);
+      expect(hasText(root, feature.body)).toBe(true);
+    });
   });
 
   it('never shows again once it has been tapped through', async () => {
@@ -71,21 +76,21 @@ describe('the welcome screen', () => {
     const storage = createMemoryStorage();
 
     const first = await launch(storage);
-    expect(hasText(first, WELCOME.headline)).toBe(true);
+    expect(hasText(first, WELCOME.eyebrow)).toBe(true);
     press(first, WELCOME.action);
-    expect(hasText(first, WELCOME.headline)).toBe(false);
+    expect(hasText(first, WELCOME.eyebrow)).toBe(false);
 
     // Let the save land, then relaunch against the same storage.
     await ReactTestRenderer.act(async () => {});
     const second = await launch(storage);
 
-    expect(hasText(second, WELCOME.headline)).toBe(false);
+    expect(hasText(second, WELCOME.eyebrow)).toBe(false);
   });
 
   it('stays out of the way of somebody who has been here before', async () => {
     const root = await launch(createReturningStorage());
 
-    expect(hasText(root, WELCOME.headline)).toBe(false);
+    expect(hasText(root, WELCOME.eyebrow)).toBe(false);
     // And the app underneath is the one they left.
     expect(hasText(root, 'Lift more')).toBe(true);
   });
@@ -101,7 +106,7 @@ describe('the welcome screen', () => {
 
     const root = await launch(pending);
 
-    expect(hasText(root, WELCOME.headline)).toBe(false);
+    expect(hasText(root, WELCOME.eyebrow)).toBe(false);
   });
 
   it('survives storage that cannot be read', async () => {
@@ -116,7 +121,7 @@ describe('the welcome screen', () => {
 
     const root = await launch(broken);
 
-    expect(hasText(root, WELCOME.headline)).toBe(true);
+    expect(hasText(root, WELCOME.eyebrow)).toBe(true);
   });
 
   it('keeps the flag when everything else is deleted', async () => {
@@ -130,6 +135,6 @@ describe('the welcome screen', () => {
     await ReactTestRenderer.act(async () => {});
 
     const second = await launch(storage);
-    expect(hasText(second, WELCOME.headline)).toBe(false);
+    expect(hasText(second, WELCOME.eyebrow)).toBe(false);
   });
 });

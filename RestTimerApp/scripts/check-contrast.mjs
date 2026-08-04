@@ -122,9 +122,9 @@ const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 420, height: 900 } });
 
 // A fresh browser profile is a first launch, and a first launch is the welcome
-// screen — which is a violet flood, and would be measured as if it were the
-// exercise list. Seeded as somebody who has been here before, which is the
-// state every ground sampled below actually belongs to.
+// screen, which would be measured as if it were the exercise list. Seeded as
+// somebody who has been here before, which is the state every ground sampled
+// below actually belongs to. The welcome gets its own pass further down.
 await page.addInitScript(() => {
   localStorage.setItem(
     'liftlock.state.v3',
@@ -146,8 +146,8 @@ await page.addStyleTag({ content: '*{color:transparent !important}' });
  * Stops above the tab bar — its top hairline runs the full width and would be
  * measured as if it were glow.
  */
-async function gutterPeak() {
-  const shot = await page.screenshot();
+async function gutterPeak(from = page) {
+  const shot = await from.screenshot();
   let best = [0, 0, 0];
   let bestL = -1;
   for (const box of [
@@ -192,6 +192,21 @@ measured('active set background', await gutterPeak(), glowedInk);
 await page.getByLabel('Done with set').click();
 await page.waitForTimeout(1400);
 measured('resting background', await gutterPeak(), glowedAccent);
+
+/**
+ * The welcome screen, on an unseeded profile — a genuine first launch.
+ *
+ * It carries a second light source nothing else does: the halo behind the logo
+ * is its own radial bloom, stacked on top of the root glow. Every colour above
+ * is budgeted against the root glow alone, so this measures that the welcome's
+ * ground still lands under the same ceiling rather than trusting that a bloom
+ * drawn in the middle of the screen stays in the middle of the screen.
+ */
+const first = await browser.newPage({ viewport: { width: 420, height: 900 } });
+await first.goto(BASE, { waitUntil: 'commit' });
+await first.waitForTimeout(1800);
+await first.addStyleTag({ content: '*{color:transparent !important}' });
+measured('welcome background', await gutterPeak(first), glowedInk);
 
 await browser.close();
 console.log(failed ? '\nSOME CHECKS FAILED' : '\nAll contrast checks pass.');

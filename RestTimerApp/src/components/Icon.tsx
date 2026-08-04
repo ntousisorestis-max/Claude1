@@ -32,7 +32,8 @@ export type IconName =
   | 'plus'
   | 'user'
   | 'signOut'
-  | 'pencil';
+  | 'pencil'
+  | 'shield';
 
 /**
  * A stroke of a glyph. `w` multiplies the icon's stroke width for this stroke
@@ -134,6 +135,16 @@ const PATHS: Record<IconName, Stroke[]> = {
   pencil: [
     'M5 19h3.6L20.2 7.4a2.55 2.55 0 0 0-3.6-3.6L5 15.4z',
     'M15.1 5.3l3.6 3.6',
+  ],
+  /**
+   * A shield. Marks the promise that nothing is taken without being chosen.
+   *
+   * One outline, no check or padlock inside it: it is used at 14px beside a
+   * single line of small text, and a second path in there turns to mush at that
+   * size. The word next to it is doing the explaining anyway.
+   */
+  shield: [
+    'M12 2.6l7.5 2.8v6.1c0 4.6-3.1 8.2-7.5 9.9-4.4-1.7-7.5-5.3-7.5-9.9V5.4z',
   ],
   /** Head and shoulders — an account, and eventually a leaderboard row. */
   user: [
