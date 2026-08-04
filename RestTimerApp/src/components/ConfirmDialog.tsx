@@ -120,7 +120,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  confirmText: { ...sized(type.action, 17), color: colors.danger },
+  /**
+   * Bumped with `cancelText` purely so the two buttons match. Danger on the
+   * dark ground is 6.5:1 and was never the problem.
+   */
+  confirmText: { ...sized(type.action, 19), color: colors.danger },
   cancel: {
     minHeight: TAP_TARGET,
     borderRadius: radius.pill,
@@ -130,5 +134,9 @@ const styles = StyleSheet.create({
   },
   /** The safe choice is the solid one: destructive actions shouldn't be the
    * thing your thumb lands on by default. */
-  cancelText: { ...sized(type.action, 17), color: colors.white },
+  /**
+   * 19px bold. White on `accent` is 4.22:1 — over AA's 3.0 for large text,
+   * under the 4.5 for body text — and WCAG's line is 18.66px bold.
+   */
+  cancelText: { ...sized(type.action, 19), color: colors.white },
 });

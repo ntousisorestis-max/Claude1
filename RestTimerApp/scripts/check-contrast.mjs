@@ -108,12 +108,11 @@ check('white on the gradient, dark end', WHITE, ACCENT_DEEP, LARGE);
 check('white on the gradient, light end', WHITE, ACCENT, LARGE);
 
 // White on accent is 4.22:1: over AA's 3.0 for large text, under the 4.5 for
-// body text. WCAG's line is 18.66px bold, so any label on an accent fill has to
-// be sized past it. `BigButton` (20px/800), `GradientButton`, and both account
-// buttons are. Four are not, and are known failures rather than oversights:
-// AuthSheet's submit (18px/800 — short by two thirds of a pixel),
-// ConfirmDialog's cancel (17px/800), SettingsScreen's "Add app" pill and
-// ExerciseCard's "Save name" pill (both 16px/700).
+// body text. WCAG's line is 18.66px bold, so every label on an accent fill has
+// to be sized past it — and every one now is. `BigButton` is 20px/800; the two
+// account buttons, `GradientButton`, `AuthSheet`'s submit, `ConfirmDialog`'s
+// buttons and both "pill" buttons are 19px/800. If a new accent button lands
+// at `type.body` size, this 3.0 bar stops being the right one for it.
 console.log('\nNon-text contrast (WCAG 1.4.11 wants 3.0 for UI):');
 check('accent fill vs dark ground', ACCENT, glowedInk, LARGE);
 check('white on the accent button', WHITE, ACCENT, LARGE);

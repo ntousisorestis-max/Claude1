@@ -328,7 +328,11 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   submitOff: { backgroundColor: colors.raised },
-  submitText: { ...sized(type.action, 18), color: colors.white },
+  /**
+   * 19px bold. White on `accent` is 4.22:1 — over AA's 3.0 for large text,
+   * under the 4.5 for body text — and WCAG's line is 18.66px bold.
+   */
+  submitText: { ...sized(type.action, 19), color: colors.white },
   submitTextOff: { color: colors.faintOnDark },
 
   swap: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },

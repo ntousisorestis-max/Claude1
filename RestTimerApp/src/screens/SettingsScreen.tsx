@@ -512,7 +512,13 @@ const styles = StyleSheet.create({
   },
   pillSolid: { backgroundColor: colors.accent, borderColor: colors.accent },
   pillOff: { backgroundColor: colors.ink, borderColor: colors.hairline },
-  pillText: { ...type.body, fontWeight: '700', color: colors.mutedOnDark },
+  /**
+   * 19px bold on the base, so "Add app" and "Cancel" stay the same size.
+   * Only the solid one needed it — white on `accent` is 4.22:1, which clears
+   * AA at large-text size and misses it at body size. The outlined one is
+   * `mutedOnDark` on ink and passes either way.
+   */
+  pillText: { ...sized(type.action, 19), color: colors.mutedOnDark },
   pillTextSolid: { color: colors.white },
   pillTextOff: { color: colors.faintOnDark },
   warn: { ...type.helper, fontSize: 13, color: colors.danger },
