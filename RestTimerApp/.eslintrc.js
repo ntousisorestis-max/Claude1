@@ -1,7 +1,8 @@
 module.exports = {
   root: true,
   extends: '@react-native',
-  ignorePatterns: ['dist/', 'node_modules/'],
+  // `dist-probe/` is where the throwaway browser-verification builds land.
+  ignorePatterns: ['dist/', 'dist-probe/', 'node_modules/'],
   overrides: [
     {
       files: ['jest.setup.js', '__tests__/**'],

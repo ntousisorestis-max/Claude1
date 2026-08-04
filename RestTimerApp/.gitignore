@@ -76,3 +76,8 @@ yarn-error.log
 
 # web build output
 /dist
+
+# Throwaway builds used to drive the app in a headless browser.
+dist-probe/
+webpack.probe.js
+src/__probe__/
