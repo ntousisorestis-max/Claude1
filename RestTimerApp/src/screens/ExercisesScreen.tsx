@@ -42,6 +42,7 @@ export function ExercisesScreen() {
     state: { exercises, defaults, session },
     addExercise,
     removeExercise,
+    renameExercise,
     setExerciseSets,
     setExerciseRest,
     toggleExerciseApp,
@@ -110,6 +111,16 @@ export function ExercisesScreen() {
                 exercise={exercise}
                 apps={apps}
                 onStart={() => startWorkout(exercise.id)}
+                onRename={name => renameExercise(exercise.id, name)}
+                // Compared against every *other* exercise, so re-saving a name
+                // unchanged is not reported as a clash with itself.
+                nameTaken={name =>
+                  exercises.some(
+                    other =>
+                      other.id !== exercise.id &&
+                      other.name.toLowerCase() === name.toLowerCase(),
+                  )
+                }
                 onSets={sets => setExerciseSets(exercise.id, sets)}
                 onRest={seconds => setExerciseRest(exercise.id, seconds)}
                 onToggleApp={appId => toggleExerciseApp(exercise.id, appId)}

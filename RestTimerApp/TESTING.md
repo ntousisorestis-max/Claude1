@@ -1,6 +1,6 @@
 # Testing the app
 
-A step-by-step guide to running Rest Timer yourself. Written for Windows, since
+A step-by-step guide to running Liftlock yourself. Written for Windows, since
 that's what you're on — the commands are the same on macOS and Linux apart from
 finding your IP address in step 7.
 

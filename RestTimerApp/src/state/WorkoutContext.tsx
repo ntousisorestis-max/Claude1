@@ -68,6 +68,7 @@ function sameIds(a: string[], b: string[]): boolean {
 type WorkoutActions = {
   addExercise: (name: string) => void;
   removeExercise: (id: string) => void;
+  renameExercise: (id: string, name: string) => void;
   setExerciseSets: (id: string, sets: number) => void;
   setExerciseRest: (id: string, seconds: number) => void;
   toggleExerciseApp: (id: string, appId: string) => void;
@@ -242,6 +243,7 @@ export function WorkoutProvider({
       addExercise: name =>
         dispatch({ type: 'ADD_EXERCISE', id: newExerciseId(), name }),
       removeExercise: id => dispatch({ type: 'REMOVE_EXERCISE', id }),
+      renameExercise: (id, name) => dispatch({ type: 'RENAME_EXERCISE', id, name }),
       setExerciseSets: (id, sets) =>
         dispatch({ type: 'SET_EXERCISE_SETS', id, sets }),
       setExerciseRest: (id, seconds) =>

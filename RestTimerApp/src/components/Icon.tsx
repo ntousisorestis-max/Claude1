@@ -31,7 +31,8 @@ export type IconName =
   | 'bellOff'
   | 'plus'
   | 'user'
-  | 'signOut';
+  | 'signOut'
+  | 'pencil';
 
 /**
  * A stroke of a glyph. `w` multiplies the icon's stroke width for this stroke
@@ -122,6 +123,18 @@ const PATHS: Record<IconName, Stroke[]> = {
     'M3.5 3.5l17 17',
   ],
   plus: ['M12 5.5v13', 'M5.5 12h13'],
+  /**
+   * A pencil, for renaming.
+   *
+   * Its own glyph rather than reusing the dumbbell that marks the card: at row
+   * size the dumbbell reads as a capital H, which is exactly the complaint that
+   * got it redrawn as filled capsules in the first place. One more path is
+   * cheaper than a row that looks like it is labelled "H".
+   */
+  pencil: [
+    'M5 19h3.6L20.2 7.4a2.55 2.55 0 0 0-3.6-3.6L5 15.4z',
+    'M15.1 5.3l3.6 3.6',
+  ],
   /** Head and shoulders — an account, and eventually a leaderboard row. */
   user: [
     'M12 11.5a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',

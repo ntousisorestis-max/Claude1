@@ -59,7 +59,7 @@ ones it uses on iOS and Android too.
 1. On the project home screen there's a row of icons under "Get started by
    adding Firebase to your app". Click the one that looks like `</>` — the web
    icon.
-2. App nickname: `Rest Timer`. Leave "Also set up Firebase Hosting"
+2. App nickname: `Liftlock`. Leave "Also set up Firebase Hosting"
    **unticked**.
 3. Click **Register app**.
 4. You'll now see a block of code with a section that looks like this:

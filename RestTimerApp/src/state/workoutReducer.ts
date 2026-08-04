@@ -243,6 +243,24 @@ export function workoutReducer(
     case 'DELETE_ALL_EXERCISES':
       return { ...state, exercises: [] };
 
+    case 'RENAME_EXERCISE': {
+      const name = action.name.trim().slice(0, MAX_EXERCISE_NAME_LENGTH);
+      if (!name) {
+        return state;
+      }
+      // A clash with *another* exercise is refused; a "clash" with itself is
+      // just someone re-saving the name they already had, or changing its case.
+      const clash = state.exercises.some(
+        exercise =>
+          exercise.id !== action.id &&
+          exercise.name.toLowerCase() === name.toLowerCase(),
+      );
+      if (clash) {
+        return state;
+      }
+      return editExercise(state, action.id, exercise => ({ ...exercise, name }));
+    }
+
     case 'SET_EXERCISE_SETS':
       return editExercise(state, action.id, exercise => ({
         ...exercise,

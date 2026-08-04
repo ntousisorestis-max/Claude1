@@ -4,5 +4,5 @@
  */
 import { version } from '../package.json';
 
-export const APP_NAME = 'Rest Timer';
+export const APP_NAME = 'Liftlock';
 export const APP_VERSION: string = version;

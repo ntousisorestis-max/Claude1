@@ -287,20 +287,92 @@ describe('full workout loop', () => {
     expect(MockBlocker.isLocked()).toBe(false);
   });
 
-  it('deletes an exercise through the confirm dialog', async () => {
+  it('deletes an exercise without opening anything first', async () => {
+    // Delete used to live inside the expanded footer, so removing an exercise
+    // meant first going to edit it. It is now a button in the card's header.
     const root = await launch();
 
     addExercise(root, 'Rows');
     press(root, 'Add exercise');
     addExercise(root, 'Squat');
 
-    pressStartingWith(root, 'Sets for Rows');
     press(root, 'Delete Rows');
     expect(hasText(root, 'Delete Rows?')).toBe(true);
 
     press(root, 'Delete it');
     expect(hasText(root, 'Squat')).toBe(true);
     expect(hasText(root, 'Rows')).toBe(false);
+  });
+
+  it('asks before deleting, and keeps the exercise if you say no', async () => {
+    const root = await launch();
+    addExercise(root, 'Rows');
+
+    press(root, 'Delete Rows');
+    press(root, 'Keep it');
+
+    expect(hasText(root, 'Delete Rows?')).toBe(false);
+    expect(hasText(root, 'Rows')).toBe(true);
+  });
+
+  it('renames an exercise', async () => {
+    const root = await launch();
+    addExercise(root, 'Rows');
+
+    pressStartingWith(root, 'Rename Rows');
+    type(root, 'Exercise name', 'Barbell rows');
+    press(root, 'Save name');
+
+    expect(hasText(root, 'Barbell rows')).toBe(true);
+    expect(labelStartingWith(root, 'Rename Barbell rows')).toContain('Rename');
+  });
+
+  it('carries the new name through to the workout', async () => {
+    // The card announces itself by name in a dozen places — Start, the
+    // steppers, the app checkboxes. A rename that only changed the heading
+    // would leave every one of them stale.
+    const root = await launch();
+    addExercise(root, 'Rows');
+
+    pressStartingWith(root, 'Rename Rows');
+    type(root, 'Exercise name', 'Barbell rows');
+    press(root, 'Save name');
+
+    press(root, 'Start Barbell rows');
+    expect(hasText(root, 'Barbell rows')).toBe(true);
+    expect(hasLabel(root, 'Set 1 of 3')).toBe(true);
+  });
+
+  it('refuses a rename that collides with another exercise', async () => {
+    const root = await launch();
+    addExercise(root, 'Rows');
+    press(root, 'Add exercise');
+    addExercise(root, 'Squat');
+
+    pressStartingWith(root, 'Rename Rows');
+    type(root, 'Exercise name', 'Squat');
+
+    // Said out loud rather than silently refused on save — the reducer would
+    // drop it either way, and a field that closed and reverted with no
+    // explanation is the worse half of that.
+    expect(hasText(root, 'You already have an exercise called Squat')).toBe(true);
+
+    const [save] = root.findAll(n => n.props?.accessibilityLabel === 'Save name');
+    expect(save.props.accessibilityState.disabled).toBe(true);
+  });
+
+  it('leaves the other cards alone when one is renamed', async () => {
+    const root = await launch();
+    addExercise(root, 'Rows');
+    press(root, 'Add exercise');
+    addExercise(root, 'Squat');
+
+    pressStartingWith(root, 'Rename Rows');
+    type(root, 'Exercise name', 'Barbell rows');
+    press(root, 'Save name');
+
+    expect(hasText(root, 'Barbell rows')).toBe(true);
+    expect(hasText(root, 'Squat')).toBe(true);
   });
 
   it('lands on the active set when the notification is tapped', async () => {

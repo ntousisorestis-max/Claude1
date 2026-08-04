@@ -1,5 +1,5 @@
 /**
- * Web build for the Rest Timer app.
+ * Web build for Liftlock.
  *
  * This runs the real app — the same App.tsx, screens, reducer and animations
  * the phones run — with react-native-web mapping RN primitives onto the DOM.

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Animated, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { AppPill } from './AppPill';
 import { Collapsible } from './Collapsible';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -9,6 +9,7 @@ import { Segmented } from './Segmented';
 import { Stepper } from './Stepper';
 import { usePressScale } from '../hooks/usePressScale';
 import {
+  MAX_EXERCISE_NAME_LENGTH,
   MAX_REST_SECONDS,
   MAX_SETS,
   MIN_REST_SECONDS,
@@ -20,10 +21,11 @@ import type { BlockableApp, Exercise } from '../state/types';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-/** The three things a card can open. Each keeps its own open/closed state. */
-type Section = 'sets' | 'rest' | 'apps';
+/** The four things a card can open. Each keeps its own open/closed state. */
+type Section = 'name' | 'sets' | 'rest' | 'apps';
 
 const ALL_CLOSED: Record<Section, boolean> = {
+  name: false,
   sets: false,
   rest: false,
   apps: false,
@@ -45,19 +47,31 @@ export function ExerciseCard({
   exercise,
   apps,
   onStart,
+  onRename,
   onSets,
   onRest,
   onToggleApp,
   onDelete,
+  nameTaken,
 }: {
   exercise: Exercise;
   /** The full blockable list, presets plus custom. */
   apps: BlockableApp[];
   onStart: () => void;
+  onRename: (name: string) => void;
   onSets: (sets: number) => void;
   onRest: (seconds: number) => void;
   onToggleApp: (appId: string) => void;
   onDelete: () => void;
+  /**
+   * Whether another exercise already answers to this name.
+   *
+   * Passed in rather than worked out here: a card only knows about itself, and
+   * the reducer that owns the list refuses a clashing rename silently. Without
+   * this the field would accept a duplicate, close, and quietly show the old
+   * name again with no explanation.
+   */
+  nameTaken: (name: string) => boolean;
 }) {
   const [open, setOpen] = useState<Record<Section, boolean>>(ALL_CLOSED);
   const [confirming, setConfirming] = useState(false);
@@ -67,21 +81,51 @@ export function ExerciseCard({
     setOpen(current => ({ ...current, [section]: !current[section] }));
 
   const blocked = apps.filter(app => exercise.selectedAppIds.includes(app.id));
-  const anyOpen = open.sets || open.rest || open.apps;
+  const anyOpen = open.name || open.sets || open.rest || open.apps;
 
   return (
     <View style={[styles.card, anyOpen && styles.cardOpen]}>
       <View style={styles.head}>
-        <View style={styles.eyebrowRow}>
-          <Icon name="dumbbell" color={colors.accentText} size={15} />
-          <Text style={styles.eyebrow}>EXERCISE</Text>
+        <View style={styles.headText}>
+          <View style={styles.eyebrowRow}>
+            <Icon name="dumbbell" color={colors.accentText} size={15} />
+            <Text style={styles.eyebrow}>EXERCISE</Text>
+          </View>
+          <Text style={styles.name} numberOfLines={2}>
+            {exercise.name}
+          </Text>
         </View>
-        <Text style={styles.name} numberOfLines={2}>
-          {exercise.name}
-        </Text>
+
+        {/* Top-right, and reachable without opening anything. Deleting used to
+            live behind an expanded section, which meant the way to remove an
+            exercise was to first go and edit it. */}
+        <DeleteButton name={exercise.name} onPress={() => setConfirming(true)} />
       </View>
 
       <View style={styles.rows}>
+        <Section divided>
+          <SettingRow
+            icon="pencil"
+            label="Name"
+            exercise={exercise.name}
+            announceAs={`Rename ${exercise.name}`}
+            value={exercise.name}
+            open={open.name}
+            onPress={() => toggle('name')}
+          />
+          <Collapsible open={open.name}>
+            <Panel>
+              <NameEditor
+                name={exercise.name}
+                open={open.name}
+                nameTaken={nameTaken}
+                onRename={onRename}
+                onDone={() => toggle('name')}
+              />
+            </Panel>
+          </Collapsible>
+        </Section>
+
         <Section divided>
           <SettingRow
             icon="reps"
@@ -164,20 +208,19 @@ export function ExerciseCard({
         </Section>
       </View>
 
-      {/* Shown whenever anything is open, rather than living inside one of the
-          three sections — deleting the exercise belongs to none of them. */}
+      {/* Just the estimate now. Delete moved to the card header, where it does
+          not require opening a section first. */}
       {anyOpen ? (
         <View style={styles.footer}>
           <Text style={styles.estimate}>
             {estimate(exercise.totalSets, exercise.restSeconds)}
           </Text>
-          <DeleteLink name={exercise.name} onPress={() => setConfirming(true)} />
         </View>
       ) : null}
 
       <GradientButton
         label={`Start ${exercise.name}`}
-        text="Start Rest Timer"
+        text="Start rest timer"
         icon="play"
         onPress={onStart}
       />
@@ -225,6 +268,7 @@ function SettingRow({
   icon,
   label,
   exercise,
+  announceAs,
   value,
   open,
   onPress,
@@ -234,6 +278,13 @@ function SettingRow({
   /** Named in the announcement: a list of cards otherwise reads as three
    * identical "Sets, 3. Edit" buttons. */
   exercise: string;
+  /**
+   * Replaces the "<label> for <exercise>, <value>" announcement.
+   *
+   * The Name row needs it: its label and its value are the same word, so the
+   * default reads "Name for Squat, Squat".
+   */
+  announceAs?: string;
   value: string;
   open: boolean;
   onPress: () => void;
@@ -244,7 +295,7 @@ function SettingRow({
     <AnimatedPressable
       {...press.handlers}
       accessibilityRole="button"
-      accessibilityLabel={`${label} for ${exercise}, ${value}. ${
+      accessibilityLabel={`${announceAs ?? `${label} for ${exercise}, ${value}`}. ${
         open ? 'Close' : 'Edit'
       }`}
       accessibilityState={{ expanded: open }}
@@ -274,8 +325,16 @@ function estimate(totalSets: number, restSeconds: number): string {
   return minutes < 1 ? 'About a minute' : `About ${minutes} min`;
 }
 
-function DeleteLink({ name, onPress }: { name: string; onPress: () => void }) {
-  const press = usePressScale({ depth: 0.94, haptic: true });
+/**
+ * The card's one destructive control, top-right.
+ *
+ * Icon-only, and quiet: it sits on every card in the list, permanently, so
+ * anything louder would make a screen of saved exercises look like a screen of
+ * warnings. `hitSlop` buys it a proper tap target without a 44pt box crowding
+ * the exercise name.
+ */
+function DeleteButton({ name, onPress }: { name: string; onPress: () => void }) {
+  const press = usePressScale({ depth: 0.9, haptic: true });
 
   return (
     <AnimatedPressable
@@ -283,9 +342,102 @@ function DeleteLink({ name, onPress }: { name: string; onPress: () => void }) {
       accessibilityRole="button"
       accessibilityLabel={`Delete ${name}`}
       onPress={onPress}
-      hitSlop={8}
+      hitSlop={12}
       style={[styles.delete, press.style]}>
-      <Text style={styles.deleteText}>Delete</Text>
+      <Icon name="trash" color={colors.faintOnDark} size={18} />
+    </AnimatedPressable>
+  );
+}
+
+/**
+ * Renaming, in the same shape as every other row on the card.
+ *
+ * A draft rather than writing straight through on each keystroke, unlike the
+ * steppers: a half-typed name is a blank or a duplicate for most of the time
+ * you are typing it, and a field that silently refused every intermediate
+ * keystroke would be unusable.
+ */
+function NameEditor({
+  name,
+  open,
+  nameTaken,
+  onRename,
+  onDone,
+}: {
+  name: string;
+  open: boolean;
+  nameTaken: (name: string) => boolean;
+  onRename: (name: string) => void;
+  onDone: () => void;
+}) {
+  const [draft, setDraft] = useState(name);
+
+  // Reopening starts from whatever the name is now, so an abandoned edit does
+  // not sit in the field waiting to be saved by mistake.
+  useEffect(() => {
+    if (open) {
+      setDraft(name);
+    }
+  }, [open, name]);
+
+  const trimmed = draft.trim();
+  const duplicate = trimmed.length > 0 && nameTaken(trimmed);
+  const unchanged = trimmed === name;
+  const canSave = trimmed.length > 0 && !duplicate && !unchanged;
+
+  const save = () => {
+    if (!canSave) {
+      return;
+    }
+    onRename(trimmed);
+    onDone();
+  };
+
+  return (
+    <View style={styles.rename}>
+      <TextInput
+        value={draft}
+        onChangeText={setDraft}
+        onSubmitEditing={save}
+        placeholder="Exercise name"
+        placeholderTextColor={colors.faintOnDark}
+        style={styles.renameInput}
+        maxLength={MAX_EXERCISE_NAME_LENGTH}
+        returnKeyType="done"
+        autoCapitalize="words"
+        accessibilityLabel={`Rename ${name}`}
+      />
+      {duplicate ? (
+        <Text style={styles.renameWarn}>
+          You already have an exercise called {trimmed}.
+        </Text>
+      ) : null}
+      <SavePill disabled={!canSave} onPress={save} />
+    </View>
+  );
+}
+
+function SavePill({
+  disabled,
+  onPress,
+}: {
+  disabled: boolean;
+  onPress: () => void;
+}) {
+  const press = usePressScale({ depth: 0.95, haptic: !disabled });
+
+  return (
+    <AnimatedPressable
+      {...press.handlers}
+      accessibilityRole="button"
+      accessibilityLabel="Save name"
+      accessibilityState={{ disabled }}
+      onPress={onPress}
+      disabled={disabled}
+      style={[styles.savePill, disabled && styles.savePillOff, press.style]}>
+      <Text style={[styles.savePillText, disabled && styles.savePillTextOff]}>
+        Save name
+      </Text>
     </AnimatedPressable>
   );
 }
@@ -301,7 +453,8 @@ const styles = StyleSheet.create({
   },
   cardOpen: { borderColor: colors.accent },
 
-  head: { gap: spacing.xs },
+  head: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
+  headText: { flex: 1, gap: spacing.xs },
   eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   eyebrow: { ...type.tag, color: colors.accentText },
   name: { ...sized(type.title, 28), color: colors.white },
@@ -341,12 +494,42 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   estimate: { ...type.helper, fontSize: 13, color: colors.faintOnDark },
+  /**
+   * Quiet by default. It carries `faintOnDark` rather than `danger` because it
+   * is on screen permanently on every card — a column of red buttons down a
+   * list of saved exercises reads as a list of problems. The confirmation
+   * dialog it opens is where the red belongs.
+   */
   delete: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
+    width: 34,
+    height: 34,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: HAIRLINE,
-    borderColor: colors.danger,
+    borderColor: colors.hairline,
   },
-  deleteText: { ...type.tag, color: colors.danger },
+
+  rename: { gap: spacing.sm },
+  renameInput: {
+    ...type.body,
+    color: colors.white,
+    backgroundColor: colors.ink,
+    borderWidth: HAIRLINE,
+    borderColor: colors.accent,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    minHeight: 52,
+  },
+  renameWarn: { ...type.helper, fontSize: 13, color: colors.danger },
+  savePill: {
+    minHeight: 48,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  savePillOff: { backgroundColor: colors.raised },
+  savePillText: { ...type.body, fontWeight: '700', color: colors.white },
+  savePillTextOff: { color: colors.faintOnDark },
 });

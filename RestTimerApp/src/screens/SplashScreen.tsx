@@ -85,7 +85,7 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
           style={styles.logo}
           resizeMode="contain"
           accessibilityRole="image"
-          accessibilityLabel="Rest Timer"
+          accessibilityLabel="Liftlock"
         />
       </Animated.View>
 

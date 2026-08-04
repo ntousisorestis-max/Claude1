@@ -1,4 +1,4 @@
-# Rest Timer
+# Liftlock
 
 A gym rest-timer that blocks your scrolling apps while you're doing a set, unlocks
 them for the rest period, and re-locks them when the countdown hits zero.
@@ -9,8 +9,8 @@ Exercise list ──Start──▶ Active Set ──Done with set──▶ Resti
                             └───────────── last set ─────────────▶ Complete (unlocked)
 ```
 
-Four tabs: **Workout** (a list of saved exercises, each carrying its own sets,
-rest and blocked apps), **Insights** (all-time totals), **Streaks** (days
+Four tabs: **Workout** (a list of saved exercises, each carrying its own name,
+sets, rest and blocked apps), **Insights** (all-time totals), **Streaks** (days
 trained in a row) and **Settings**. Starting an exercise snapshots that card
 into the workout, and the workout then owns the screen until it ends.
 
@@ -161,6 +161,25 @@ real browser, so it catches what the maths alone would miss.
 **Nothing native has ever been compiled yet** — no `Podfile.lock`, no Gradle
 build. The web bundle builds and runs; iOS and Android are unproven until
 someone with the toolchain runs them. See [Known risks](#known-risks).
+
+## The name
+
+The app is **Liftlock**. A handful of identifiers still read `RestTimer`, and
+they are all deliberate:
+
+- `app.json`'s `name` is the `AppRegistry` key and has to match what the native
+  host registers. Renaming it breaks launch on both platforms.
+- `RestTimerScreenTime` is the Phase 2 native module's name, fixed by the Swift
+  side that doesn't exist yet.
+- The notification channel ids (`rest-timer`, `rest-timer-silent`) and the
+  storage key (`rest-timer.state.v2`) are keys, not labels. An Android channel's
+  settings are immutable once created, so changing its id orphans whatever the
+  user had configured.
+- The channel *names* — "Rest timer" and "Rest timer (silent)" — are visible in
+  Android's notification settings, and describe the notification's purpose
+  rather than the app. Under an app called Liftlock, a channel called "Rest
+  timer" is the right label; renaming it to "Liftlock" would tell the user
+  nothing.
 
 ## Logo and icons
 

@@ -1,13 +1,11 @@
 import React from 'react';
 import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { NeedsAccount } from '../components/NeedsAccount';
-import { SessionStats } from '../components/SessionStats';
 import { StatCard } from '../components/StatCard';
 import { useAccount } from '../cloud/AccountContext';
 import { recentDays } from '../cloud/days';
 import { EMPTY_INSIGHTS } from '../copy';
 import { useEnter } from '../hooks/useEnter';
-import { useWorkout } from '../state/WorkoutContext';
 import { colors, describeSpan, sized, spacing, type } from '../theme';
 
 /**
@@ -23,9 +21,6 @@ import { colors, describeSpan, sized, spacing, type } from '../theme';
  */
 export function InsightsScreen() {
   const { status, totals, days, today } = useAccount();
-  const {
-    state: { session },
-  } = useWorkout();
 
   const enter = useEnter();
   // One per block rather than one for the lot: three cards that assemble read
@@ -94,33 +89,24 @@ export function InsightsScreen() {
             </Animated.View>
           </>
         ) : (
-          <>
-            <Animated.View style={enterOne}>
-              <NeedsAccount empty={EMPTY_INSIGHTS} />
-            </Animated.View>
-
-            {/* Not a consolation prize: this is the same card the Workout tab
-                shows, and it is the only honest thing to put here — these
-                numbers are real, they just won't outlive the app being
-                closed. */}
-            <Animated.View style={enterTwo}>
-              <Text style={styles.sectionNote}>
-                In the meantime, here is what this session has counted:
-              </Text>
-            </Animated.View>
-            <Animated.View style={enterThree}>
-              <SessionStats session={session} />
-            </Animated.View>
-          </>
+          // Just the explanation. The session card lives on the Workout tab and
+          // only there — showing it here too put the same three numbers on two
+          // tabs, which reads as a bug rather than as a summary.
+          <Animated.View style={enterOne}>
+            <NeedsAccount empty={EMPTY_INSIGHTS} />
+          </Animated.View>
         )}
 
-        <Animated.View style={enterNote}>
-          <Text style={styles.note}>
-            {signedIn
-              ? 'Counted from finished workouts only — a workout you end early still counts the sets you did.'
-              : 'Session numbers reset when the app restarts. Signing in is what makes them stick.'}
-          </Text>
-        </Animated.View>
+        {/* Signed out there is nothing on this screen for a footnote to be
+            about, so there isn't one. */}
+        {signedIn ? (
+          <Animated.View style={enterNote}>
+            <Text style={styles.note}>
+              Counted from finished workouts only — a workout you end early
+              still counts the sets you did.
+            </Text>
+          </Animated.View>
+        ) : null}
       </View>
     </ScrollView>
   );
@@ -147,12 +133,6 @@ const styles = StyleSheet.create({
   },
 
   body: { gap: spacing.md },
-  sectionNote: {
-    ...type.helper,
-    fontSize: 14,
-    color: colors.mutedOnDark,
-    marginTop: spacing.sm,
-  },
   note: {
     ...type.helper,
     fontSize: 13,

@@ -191,14 +191,20 @@ describe('Insights and Streaks', () => {
     }
   });
 
-  it('tells a signed-out user why Insights is empty, and still shows the session', async () => {
+  it('tells a signed-out user why Insights is empty, and nothing else', async () => {
     const root = await launch();
     press(root, 'Insights');
 
     expect(hasText(root, 'Nothing to count yet')).toBe(true);
-    // The session card is real data, so it stays — just labelled for what it is.
+
+    // The session card belongs to the Workout tab and only there. It used to
+    // appear here too, which put the same three numbers on two tabs and read
+    // as a bug rather than as a summary.
+    expect(hasText(root, 'THIS SESSION')).toBe(false);
+
+    // And it is still on the Workout tab, where it always was.
+    press(root, 'Workout');
     expect(hasText(root, 'THIS SESSION')).toBe(true);
-    expect(hasText(root, 'Session numbers reset when the app restarts')).toBe(true);
   });
 
   it('shows lifetime totals and a rolling weekly count', async () => {
