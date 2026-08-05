@@ -31,12 +31,24 @@ export type FocusTotals = {
   focusSeconds: number;
   setsCompleted: number;
   workoutsFinished: number;
+  /**
+   * Workouts where every planned set got banked — `workoutsFinished` minus the
+   * ones cut short. Drives the Streaks tab's challenge.
+   *
+   * A counter and not a ratio on purpose. "78% completion" invites reading a
+   * bad week as a failing grade, and this app doesn't grade anyone; a count
+   * only ever goes up, so a session ended early costs nothing except not
+   * counting. It also means the field ratchets in the security rules like every
+   * other total, instead of needing one that can go down.
+   */
+  fullWorkouts: number;
 };
 
 export const NO_TOTALS: FocusTotals = {
   focusSeconds: 0,
   setsCompleted: 0,
   workoutsFinished: 0,
+  fullWorkouts: 0,
 };
 
 /**
@@ -50,6 +62,15 @@ export type WorkoutRecord = {
   exerciseName: string;
   focusSeconds: number;
   setsCompleted: number;
+  /**
+   * How many sets the workout set out to do.
+   *
+   * Snapshotted into `config` when Start was tapped, so editing the exercise
+   * card mid-workout can't move the goalposts — which is exactly what makes
+   * `setsCompleted >= plannedSets` a fact rather than an opinion, and the whole
+   * reason the "finish what you start" challenge is measurable at all.
+   */
+  plannedSets: number;
   restSeconds: number;
   /** Wall-clock ms when the workout ended, on the device that ran it. */
   endedAt: number;

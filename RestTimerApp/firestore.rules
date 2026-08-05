@@ -19,8 +19,8 @@ service cloud.firestore {
 
       // Readable by any signed-in user, because that is what a leaderboard is.
       // Nothing sensitive is stored here on purpose — no email address, no
-      // password, just a display name and three numbers. Signed-out visitors
-      // get nothing.
+      // password, just a display name and a handful of counters. Signed-out
+      // visitors get nothing.
       allow read: if request.auth != null;
 
       // Only ever your own row, and only in ways that keep it a valid row.
@@ -97,7 +97,13 @@ service cloud.firestore {
         && d.get('longestFocusSeconds', 0) is number
         && d.get('longestFocusSeconds', 0) >= 0
         && d.get('mostSetsInWorkout', 0) is number
-        && d.get('mostSetsInWorkout', 0) >= 0;
+        && d.get('mostSetsInWorkout', 0) >= 0
+        // Workouts where nothing was left on the table. Can never exceed the
+        // number of workouts, which is the one thing that would make the
+        // challenge card show a fraction over 100%.
+        && d.get('fullWorkouts', 0) is number
+        && d.get('fullWorkouts', 0) >= 0
+        && d.get('fullWorkouts', 0) <= d.workoutsFinished;
     }
 
     /**
@@ -127,7 +133,8 @@ service cloud.firestore {
         // Personal records are maxima. Same argument as the best streak: the
         // only legitimate write raises them.
         && after.get('longestFocusSeconds', 0) >= before.get('longestFocusSeconds', 0)
-        && after.get('mostSetsInWorkout', 0) >= before.get('mostSetsInWorkout', 0);
+        && after.get('mostSetsInWorkout', 0) >= before.get('mostSetsInWorkout', 0)
+        && after.get('fullWorkouts', 0) >= before.get('fullWorkouts', 0);
     }
 
     /** Shapes a day doc. */
@@ -154,6 +161,9 @@ service cloud.firestore {
         && d.exerciseName.size() <= 32
         && d.focusSeconds is number && d.focusSeconds >= 0
         && d.setsCompleted is number && d.setsCompleted >= 0
+        // What the workout set out to do. At least one, or "finished every set
+        // you planned" would be trivially true for a workout that planned none.
+        && d.get('plannedSets', 1) is number && d.get('plannedSets', 1) >= 1
         && d.restSeconds is number && d.restSeconds >= 0
         && d.endedAt is number;
     }

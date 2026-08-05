@@ -2,10 +2,16 @@ import React from 'react';
 import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '../components/Icon';
 import { NeedsAccount } from '../components/NeedsAccount';
-import { Pop } from '../components/Pop';
-import { WeekStrip } from '../components/WeekStrip';
+import { ProgressBar } from '../components/ProgressBar';
+import { StreakRing } from '../components/StreakRing';
 import { useAccount } from '../cloud/AccountContext';
-import { EMPTY_STREAKS } from '../copy';
+import {
+  CHALLENGE_RUNGS,
+  nextRung,
+  STREAK_MILESTONES,
+  type Rung,
+} from '../cloud/milestones';
+import { EMPTY_STREAKS, STREAKS } from '../copy';
 import { useEnter } from '../hooks/useEnter';
 import {
   colors,
@@ -17,118 +23,236 @@ import {
   type,
 } from '../theme';
 
+/** 24pt between sections, matching Insights. `spacing.lg` is 22. */
+const SECTION_GAP = 24;
+/** 16pt inside every card. */
+const CARD_PAD = 16;
+
 /**
- * Days trained in a row.
+ * Consistency, as opposed to Insights' arithmetic.
  *
- * A day counts if at least one workout finished on it — not sets, not minutes.
- * That threshold is the whole design: the point of a streak is showing up, and
- * a streak you can lose by having a short session is a streak that punishes
- * exactly the day you most needed a reason to go.
+ * The split between the two tabs is the whole design, and it is a split of
+ * *kind* rather than of quantity: Insights is what has accumulated — totals,
+ * an average, a chart, records — and this is whether you keep turning up.
+ * Nothing here is a sum of minutes or sets, and nothing on Insights is a
+ * calendar. The one number that used to appear on both — the current streak, in
+ * Insights' fourth tile — now lives here alone.
  *
- * No badges and no challenges here yet, on purpose. Both are ways of making the
- * number mean more, and the number has to be right first.
+ * ## A day counts if a workout finished on it
+ *
+ * Not sets, not minutes. That threshold is deliberate: the point of a streak is
+ * showing up, and one you can lose by having a short session punishes exactly
+ * the day somebody most needed a reason to go.
+ *
+ * ## Two ladders, doing different jobs
+ *
+ * The milestone card measures the streak against the calendar; the challenge
+ * measures workouts against themselves. Both draw a bar, which is the risk —
+ * two stacked bars can read as the same thing twice — so they are pointedly
+ * different shapes: the milestone is a thin line under a countdown, the
+ * challenge is a fat bar that is the card's main event.
+ *
+ * ## What a challenge here can and cannot see
+ *
+ * "Finished every set you planned" is `setsCompleted >= plannedSets`, both
+ * measured by this app on this device. That is the only kind of challenge that
+ * can exist here. Anything about what somebody did *in another app* — scrolling
+ * avoided, apps left unopened — is unobservable by construction: iOS hands back
+ * an opaque selection token and never says what is in it. See WorkoutRecord.
  */
 export function StreaksScreen() {
-  const { status, streak, currentStreak, trainedToday, days, today } = useAccount();
+  const { status, streak, currentStreak, trainedToday, totals } = useAccount();
 
-  const enter = useEnter();
-  const enterBody = useEnter(80);
+  const enterHero = useEnter();
+  const enterRing = useEnter(80);
+  const enterMilestone = useEnter(160);
+  const enterChallenge = useEnter(220);
+  const enterShield = useEnter(280);
+  const enterFoot = useEnter(340);
 
   const signedIn = status === 'signed-in';
 
+  // Measured against the *best* streak, not the current one. A milestone
+  // already passed in March shouldn't reappear as a target in April — the
+  // ladder tracks what has been proved, and the ring above it is where things
+  // actually stand today.
+  const milestone = nextRung(STREAK_MILESTONES, streak.bestStreak);
+  const challenge = nextRung(CHALLENGE_RUNGS, totals.fullWorkouts);
+
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <Animated.View style={[styles.hero, enter]}>
+      <Animated.View style={[styles.hero, enterHero]}>
         <Text style={styles.eyebrow}>CONSISTENCY</Text>
         <Text style={styles.masthead}>
           Streaks<Text style={styles.stop}>.</Text>
         </Text>
-        <Text style={styles.heroSub}>
-          One finished workout a day is all it takes to keep it alive.
-        </Text>
       </Animated.View>
 
-      <Animated.View style={[styles.body, enterBody]}>
-        {signedIn ? (
-          <>
-            {/* The current streak is the screen — hence a card built around the
-                number rather than a row of equal tiles. */}
-            <View
-              style={styles.current}
-              accessibilityRole="text"
-              accessibilityLabel={`Current streak: ${currentStreak} ${
-                currentStreak === 1 ? 'day' : 'days'
-              }`}>
-              <View style={styles.flame}>
-                <Icon
-                  name="flame"
-                  color={currentStreak > 0 ? colors.accent : colors.faintOnDark}
-                  size={30}
-                  strokeWidth={1.7}
-                />
-              </View>
-              <Pop value={currentStreak} depth={1.08}>
-                <Text style={styles.currentValue}>{currentStreak}</Text>
-              </Pop>
-              <Text style={styles.currentUnit}>
-                {currentStreak === 1 ? 'day streak' : 'day streak'}
-              </Text>
-              <Text style={styles.currentNote}>
-                {statusLine(currentStreak, trainedToday)}
-              </Text>
-            </View>
+      {signedIn ? (
+        <>
+          {/* 1 — the ring, which measures today */}
+          <Animated.View style={enterRing}>
+            <StreakRing
+              streak={currentStreak}
+              trainedToday={trainedToday}
+              line={ringLine(currentStreak, trainedToday)}
+            />
+          </Animated.View>
 
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>LAST SEVEN DAYS</Text>
-              <WeekStrip today={today} trainedDays={days.map(day => day.day)} />
-            </View>
+          {/* 2 — how far to the next rung */}
+          <Animated.View style={[styles.card, enterMilestone]}>
+            <MilestoneCard rung={milestone} best={streak.bestStreak} />
+          </Animated.View>
 
-            <View style={styles.best}>
-              <View style={styles.bestTile}>
-                <Icon name="trophy" color={colors.accentText} size={20} />
-              </View>
-              <View style={styles.bestText}>
-                <Text style={styles.bestLabel}>BEST EVER</Text>
-                <Text style={styles.bestValue}>
-                  {streak.bestStreak}{' '}
-                  <Text style={styles.bestUnit}>
-                    {streak.bestStreak === 1 ? 'day' : 'days'}
-                  </Text>
-                </Text>
-              </View>
-            </View>
+          {/* 3 — the one active challenge */}
+          <Animated.View style={[styles.card, enterChallenge]}>
+            <ChallengeCard rung={challenge} done={totals.fullWorkouts} />
+          </Animated.View>
 
-            <Text style={styles.note}>
-              Days are your phone's local days, and a streak isn't broken until a
-              whole one goes by without a finished workout — so it still stands
-              the morning after.
-            </Text>
-          </>
-        ) : (
+          {/* 4 — the rule, stated rather than implied */}
+          <Animated.View style={[styles.shield, enterShield]}>
+            <View style={styles.shieldTile}>
+              <Icon name="shield" color={colors.white} size={20} />
+            </View>
+            <View style={styles.shieldText}>
+              <Text style={styles.shieldTitle}>{STREAKS.shield.title}</Text>
+              <Text style={styles.shieldBody}>{STREAKS.shield.body}</Text>
+            </View>
+          </Animated.View>
+
+          {/* 5 */}
+          <Animated.View style={enterFoot}>
+            <Text style={styles.footer}>{STREAKS.footer}</Text>
+          </Animated.View>
+        </>
+      ) : (
+        <Animated.View style={enterRing}>
           <NeedsAccount empty={EMPTY_STREAKS} />
-        )}
-      </Animated.View>
+        </Animated.View>
+      )}
     </ScrollView>
   );
 }
 
 /**
- * The line under the number.
+ * The next milestone, and the distance to it.
+ *
+ * The number that leads is the *target*, not the best. A card headed by what
+ * has already been done is a trophy; this one is meant to be a direction.
+ */
+function MilestoneCard({ rung, best }: { rung: Rung | null; best: number }) {
+  if (!rung) {
+    return (
+      <>
+        <Text style={styles.cardTitle}>{STREAKS.milestone.label}</Text>
+        <Text style={styles.past}>{STREAKS.milestone.done}</Text>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <View style={styles.cardHead}>
+        <Text style={styles.cardTitle}>{STREAKS.milestone.label}</Text>
+        {/* "No best yet" rather than "0 days" — a zero here reads as a score. */}
+        <Text style={styles.best}>
+          {best > 0 ? (
+            <>
+              {STREAKS.milestone.bestLabel}{' '}
+              <Text style={styles.bestValue}>
+                {best} {best === 1 ? 'day' : 'days'}
+              </Text>
+            </>
+          ) : (
+            STREAKS.milestone.noBest.toUpperCase()
+          )}
+        </Text>
+      </View>
+
+      <View style={styles.target}>
+        <Text style={styles.targetValue}>{rung.target}</Text>
+        <Text style={styles.targetUnit}>days</Text>
+      </View>
+
+      <ProgressBar
+        value={best - rung.from}
+        max={rung.target - rung.from}
+        label={`${best} of ${rung.target} days toward the next milestone`}
+        height={8}
+        delay={260}
+      />
+
+      <Text style={styles.remaining}>
+        {best > 0
+          ? `${rung.remaining} more ${
+              rung.remaining === 1 ? 'day' : 'days'
+            } in a row and it’s yours.`
+          : `${rung.remaining} days to your first milestone.`}
+      </Text>
+    </>
+  );
+}
+
+/**
+ * The challenge. One at a time, cumulative, and it never goes backwards.
+ *
+ * A consecutive version would reset the moment somebody ended a session early,
+ * which is the single thing the app's voice is not allowed to punish. This one
+ * costs nothing for a bad day — it just doesn't count — and as a side effect it
+ * ratchets cleanly in the security rules rather than needing a counter that can
+ * go down.
+ */
+function ChallengeCard({ rung, done }: { rung: Rung | null; done: number }) {
+  return (
+    <>
+      <View style={styles.cardHead}>
+        <Text style={styles.cardTitle}>{STREAKS.challenge.label}</Text>
+        <Text style={styles.count}>
+          <Text style={styles.countNow}>{done}</Text>
+          {rung ? <Text style={styles.countOf}> of {rung.target}</Text> : null}
+        </Text>
+      </View>
+
+      <Text style={styles.challengeTitle}>{STREAKS.challenge.title}</Text>
+
+      {/* No bar once every rung is behind them: a full bar with nothing left to
+          fill is the same shape as a bar that hasn't loaded. */}
+      {rung ? (
+        <ProgressBar
+          value={done}
+          max={rung.target}
+          label={`Finish what you start: ${done} of ${rung.target} workouts`}
+          height={14}
+          delay={320}
+        />
+      ) : null}
+
+      <Text style={styles.challengeBody}>
+        {rung == null
+          ? STREAKS.challenge.done(done)
+          : done === 0
+          ? STREAKS.challenge.empty
+          : STREAKS.challenge.body}
+      </Text>
+    </>
+  );
+}
+
+/**
+ * The line under the ring.
  *
  * Four states, and the difference between them matters more than the number
  * does: "done for today" and "today is still open" are the same integer and
  * completely different situations to be in.
  */
-function statusLine(current: number, trainedToday: boolean): string {
+function ringLine(current: number, trainedToday: boolean): string {
   if (current === 0) {
-    return 'One finished workout today and you’re on the board.';
+    return STREAKS.ring.none;
   }
-  if (trainedToday) {
-    return current === 1
-      ? 'Day one, done. The hard part is tomorrow.'
-      : 'Today’s in the bank. Nothing left to prove.';
+  if (!trainedToday) {
+    return STREAKS.ring.open;
   }
-  return 'Still alive. One workout today and it stays that way.';
+  return current === 1 ? STREAKS.ring.firstDay : STREAKS.ring.banked;
 }
 
 const styles = StyleSheet.create({
@@ -136,93 +260,89 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     paddingBottom: spacing.xxl,
-    gap: spacing.lg,
+    gap: SECTION_GAP,
   },
 
   hero: { gap: 2 },
   eyebrow: { ...type.tag, color: colors.accentText, marginBottom: spacing.xs },
   masthead: { ...sized(type.display, 42), color: colors.white },
   stop: { color: colors.accent },
-  heroSub: {
-    ...type.helper,
-    fontSize: 14,
-    color: colors.mutedOnDark,
-    lineHeight: 20,
-    marginTop: spacing.sm,
-  },
-
-  body: { gap: spacing.md },
-
-  current: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.md,
-    gap: 2,
-  },
-  flame: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accentWash,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
-  },
-  currentValue: { ...sized(type.mega, 68), ...tabular, color: colors.white },
-  currentUnit: { ...type.tag, color: colors.accentText },
-  currentNote: {
-    ...type.helper,
-    fontSize: 14,
-    color: colors.mutedOnDark,
-    lineHeight: 20,
-    textAlign: 'center',
-    marginTop: spacing.sm,
-  },
 
   card: {
     backgroundColor: colors.surface,
     borderWidth: HAIRLINE,
     borderColor: colors.hairline,
     borderRadius: radius.lg,
-    padding: spacing.md,
+    padding: CARD_PAD,
     gap: spacing.md,
+  },
+  cardHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   cardTitle: { ...sized(type.tag, 10), color: colors.accentText },
 
-  best: {
+  best: { ...sized(type.tag, 10), color: colors.faintOnDark },
+  bestValue: { color: colors.mutedOnDark },
+
+  /** Target and unit on one baseline, so "30 days" reads as one thing. */
+  target: { flexDirection: 'row', alignItems: 'baseline', gap: 7 },
+  targetValue: { ...sized(type.display, 40), ...tabular, color: colors.white },
+  targetUnit: { ...type.body, fontWeight: '700', color: colors.mutedOnDark },
+
+  remaining: {
+    ...type.helper,
+    fontSize: 14,
+    color: colors.mutedOnDark,
+    lineHeight: 20,
+  },
+  past: { ...type.body, fontWeight: '600', color: colors.white, lineHeight: 23 },
+
+  count: { flexDirection: 'row', alignItems: 'baseline' },
+  countNow: { ...sized(type.title, 22), ...tabular, color: colors.white },
+  countOf: { ...type.body, fontWeight: '600', color: colors.faintOnDark },
+
+  challengeTitle: { ...sized(type.title, 21), color: colors.white },
+  challengeBody: {
+    ...type.helper,
+    fontSize: 14,
+    color: colors.mutedOnDark,
+    lineHeight: 20,
+  },
+
+  shield: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.md,
     backgroundColor: colors.surface,
     borderWidth: HAIRLINE,
     borderColor: colors.hairline,
     borderRadius: radius.lg,
-    padding: spacing.md,
+    padding: CARD_PAD,
   },
-  bestTile: {
+  shieldTile: {
     width: 44,
     height: 44,
-    borderRadius: radius.md,
-    backgroundColor: colors.accentWash,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
+    borderRadius: radius.sm + 2,
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bestText: { flex: 1, gap: 3 },
-  bestLabel: { ...sized(type.tag, 10), color: colors.accentText },
-  bestValue: { ...sized(type.title, 24), ...tabular, color: colors.white },
-  bestUnit: { ...type.body, fontWeight: '600', color: colors.mutedOnDark },
+  shieldText: { flex: 1, gap: 4, paddingTop: 1 },
+  shieldTitle: { ...type.body, fontSize: 17, fontWeight: '800', color: colors.white },
+  shieldBody: {
+    ...type.helper,
+    fontSize: 14,
+    color: colors.mutedOnDark,
+    lineHeight: 20,
+  },
 
-  note: {
+  footer: {
     ...type.helper,
     fontSize: 13,
     color: colors.faintOnDark,
     lineHeight: 18,
-    marginTop: spacing.xs,
+    textAlign: 'center',
   },
 });

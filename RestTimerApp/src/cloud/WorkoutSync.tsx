@@ -60,6 +60,11 @@ export function WorkoutSync() {
       exerciseName: state.config.exerciseName,
       focusSeconds: state.totalLockedSeconds,
       setsCompleted: state.setsCompleted,
+      // From `config`, not from the exercise in the list: `config` is the
+      // snapshot taken when Start was tapped, so an exercise edited to two sets
+      // halfway through a five-set workout can't retroactively turn it into a
+      // finished one. See WorkoutRecord.plannedSets.
+      plannedSets: state.config.totalSets,
       restSeconds: state.totalRestSeconds,
       endedAt,
       // Stamped here, on the device, from the moment the workout ended — not

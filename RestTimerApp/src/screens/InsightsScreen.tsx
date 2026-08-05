@@ -56,7 +56,7 @@ const CARD_PAD = 16;
  * finds out about the moment they finish their first workout.
  */
 export function InsightsScreen() {
-  const { status, totals, records, days, today, currentStreak } = useAccount();
+  const { status, totals, records, days, today } = useAccount();
   const [signingIn, setSigningIn] = useState(false);
 
   const enterHero = useEnter();
@@ -78,6 +78,10 @@ export function InsightsScreen() {
   const focus = describeSpan(totals.focusSeconds);
   const longest = describeSpan(records.longestFocusSeconds);
   const weekSpan = describeSpan(weekFocusSeconds);
+  // Guarded, because the first thing every account divides by is zero.
+  const perWorkout = describeSpan(
+    totals.workoutsFinished > 0 ? totals.focusSeconds / totals.workoutsFinished : 0,
+  );
 
   // Lifetime seconds per set, used to price this week's focus in sets. See
   // extraSetsLine in copy.ts for why the two spans have to differ.
@@ -122,11 +126,15 @@ export function InsightsScreen() {
             value={signedIn ? String(totals.workoutsFinished) : null}
             unit={totals.workoutsFinished === 1 ? 'done' : 'done'}
           />
+          {/* Was the current streak, until the Streaks tab grew a hero ring
+              around that same number. An average is this screen's character
+              anyway — Insights is arithmetic, Streaks is the calendar — and it
+              needs no field the account doesn't already have. */}
           <Tile
             icon="timer"
-            label="Current streak"
-            value={signedIn ? String(currentStreak) : null}
-            unit={currentStreak === 1 ? 'day' : 'days'}
+            label="Avg. per workout"
+            value={signedIn && totals.workoutsFinished > 0 ? perWorkout.value : null}
+            unit={perWorkout.unit}
           />
         </View>
       </Animated.View>

@@ -586,6 +586,12 @@ already on screen back at you wearing a hat. The version that ships compares
 denominator span different windows and the answer carries information. It hides
 entirely until there is a set count to divide by.
 
+**The fourth grid tile is an average, not the streak.** It was the current
+streak until the Streaks tab grew a hero ring around that same number, and one
+figure in two places is one too many. `focusSeconds ÷ workoutsFinished` needs no
+field the account doesn't already have, and an average is this screen's
+character anyway: Insights is arithmetic, Streaks is the calendar.
+
 **Personal records needed new data.** Every other number on the account is a
 sum, and no amount of adding tells you the largest single entry. So
 `longestFocusSeconds` and `mostSetsInWorkout` are maintained as maxima in the
@@ -622,19 +628,42 @@ Three things about it are load-bearing:
   streak is only true as of the day it was written, so `streakToday()` takes off
   a missed day when the screen asks. Yesterday still counts, or everyone's
   streak would read zero every morning until they got to the gym.
-- **The week strip is rolling, not Monday-to-Sunday.** A calendar week puts
-  empty boxes to the right of today for most of the week, and a box you haven't
-  reached yet looks exactly like one you missed.
+- **The ring measures today, not the streak.** "Eleven days" isn't a proportion
+  of anything, so a ring filled by the streak itself would need a denominator
+  invented for it. The arc is empty while today is still open and closes into a
+  full circle once a workout lands — the one thing on the screen anybody can act
+  on right now. Progress toward the next milestone *is* a real fraction, and it
+  has its own bar in the card below.
 
 All of that arithmetic lives in `src/cloud/days.ts` as pure functions with no
 imports, because it is the kind of logic that looks obviously right and is wrong
 at month boundaries, leap days and the two nights a year the clocks change.
 `__tests__/days.test.ts` covers each of those.
 
+**Two ladders, and why the bars measure a leg rather than the whole climb.**
+Streak milestones run 3, 7, 14, 30, 60, 100, 200, 365 — three is the first
+weekend survived, seven is a week, and the gaps roughly double from there
+because 30 straight to 100 leaves seventy days where the bar moves under 1.5% a
+session. The challenge ladder is flatter (3, 5, 10, 25, 50, 100) because it is
+paced by how often somebody trains rather than by the calendar. Both bars fill
+from the rung just cleared, not from zero: measured from zero, arriving at 100
+hands you a bar to 200 that is already half full before a single day of that leg
+has been done. `src/cloud/milestones.ts` is pure and tested for exactly that.
+
+**The challenge counts something the app can actually see.** "Finish what you
+start" is `setsCompleted >= plannedSets`, two numbers this app measured itself —
+`plannedSets` is the snapshot `config` took when Start was tapped, so editing an
+exercise mid-workout can't move the goalposts. Anything about what somebody did
+*in another app* is unobservable by construction, for the same Screen Time
+reason the Insights tab has no per-app breakdown. It is cumulative rather than
+consecutive, so a session ended early costs nothing — which is both the kinder
+design and the one that ratchets cleanly in `firestore.rules` instead of needing
+a counter that can go down.
+
 `firestore.rules` is the security model and has to be pasted into the Firebase
-console by hand — **including again after this change**, which added the `days`
-collection. The API key in `firebaseConfig.ts` protects nothing and is meant to
-be committed.
+console by hand — **including again after this change**, which added
+`fullWorkouts` to the profile and `plannedSets` to a workout. The API key in
+`firebaseConfig.ts` protects nothing and is meant to be committed.
 
 ## State & persistence
 

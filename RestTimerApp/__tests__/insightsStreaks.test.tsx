@@ -71,8 +71,10 @@ function createFakeCloud() {
   return {
     backend,
     recorded,
-    push(totals: FocusTotals, streak: StreakState = NO_STREAK) {
-      latest = { totals, streak, records: latest.records };
+    // Partial, so a test names only the numbers it cares about — and adding a
+    // field to FocusTotals doesn't mean editing every call site.
+    push(totals: Partial<FocusTotals>, streak: StreakState = NO_STREAK) {
+      latest = { totals: { ...NO_TOTALS, ...totals }, streak, records: latest.records };
       ReactTestRenderer.act(() => notifyAccount?.(latest));
     },
     pushRecords(records: PersonalRecords) {
@@ -240,7 +242,11 @@ describe('Insights and Streaks', () => {
     expect(hasLabel(root, 'Time saved: 4h 12m')).toBe(true);
     expect(hasLabel(root, 'Sets finished: 214 sets')).toBe(true);
     expect(hasLabel(root, 'Workouts: 31 done')).toBe(true);
-    expect(hasLabel(root, 'Current streak: 5 days')).toBe(true);
+    // 15,120s over 31 workouts is 487s, which rounds to 8 minutes. The fourth
+    // tile is an average rather than the streak: the streak has a hero ring of
+    // its own one tab over, and one number in two places is one too many.
+    expect(hasLabel(root, 'Avg. per workout: 8 minutes')).toBe(true);
+    expect(hasLabel(root, 'Current streak: 5 days')).toBe(false);
 
     // The account card has done its job and got out of the way.
     expect(hasText(root, 'Save your progress')).toBe(false);
@@ -304,17 +310,51 @@ describe('Insights and Streaks', () => {
 
     press(root, 'Streaks');
 
-    expect(hasLabel(root, 'Current streak: 3 days')).toBe(true);
-    expect(hasText(root, '11')).toBe(true);
+    // The ring announces the number and today's state together — the two Texts
+    // inside it would otherwise read as "3" and "DAY STREAK".
+    expect(hasLabel(root, '3 days, trained today')).toBe(true);
     expect(hasText(root, 'Today’s in the bank. Nothing left to prove.')).toBe(true);
 
-    // Monday is today and trained; Sunday and Saturday before it are trained;
-    // the four before that are not.
-    expect(hasLabel(root, 'Mon, today: trained')).toBe(true);
-    expect(hasLabel(root, 'Sun: trained')).toBe(true);
-    expect(hasLabel(root, 'Sat: trained')).toBe(true);
-    expect(hasLabel(root, 'Fri: no workout')).toBe(true);
-    expect(hasLabel(root, 'Tue: no workout')).toBe(true);
+    // Best ever 11 puts the next milestone at 14, three days out.
+    expect(hasText(root, '11 days')).toBe(true);
+    expect(hasText(root, '14')).toBe(true);
+    expect(hasText(root, '3 more days in a row and it’s yours.')).toBe(true);
+  });
+
+  it('measures the milestone against the best streak, not the current one', async () => {
+    // A milestone cleared in March must not come back as a target in April.
+    const root = await launch();
+    await signIn(root);
+
+    cloud.push(NO_TOTALS, {
+      currentStreak: 1,
+      bestStreak: 30,
+      lastActiveDay: '2026-08-03',
+    });
+
+    press(root, 'Streaks');
+
+    // 30 is cleared, so the target is 60 — not 3, which is where a ladder read
+    // off the current streak of 1 would have started again.
+    expect(hasText(root, '60')).toBe(true);
+    expect(hasText(root, '30 more days in a row and it’s yours.')).toBe(true);
+  });
+
+  it('counts only the workouts that finished every planned set', async () => {
+    const root = await launch();
+    await signIn(root);
+
+    press(root, 'Streaks');
+    // Nothing banked: the count is honest and the line is an invitation.
+    expect(hasLabel(root, 'Finish what you start: 0 of 3 workouts')).toBe(true);
+    expect(
+      hasText(root, 'Finish every set you planned, three times over.'),
+    ).toBe(true);
+
+    cloud.push({ workoutsFinished: 9, fullWorkouts: 4 });
+
+    // Four clears the first rung, so the target moves up to five.
+    expect(hasLabel(root, 'Finish what you start: 4 of 5 workouts')).toBe(true);
   });
 
   it('keeps yesterday’s streak alive before today’s workout', async () => {
@@ -329,7 +369,7 @@ describe('Insights and Streaks', () => {
     });
 
     press(root, 'Streaks');
-    expect(hasLabel(root, 'Current streak: 6 days')).toBe(true);
+    expect(hasLabel(root, '6 days, not trained today yet')).toBe(true);
     expect(hasText(root, 'Still alive. One workout today and it stays that way.')).toBe(
       true,
     );
@@ -346,12 +386,14 @@ describe('Insights and Streaks', () => {
     });
 
     press(root, 'Streaks');
-    expect(hasLabel(root, 'Current streak: 0 days')).toBe(true);
-    expect(hasText(root, 'One finished workout today and you’re on the board.')).toBe(
-      true,
-    );
-    // The record survives the streak that set it.
-    expect(hasText(root, '9')).toBe(true);
+    expect(hasLabel(root, '0 days, not trained today yet')).toBe(true);
+    expect(
+      hasText(root, 'Nothing running yet. Finish a workout today and that’s day one.'),
+    ).toBe(true);
+    // The record survives the streak that set it, and still drives the ladder:
+    // best 9 puts the next milestone at 14.
+    expect(hasText(root, '9 days')).toBe(true);
+    expect(hasText(root, '14')).toBe(true);
   });
 
   it('stamps a finished workout with the local day it happened on', async () => {

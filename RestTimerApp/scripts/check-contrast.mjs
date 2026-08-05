@@ -29,6 +29,7 @@ const ACCENT_TEXT = '#9E76F7';
 const WHITE = '#FFFFFF';
 const SURFACE = '#17122A';
 const RAISED = '#201A38';
+const HAIRLINE = '#2E2647';
 const PEAK_ON_INK = 0.12;
 const PEAK_ON_ACCENT = 0.06;
 
@@ -116,6 +117,10 @@ check('white on the gradient, light end', WHITE, ACCENT, LARGE);
 console.log('\nNon-text contrast (WCAG 1.4.11 wants 3.0 for UI):');
 check('accent fill vs dark ground', ACCENT, glowedInk, LARGE);
 check('white on the accent button', WHITE, ACCENT, LARGE);
+// The Streaks tab's two progress bars and its streak ring are all the same
+// pair: an accent fill against a hairline track. If the fill can't be told from
+// the track, the bar carries no information at all.
+check('progress fill vs its track', ACCENT, HAIRLINE, LARGE);
 
 // --- Confirm the model against what actually renders ---------------------
 const browser = await chromium.launch();

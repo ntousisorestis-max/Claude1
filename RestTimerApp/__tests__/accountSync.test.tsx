@@ -98,9 +98,13 @@ function createFakeCloud() {
     rejectAuthWith(code: string) {
       authError = { code };
     },
-    pushTotals(totals: FocusTotals) {
+    pushTotals(totals: Partial<FocusTotals>) {
       ReactTestRenderer.act(() =>
-        notifyAccount?.({ totals, streak: NO_STREAK, records: NO_RECORDS }),
+        notifyAccount?.({
+          totals: { ...NO_TOTALS, ...totals },
+          streak: NO_STREAK,
+          records: NO_RECORDS,
+        }),
       );
     },
     pushAccount(data: AccountData) {
@@ -272,8 +276,40 @@ describe('accounts and focus-stat sync', () => {
       exerciseName: 'Squat',
       focusSeconds: 120,
       setsCompleted: 1,
+      // What the workout set out to do, alongside what it did. The pair is what
+      // makes the Streaks challenge measurable — see WorkoutRecord.plannedSets.
+      plannedSets: 1,
     });
     expect(cloud.recorded[0].id).toMatch(/^w_/);
+  });
+
+  it('records what a cut-short workout planned, not just what it did', async () => {
+    // The pair the Streaks challenge is counted from. A workout that bailed
+    // after one of three sets has to arrive at the server *saying* it planned
+    // three, or "finished every set you planned" would be true of every session
+    // ever recorded.
+    const root = await launch();
+    await signUp(root);
+
+    press(root, 'Workout');
+    typeInto(root, 'Bench press', 'Rows');
+    press(root, 'Save exercise');
+    press(root, 'Start Rows');
+    // A minute in. Ending with nothing banked *and* no time reclaimed is the
+    // one case the outbox drops on the floor, and it isn't the case under test.
+    await ReactTestRenderer.act(async () => {
+      jest.advanceTimersByTime(60_000);
+    });
+    press(root, 'End workout');
+    press(root, 'End it now');
+    await ReactTestRenderer.act(async () => {});
+
+    backToList(root);
+
+    expect(cloud.recorded[0]).toMatchObject({
+      setsCompleted: 0,
+      plannedSets: 3,
+    });
   });
 
   it('sends nothing while signed out', async () => {

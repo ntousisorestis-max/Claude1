@@ -298,6 +298,67 @@ export function extraSetsLine(sets: number): string {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Streaks                                                                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The consistency tab.
+ *
+ * The rule this whole screen is written against: **never make a missed day into
+ * a telling-off.** Somebody looking at a broken streak already knows. Every line
+ * below that could have been a jab is a door back in instead, and the shield
+ * card states the rule flatly rather than dressing a loss up as a lesson.
+ *
+ * The other rule is the app's usual one — nothing here promises a mechanic that
+ * doesn't exist. There is no freeze, no rest day, no pass, so the card says so
+ * in as many words rather than leaving a gap somebody fills in hopefully.
+ */
+export const STREAKS = {
+  /** Under the ring. Four states of the same integer, and they're not alike. */
+  ring: {
+    none: 'Nothing running yet. Finish a workout today and that’s day one.',
+    open: 'Still alive. One workout today and it stays that way.',
+    firstDay: 'Day one, done. The hard part is tomorrow.',
+    banked: 'Today’s in the bank. Nothing left to prove.',
+  },
+  milestone: {
+    label: 'NEXT MILESTONE',
+    bestLabel: 'BEST EVER',
+    /** Before there is a best to show. Not "0 days". */
+    noBest: 'No best yet',
+    /** Past the top rung. Rare, and it should feel like it. */
+    done: 'You’re past every milestone there is. Genuinely — that’s the lot.',
+  },
+  challenge: {
+    label: 'CHALLENGE',
+    title: 'Finish what you start',
+    body:
+      'Workouts where you banked every set you planned. Ending one early ' +
+      'costs you nothing — it just doesn’t count toward this.',
+    /** Sits under the bar at zero, where "0 of 3" alone reads as a locked door. */
+    empty: 'Finish every set you planned, three times over.',
+    /**
+     * Past the top rung.
+     *
+     * Its own line because the alternative is a bar reading "140 of 140" — a
+     * tautology under a full bar, which looks like a placeholder rather than
+     * like having finished the thing.
+     */
+    done: (count: number) =>
+      `Every rung of this one is behind you — ${count} workouts, every ` +
+      'planned set banked.',
+  },
+  shield: {
+    title: 'One missed day ends it',
+    body:
+      'A streak breaks when a whole calendar day goes by with no finished ' +
+      'workout. Any workout protects it — one set counts. There’s no freeze, ' +
+      'no rest day and no way to buy it back.',
+  },
+  footer: 'Nobody’s watching. That’s rather the point.',
+} as const;
+
+/* -------------------------------------------------------------------------- */
 /* Empty states                                                               */
 /* -------------------------------------------------------------------------- */
 

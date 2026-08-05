@@ -121,6 +121,7 @@ function totalsFrom(data: Record<string, unknown> | undefined): FocusTotals {
         focusSeconds: num(data, 'focusSeconds'),
         setsCompleted: num(data, 'setsCompleted'),
         workoutsFinished: num(data, 'workoutsFinished'),
+        fullWorkouts: num(data, 'fullWorkouts'),
       }
     : NO_TOTALS;
 }
@@ -230,6 +231,7 @@ export const firebaseBackend: CloudBackend = {
         focusSeconds: 0,
         setsCompleted: 0,
         workoutsFinished: 0,
+        fullWorkouts: 0,
         currentStreak: 0,
         bestStreak: 0,
         lastActiveDay: null,
@@ -296,6 +298,7 @@ export const firebaseBackend: CloudBackend = {
         exerciseName: record.exerciseName,
         focusSeconds: record.focusSeconds,
         setsCompleted: record.setsCompleted,
+        plannedSets: record.plannedSets,
         restSeconds: record.restSeconds,
         endedAt: record.endedAt,
         day: record.day,
@@ -331,6 +334,13 @@ export const firebaseBackend: CloudBackend = {
           focusSeconds: increment(record.focusSeconds),
           setsCompleted: increment(record.setsCompleted),
           workoutsFinished: increment(1),
+          // Only when nothing was left on the table. Decided here, from two
+          // numbers the device measured itself, rather than trusting a flag the
+          // client could set — and incremented rather than recomputed, so it
+          // never has to re-read every workout that came before.
+          fullWorkouts: increment(
+            record.setsCompleted >= record.plannedSets ? 1 : 0,
+          ),
           // Written as values, not increments: a streak is not a running total
           // — it resets to 1 after a gap — so it has to be computed from what
           // was there and written whole.
