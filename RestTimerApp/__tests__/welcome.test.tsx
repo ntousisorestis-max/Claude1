@@ -8,6 +8,12 @@
 import React from 'react';
 import ReactTestRenderer, { type ReactTestInstance } from 'react-test-renderer';
 import App from '../App';
+// The do-nothing cloud, passed explicitly. Before Firebase was configured this
+// was what `<App />` picked by itself; now that a project exists, the default is
+// the real SDK — which these tests have no business starting, and which Jest
+// can't even parse (it ships as ESM, and node_modules isn't transformed).
+// Naming it here keeps this suite about the app and off the network.
+import { localOnlyBackend } from '../src/cloud/backend';
 import { WELCOME } from '../src/copy';
 import { createMemoryStorage, createReturningStorage } from '../src/state/storage';
 import type { AppStorage } from '../src/state/storage';
@@ -52,7 +58,9 @@ describe('the welcome screen', () => {
   const launch = async (storage: AppStorage) => {
     let tree!: ReactTestRenderer.ReactTestRenderer;
     await ReactTestRenderer.act(async () => {
-      tree = ReactTestRenderer.create(<App storage={storage} />);
+      tree = ReactTestRenderer.create(
+        <App storage={storage} backend={localOnlyBackend} />,
+      );
     });
     trees.push(tree);
     return tree.root;

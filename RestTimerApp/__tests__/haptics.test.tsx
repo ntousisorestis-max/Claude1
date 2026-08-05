@@ -27,6 +27,12 @@ import React from 'react';
 import ReactTestRenderer, { type ReactTestInstance } from 'react-test-renderer';
 import notifee, { EventType } from '@notifee/react-native';
 import App from '../App';
+// The do-nothing cloud, passed explicitly. Before Firebase was configured this
+// was what `<App />` picked by itself; now that a project exists, the default is
+// the real SDK — which these tests have no business starting, and which Jest
+// can't even parse (it ships as ESM, and node_modules isn't transformed).
+// Naming it here keeps this suite about the app and off the network.
+import { localOnlyBackend } from '../src/cloud/backend';
 import * as haptics from '../src/haptics';
 import { createReturningStorage } from '../src/state/storage';
 
@@ -82,7 +88,9 @@ describe('haptics', () => {
   const launch = async () => {
     let tree!: ReactTestRenderer.ReactTestRenderer;
     await ReactTestRenderer.act(async () => {
-      tree = ReactTestRenderer.create(<App storage={createReturningStorage()} />);
+      tree = ReactTestRenderer.create(
+        <App storage={createReturningStorage()} backend={localOnlyBackend} />,
+      );
     });
     trees.push(tree);
     return tree.root;

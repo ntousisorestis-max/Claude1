@@ -1,16 +1,22 @@
 # Setting up Firebase
 
-> **Already set this up once?** The security rules have changed twice since —
-> once for the `days` collection, and again for the personal-record fields on
-> the Insights tab. Redo **step 6** (copy `firestore.rules` into the console and
-> Publish) or finished workouts will sit on "waiting to be saved" forever.
-> Nothing else needs redoing.
+> **This is done.** Project `liftlock-90b25` exists, Email/Password sign-in is
+> on, Firestore is live in `europe-west3`, the rules are published and the
+> config is in `src/cloud/firebaseConfig.ts`. The walkthrough below is kept for
+> reference — if you ever need a second project (a separate one for testing,
+> say), it still applies.
+>
+> **The one thing that comes back.** Every time `firestore.rules` changes in
+> this repo, it has to be re-pasted into the console — **step 6**. Nothing in
+> the app can do that for you, and until you do, finished workouts sit on
+> "waiting to be saved" forever. The rules have changed three times so far: the
+> `days` collection, the personal-record fields, and the Streaks tab's
+> `fullWorkouts` and `plannedSets`.
 
-You have to do this part yourself, and it's unavoidable: a Firebase project is
-tied to a Google account and a billing identity, so nobody can create one on
-your behalf. It takes about ten minutes and costs nothing.
+A Firebase project is tied to a Google account and a billing identity, so nobody
+can create one on your behalf. It takes about ten minutes and costs nothing.
 
-Until you've done it the app runs exactly as it always has — timer, blocking
+Before it's set up the app runs exactly as it always has — timer, blocking
 simulation, everything — with the Account section on Settings saying accounts
 aren't switched on yet. Nothing is broken in the meantime.
 

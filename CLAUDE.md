@@ -60,7 +60,15 @@ Bare **React Native 0.86** with TypeScript. Not Expo.
   phone, one JSON blob under `liftlock.state.v3`.
 - Firebase (Auth + Firestore) backs optional accounts. It's the JavaScript SDK,
   not `@react-native-firebase`, because the web build is the only target that
-  has ever actually run.
+  has ever actually run. **The project is live** — `liftlock-90b25`, Firestore
+  in `europe-west3`, config committed in `src/cloud/firebaseConfig.ts`. Those
+  values are public identifiers, not secrets; `firestore.rules` is what protects
+  the data.
+- **Whenever `firestore.rules` changes, they have to paste it into the Firebase
+  console by hand.** Nothing in the app can do it. Say so every time, or
+  finished workouts sit on "waiting to be saved" forever.
+- Tests must never start the real SDK. Suites that render `<App />` pass
+  `backend={localOnlyBackend}`; Jest can't parse Firebase's ESM.
 - `.web.ts` / `.web.tsx` files automatically replace their native twins in the
   web build. That's how the browser gets a working version of things phones do
   natively.

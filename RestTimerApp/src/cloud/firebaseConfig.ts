@@ -25,12 +25,12 @@
  * rather than a broken one — and the tests run in it.
  */
 export const FIREBASE_CONFIG = {
-  apiKey: '',
-  authDomain: '',
-  projectId: '',
-  storageBucket: '',
-  messagingSenderId: '',
-  appId: '',
+  apiKey: 'AIzaSyA_s6RIXXDRKaen-RQ0wo7FPWbSfWr1K3M',
+  authDomain: 'liftlock-90b25.firebaseapp.com',
+  projectId: 'liftlock-90b25',
+  storageBucket: 'liftlock-90b25.firebasestorage.app',
+  messagingSenderId: '400644656679',
+  appId: '1:400644656679:web:c183a15f1af0c9b3430802',
 };
 
 /**
