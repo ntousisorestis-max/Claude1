@@ -12,7 +12,8 @@
     "web": "webpack serve --mode development",
     "build:web": "webpack --mode production",
     "icons": "node scripts/generate-icons.mjs",
-    "contrast": "node scripts/check-contrast.mjs"
+    "contrast": "node scripts/check-contrast.mjs",
+    "hourglass": "node scripts/feather-hourglass.mjs"
   },
   "dependencies": {
     "@notifee/react-native": "^9.1.8",

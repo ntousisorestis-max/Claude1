@@ -1,151 +1,276 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
-import Svg, {
-  Defs,
-  Ellipse,
-  LinearGradient,
-  Path,
-  RadialGradient,
-  Rect,
-  Stop,
-} from 'react-native-svg';
+import React, { useEffect, useId, useMemo, useRef } from 'react';
+import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
+import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { useReduceMotion } from '../hooks/useReduceMotion';
 import { colors } from '../theme';
 
 /**
- * The header's illustration: an hourglass with violet sand, lit from within.
+ * The header's illustration: a 3D render of the hourglass, lit from within.
  *
- * Drawn rather than shipped as a PNG. It has to sit on a background that is
- * itself a gradient, at whatever size the header gives it, in a palette that
- * has already changed once — all three of which a raster asset is bad at. It
- * also costs nothing to download and stays sharp on every density.
+ * ## Why this is a bitmap now, and what that cost
  *
- * The only motion is the falling sand, which is why the whole thing doesn't
- * read as a static sticker. It's one looping opacity fade on a native driver,
- * and it stops entirely under reduce-motion.
+ * It used to be hand-drawn SVG, which was the right call while it was an
+ * illustration. It is now a render — real glass, real reflections, glowing sand
+ * — and that is not reachable with paths and gradients at any sane line count.
+ * So the object is a PNG and everything *around* it is still code.
+ *
+ * The PNG is generated, not raw: `scripts/feather-hourglass.mjs` takes the
+ * render and dissolves its edges to nothing, because the render is a finished
+ * picture on an opaque ground and would otherwise sit on the screen as a
+ * rectangle. The reasoning, and the variants tried and rejected, are in there.
+ *
+ * The one thing lost by not having a true cutout: the render's own ring and
+ * glow are baked in, so they can't be recoloured or pulsed. The ring is
+ * therefore *not* drawn here — one drawn ring over one baked ring would read as
+ * a mistake — and the rotation is kept to ±0.8° rather than the ±1.5° a cutout
+ * would allow, because a ring you can see turning is a ring that looks wrong.
+ *
+ * ## The motion
+ *
+ * Four things, on deliberately unrelated timings so they never sync up into a
+ * mechanical bob: a 4.4s float, an 11s drift of rotation, a 5.2s breath in the
+ * glow behind, and particles on a 9s cycle. Every one is transform or opacity
+ * only, so all of it runs on the native driver.
+ *
+ * Under reduce-motion the loops don't start, each value parks mid-travel, and
+ * the particles are dropped entirely — five specks frozen around an illustration
+ * read as dirt on the screen, not as a design.
+ *
+ * ## What isn't animated
+ *
+ * The sand. It can't be: it's painted into the image, and faking a stream in
+ * code would mean hardcoding the pixel coordinates of the neck of this exact
+ * render, which would silently point at the wrong place the day the art is
+ * replaced. The render already has a visible stream in the neck, and a still
+ * one reads as "time is passing" perfectly well.
  */
 
-const W = 132;
-const H = 168;
+/** The asset's own proportions. */
+const ASPECT = 651 / 541;
+/** The bloom is drawn past the art so its falloff isn't cut off at the edge. */
+const GLOW_SCALE = 1.45;
+
+/**
+ * Where the particles sit, as fractions of the box, and how far each drifts.
+ *
+ * Fixed rather than random: a fresh scatter on every render would reshuffle
+ * whenever the header re-renders, which is the single most distracting thing a
+ * background detail can do. `phase` staggers them around the shared cycle.
+ */
+const PARTICLES = [
+  { x: 0.12, y: 0.64, r: 2, drift: 26, sway: 4, phase: 0 },
+  { x: 0.87, y: 0.46, r: 1.5, drift: 22, sway: -3, phase: 0.34 },
+  { x: 0.24, y: 0.3, r: 1.2, drift: 30, sway: 3, phase: 0.61 },
+  { x: 0.79, y: 0.73, r: 2.4, drift: 18, sway: -5, phase: 0.17 },
+  { x: 0.52, y: 0.16, r: 1.3, drift: 24, sway: 2, phase: 0.82 },
+] as const;
 
 export function HeroHourglass({ size = 150 }: { size?: number }) {
   const reduceMotion = useReduceMotion();
-  const fall = useRef(new Animated.Value(0)).current;
+
+  const float = useRef(new Animated.Value(0)).current;
+  const spin = useRef(new Animated.Value(0)).current;
+  const breath = useRef(new Animated.Value(0)).current;
+  const drift = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (reduceMotion) {
-      fall.setValue(0.6);
+      // Mid-travel, not at either end: a still frame should look like the
+      // animation's average rather than like it stopped on a peak.
+      float.setValue(0.5);
+      spin.setValue(0.5);
+      breath.setValue(0.5);
       return;
     }
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(fall, {
-          toValue: 1,
-          duration: 1400,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(fall, {
-          toValue: 0.35,
-          duration: 1400,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [fall, reduceMotion]);
 
-  const height = (size / W) * H;
+    /** There and back, easing at both ends — the shape of a breath. */
+    const swing = (value: Animated.Value, duration: number) =>
+      Animated.loop(
+        Animated.sequence(
+          [1, 0].map(toValue =>
+            Animated.timing(value, {
+              toValue,
+              duration,
+              easing: Easing.inOut(Easing.quad),
+              useNativeDriver: true,
+            }),
+          ),
+        ),
+      );
+
+    const loops = [
+      swing(float, 2200),
+      swing(spin, 5500),
+      swing(breath, 2600),
+      // The particles run one way and restart, so this one is a plain ramp.
+      Animated.loop(
+        Animated.timing(drift, {
+          toValue: 1,
+          duration: 9000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ),
+    ];
+    loops.forEach(loop => loop.start());
+    return () => loops.forEach(loop => loop.stop());
+  }, [float, spin, breath, drift, reduceMotion]);
+
+  const width = size;
+  const height = Math.round(size * ASPECT);
+  const glow = Math.round(width * GLOW_SCALE);
+
+  const art = {
+    transform: [
+      {
+        translateY: float.interpolate({
+          inputRange: [0, 1],
+          outputRange: [-3, 3],
+        }),
+      },
+      {
+        rotate: spin.interpolate({
+          inputRange: [0, 1],
+          outputRange: ['-0.8deg', '0.8deg'],
+        }),
+      },
+    ],
+  };
+
+  const bloom = {
+    opacity: breath.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }),
+    transform: [
+      {
+        scale: breath.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.94, 1.05],
+        }),
+      },
+    ],
+  };
 
   return (
-    <View style={[styles.box, { width: size, height }]} pointerEvents="none">
-      {/* The bloom it sits in. Separate from the glass so it can spill past the
-          silhouette without being clipped by it. */}
-      <Svg style={styles.layer} width={size} height={height} viewBox={`0 0 ${W} ${H}`}>
-        <Defs>
-          <RadialGradient id="hg-glow" cx={W / 2} cy={H * 0.56} rx={W * 0.62} ry={H * 0.5} gradientUnits="userSpaceOnUse">
-            <Stop offset="0" stopColor={colors.accent} stopOpacity={0.42} />
-            <Stop offset="0.55" stopColor={colors.accent} stopOpacity={0.13} />
-            <Stop offset="1" stopColor={colors.accent} stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        <Rect x={0} y={0} width={W} height={H} fill="url(#hg-glow)" />
-      </Svg>
-
-      <Svg style={styles.layer} width={size} height={height} viewBox={`0 0 ${W} ${H}`}>
-        <Defs>
-          {/* The glass: barely there, brighter along the top edge. */}
-          <LinearGradient id="hg-glass" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.16} />
-            <Stop offset="1" stopColor="#FFFFFF" stopOpacity={0.04} />
-          </LinearGradient>
-          {/* Sand, lit from the top so the two bulbs don't look flat. */}
-          <LinearGradient id="hg-sand" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor="#C4A5FF" />
-            <Stop offset="1" stopColor={colors.accent} />
-          </LinearGradient>
-          <LinearGradient id="hg-frame" x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor={colors.raised} />
-            <Stop offset="1" stopColor={colors.surface} />
-          </LinearGradient>
-        </Defs>
-
-        {/* --- Glass -------------------------------------------------------
-            Concave sides, not straight ones. A pair of triangles meeting at a
-            point is a bowtie; the waist curve is what makes it an hourglass. */}
-        <Path
-          d="M32 26 H100 C100 44 90 66 68 83 H64 C42 66 32 44 32 26 Z"
-          fill="url(#hg-glass)"
-          stroke="rgba(255,255,255,0.26)"
-          strokeWidth={1.6}
-          strokeLinejoin="round"
-        />
-        <Path
-          d="M64 85 H68 C90 102 100 124 100 142 H32 C32 124 42 102 64 85 Z"
-          fill="url(#hg-glass)"
-          stroke="rgba(255,255,255,0.26)"
-          strokeWidth={1.6}
-          strokeLinejoin="round"
-        />
-
-        {/* --- Sand, still in the top bulb --------------------------------- */}
-        <Path d="M43 52 H89 C86 64 79 73 68 83 H64 C53 73 46 64 43 52 Z" fill="url(#hg-sand)" />
-        {/* --- Sand, piled in the bottom ----------------------------------- */}
-        <Path d="M38 142 C40 122 56 110 66 110 C76 110 92 122 94 142 Z" fill="url(#hg-sand)" />
-        <Ellipse cx={66} cy={138} rx={28} ry={4.5} fill="#C4A5FF" opacity={0.5} />
-
-        {/* A single highlight down the left of the upper bulb — the cheapest
-            possible cue that this is glass rather than a flat shape. */}
-        <Path
-          d="M40 32 C42 46 49 58 58 68"
-          stroke="rgba(255,255,255,0.3)"
-          strokeWidth={2.4}
-          strokeLinecap="round"
-          fill="none"
-        />
-
-        {/* --- Frame: caps and posts --------------------------------------- */}
-        <Rect x={22} y={20} width={5} height={128} rx={2.5} fill="url(#hg-frame)" />
-        <Rect x={105} y={20} width={5} height={128} rx={2.5} fill="url(#hg-frame)" />
-        <Rect x={16} y={12} width={100} height={15} rx={7.5} fill="url(#hg-frame)" />
-        <Rect x={16} y={141} width={100} height={15} rx={7.5} fill="url(#hg-frame)" />
-        <Rect x={16} y={12} width={100} height={3.5} rx={1.75} fill={colors.accent} opacity={0.55} />
-        <Rect x={16} y={152.5} width={100} height={3.5} rx={1.75} fill={colors.accent} opacity={0.3} />
-      </Svg>
-
-      {/* --- The stream, the one moving part --------------------------------- */}
-      <Animated.View style={[styles.layer, { opacity: fall }]}>
-        <Svg width={size} height={height} viewBox={`0 0 ${W} ${H}`}>
-          <Rect x={64.2} y={84} width={3.6} height={46} rx={1.8} fill="#C4A5FF" />
-        </Svg>
+    <View style={[styles.box, { width, height }]}>
+      <Animated.View
+        style={[styles.centre, { width: glow, height: glow }, bloom]}
+        pointerEvents="none">
+        <Bloom size={glow} />
       </Animated.View>
+
+      <Animated.View style={art}>
+        {/* Decorative. The headline beside it is what says what the app does,
+            and "hourglass illustration" read out after it adds nothing. */}
+        <Image
+          accessible={false}
+          source={require('../../assets/hourglass.png')}
+          style={{ width, height }}
+          resizeMode="contain"
+        />
+      </Animated.View>
+
+      {reduceMotion
+        ? null
+        : PARTICLES.map(particle => (
+            <Particle
+              key={`${particle.x}-${particle.y}`}
+              particle={particle}
+              drift={drift}
+              width={width}
+              height={height}
+            />
+          ))}
     </View>
+  );
+}
+
+/**
+ * One speck of light, phase-shifted off the shared cycle.
+ *
+ * All five read the same `drift` value rather than owning a loop each, so they
+ * cannot slide out of phase with one another over a long session — the same
+ * reason the splash screen's dots share one value. The shift is done by
+ * *sampling*: the motion is evaluated at a dozen points around the cycle,
+ * offset by this particle's phase, and handed to `interpolate` as a lookup
+ * table.
+ *
+ * The wrap is the catch. At the moment the cycle restarts, a phase-shifted
+ * particle jumps from wherever it was back to the start, and `interpolate`
+ * ramps smoothly across that jump — which would be a visible slide. It isn't,
+ * because the fade is built to reach zero at both ends of the cycle, so every
+ * particle is invisible at exactly the moment it teleports.
+ */
+function Particle({
+  particle,
+  drift,
+  width,
+  height,
+}: {
+  particle: (typeof PARTICLES)[number];
+  drift: Animated.Value;
+  width: number;
+  height: number;
+}) {
+  const style = useMemo(() => {
+    const at = (fn: (t: number) => number) => {
+      const inputRange: number[] = [];
+      const outputRange: number[] = [];
+      for (let i = 0; i <= 12; i++) {
+        const t = i / 12;
+        inputRange.push(t);
+        outputRange.push(fn((t + particle.phase) % 1));
+      }
+      return drift.interpolate({ inputRange, outputRange });
+    };
+
+    return {
+      // Zero at t=0 and t=1, so the wrap happens while it can't be seen.
+      opacity: at(t => Math.sin(Math.PI * t) ** 1.6 * 0.55),
+      transform: [
+        { translateY: at(t => -particle.drift * t) },
+        { translateX: at(t => particle.sway * Math.sin(Math.PI * 2 * t)) },
+      ],
+    };
+  }, [drift, particle]);
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.particle,
+        {
+          left: width * particle.x,
+          top: height * particle.y,
+          width: particle.r * 2,
+          height: particle.r * 2,
+          borderRadius: particle.r,
+        },
+        style,
+      ]}
+    />
+  );
+}
+
+/** The soft violet ground the object floats on. */
+function Bloom({ size }: { size: number }) {
+  // SVG gradient ids share one global namespace on the web. See GlowBackground.
+  const id = `hourglass-glow-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+
+  return (
+    <Svg width={size} height={size}>
+      <Defs>
+        <RadialGradient id={id} cx="50%" cy="50%" r="50%">
+          <Stop offset="0" stopColor={colors.accent} stopOpacity={0.22} />
+          <Stop offset="0.5" stopColor={colors.accent} stopOpacity={0.1} />
+          <Stop offset="1" stopColor={colors.accent} stopOpacity={0} />
+        </RadialGradient>
+      </Defs>
+      <Circle cx={size / 2} cy={size / 2} r={size / 2} fill={`url(#${id})`} />
+    </Svg>
   );
 }
 
 const styles = StyleSheet.create({
   box: { alignItems: 'center', justifyContent: 'center' },
-  layer: { position: 'absolute', top: 0, left: 0 },
+  centre: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
+  particle: { position: 'absolute', backgroundColor: colors.accent },
 });

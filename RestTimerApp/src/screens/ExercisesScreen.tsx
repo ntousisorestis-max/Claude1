@@ -92,6 +92,12 @@ export function ExercisesScreen() {
               </Text>
             </View>
 
+            {/* Still 132, and it has to stay there. The art carries a
+                transparent margin for its glow, so the hourglass is 86% of the
+                box and 150 was tried to win that back — at which point the
+                headline no longer fits beside it on a 360pt phone and "Focus
+                up." breaks across two lines, turning a two-line masthead into
+                three. The glow buys back the presence instead. */}
             <HeroHourglass size={132} />
           </View>
         </Animated.View>

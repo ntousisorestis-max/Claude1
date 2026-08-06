@@ -53,7 +53,10 @@ Bare **React Native 0.86** with TypeScript. Not Expo.
 
 - **Styling is React Native `StyleSheet`, always.** **Never introduce Tailwind
   or NativeWind**, or any other styling library. Match the existing files.
-- `react-native-svg` draws every icon, illustration, ring, chart and gradient.
+- `react-native-svg` draws every icon, ring, chart, glow and gradient. The one
+  bitmap illustration is the Workout tab's hourglass — see `assets/README.md`;
+  `assets/hourglass.png` is **generated** from the render beside it, don't edit
+  it by hand.
 - One `useReducer` at the root (`src/state/workoutReducer.ts`). The workout's
   *phase* is the navigation — there is no router.
 - State is saved to the device: `localStorage` in a browser, AsyncStorage on a
