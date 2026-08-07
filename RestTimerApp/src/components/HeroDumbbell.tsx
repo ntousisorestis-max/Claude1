@@ -8,7 +8,7 @@ import Svg, {
   Rect,
   Stop,
 } from 'react-native-svg';
-import { colors } from '../theme';
+import { themed, useColors } from '../theme';
 
 /**
  * The Settings header's illustration: a dumbbell, lit the way the Workout
@@ -36,6 +36,8 @@ const PARTS = [
 ];
 
 export function HeroDumbbell({ size = 150 }: { size?: number }) {
+  const styles = useStyles();
+  const colors = useColors();
   const height = (size / W) * H;
 
   return (
@@ -50,14 +52,15 @@ export function HeroDumbbell({ size = 150 }: { size?: number }) {
             cy={H / 2}
             rx={W * 0.55}
             ry={H * 0.62}
-            gradientUnits="userSpaceOnUse">
+            gradientUnits="userSpaceOnUse"
+          >
             <Stop offset="0" stopColor={colors.accent} stopOpacity={0.4} />
             <Stop offset="0.5" stopColor={colors.accent} stopOpacity={0.14} />
             <Stop offset="1" stopColor={colors.accent} stopOpacity={0} />
           </RadialGradient>
           {/* Lit from the top-left, like the hourglass's sand. */}
           <LinearGradient id="db-body" x1="0" y1="0" x2="0.4" y2="1">
-            <Stop offset="0" stopColor="#C4A5FF" />
+            <Stop offset="0" stopColor={colors.accentLit} />
             <Stop offset="0.55" stopColor={colors.accent} />
             <Stop offset="1" stopColor={colors.accentDeep} />
           </LinearGradient>
@@ -71,14 +74,32 @@ export function HeroDumbbell({ size = 150 }: { size?: number }) {
             <Rect key={part.x} {...part} fill="url(#db-body)" />
           ))}
           {/* One highlight along the top of each big plate. */}
-          <Rect x={34} y={36} width={9} height={20} rx={4.5} fill="#FFFFFF" opacity={0.28} />
-          <Rect x={117} y={36} width={9} height={20} rx={4.5} fill="#FFFFFF" opacity={0.28} />
+          <Rect
+            x={34}
+            y={36}
+            width={9}
+            height={20}
+            rx={4.5}
+            fill={colors.specular}
+            opacity={0.28}
+          />
+          <Rect
+            x={117}
+            y={36}
+            width={9}
+            height={20}
+            rx={4.5}
+            fill={colors.specular}
+            opacity={0.28}
+          />
         </G>
       </Svg>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  box: { alignItems: 'center', justifyContent: 'center' },
-});
+const useStyles = themed(() =>
+  StyleSheet.create({
+    box: { alignItems: 'center', justifyContent: 'center' },
+  }),
+);

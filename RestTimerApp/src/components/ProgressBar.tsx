@@ -1,7 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import {
+  Animated,
+  Easing,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+} from 'react-native';
 import { useReduceMotion } from '../hooks/useReduceMotion';
-import { colors, radius } from '../theme';
+import { radius, themed } from '../theme';
 
 /**
  * A track with a violet fill that slides in from the left.
@@ -38,6 +44,7 @@ export function ProgressBar({
   height?: number;
   delay?: number;
 }) {
+  const styles = useStyles();
   const reduceMotion = useReduceMotion();
   const [width, setWidth] = useState(0);
   const progress = useRef(new Animated.Value(0)).current;
@@ -70,7 +77,8 @@ export function ProgressBar({
       accessibilityLabel={label}
       accessibilityValue={{ min: 0, max, now: Math.min(value, max) }}
       onLayout={onLayout}
-      style={[styles.track, { height, borderRadius: height / 2 }]}>
+      style={[styles.track, { height, borderRadius: height / 2 }]}
+    >
       {width > 0 ? (
         <Animated.View
           style={[
@@ -94,18 +102,20 @@ export function ProgressBar({
   );
 }
 
-const styles = StyleSheet.create({
-  track: {
-    backgroundColor: colors.hairline,
-    overflow: 'hidden',
-    width: '100%',
-  },
-  fill: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    backgroundColor: colors.accent,
-    borderRadius: radius.pill,
-  },
-});
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    track: {
+      backgroundColor: colors.hairline,
+      overflow: 'hidden',
+      width: '100%',
+    },
+    fill: {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: 0,
+      backgroundColor: colors.accent,
+      borderRadius: radius.pill,
+    },
+  }),
+);

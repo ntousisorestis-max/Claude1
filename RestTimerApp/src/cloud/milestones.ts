@@ -58,7 +58,10 @@ export type Rung = {
  * single day of it has been done, and then crawls. Per-leg, every milestone
  * starts empty and fills at a rate you can feel.
  */
-export function nextRung(ladder: readonly number[], value: number): Rung | null {
+export function nextRung(
+  ladder: readonly number[],
+  value: number,
+): Rung | null {
   const count = Math.max(0, Math.floor(value));
 
   for (let i = 0; i < ladder.length; i++) {

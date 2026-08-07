@@ -40,7 +40,9 @@ const asyncStorage: AsyncStorageLike | null = (() => {
   try {
     const module = require('@react-native-async-storage/async-storage');
     const api = module?.default ?? module;
-    return typeof api?.getItem === 'function' ? (api as AsyncStorageLike) : null;
+    return typeof api?.getItem === 'function'
+      ? (api as AsyncStorageLike)
+      : null;
   } catch {
     return null;
   }

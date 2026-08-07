@@ -1,9 +1,16 @@
 import React from 'react';
-import { Animated, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import {
+  Animated,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
+} from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { Icon, type IconName } from './Icon';
 import { usePressScale } from '../hooks/usePressScale';
-import { colors, radius, sized, TAP_TARGET, type } from '../theme';
+import { radius, sized, TAP_TARGET, themed, type, useColors } from '../theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -34,6 +41,8 @@ export function GradientButton({
   onPress: () => void;
   style?: ViewStyle;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const press = usePressScale({ haptic: true });
 
   return (
@@ -42,7 +51,8 @@ export function GradientButton({
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
-      style={[styles.wrap, press.style, style]}>
+      style={[styles.wrap, press.style, style]}
+    >
       <Svg style={styles.fill} width="100%" height="100%">
         <Defs>
           {/* Both ends are existing palette tokens, and the light one is
@@ -72,32 +82,39 @@ export function GradientButton({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: {
-    minHeight: TAP_TARGET,
-    borderRadius: radius.pill,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingLeft: 26,
-    paddingRight: 8,
-    // The glow ties it to the accent buttons elsewhere in the app.
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-  },
-  fill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  /** 19px bold clears WCAG's "large text" bar (14pt bold), which is what lets
-   * white sit on the accent at all — at 18px it would need 4.5:1, not 3:1. */
-  label: { ...sized(type.action, 19), flex: 1, textAlign: 'center', color: colors.white },
-  disc: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(11, 6, 24, 0.55)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 8,
-  },
-});
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    wrap: {
+      minHeight: TAP_TARGET,
+      borderRadius: radius.pill,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingLeft: 26,
+      paddingRight: 8,
+      // The glow ties it to the accent buttons elsewhere in the app.
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: colors.shadowOpacity,
+      shadowRadius: 16,
+    },
+    fill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+    /** 19px bold clears WCAG's "large text" bar (14pt bold), which is what lets
+     * white sit on the accent at all — at 18px it would need 4.5:1, not 3:1. */
+    label: {
+      ...sized(type.action, 19),
+      flex: 1,
+      textAlign: 'center',
+      color: colors.white,
+    },
+    disc: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: colors.discOnAccent,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginLeft: 8,
+    },
+  }),
+);

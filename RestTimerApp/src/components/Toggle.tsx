@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { usePressScale } from '../hooks/usePressScale';
 import { useReduceMotion } from '../hooks/useReduceMotion';
-import { colors, radius, spacing, type } from '../theme';
+import { radius, spacing, themed, type } from '../theme';
 
 /**
  * A labelled on/off row.
@@ -25,6 +25,7 @@ export function Toggle({
   value: boolean;
   onChange: (next: boolean) => void;
 }) {
+  const styles = useStyles();
   // Flipping a setting is worth a tick; it's the only feedback that it took.
   const pressScale = usePressScale({ depth: 0.98, haptic: true });
   const reduceMotion = useReduceMotion();
@@ -59,14 +60,16 @@ export function Toggle({
       aria-checked={value}
       accessibilityLabel={label}
       onPress={() => onChange(!value)}
-      style={styles.row}>
+      style={styles.row}
+    >
       <View style={styles.text}>
         <Text style={styles.label}>{label}</Text>
         {help ? <Text style={styles.help}>{help}</Text> : null}
       </View>
 
       <Animated.View
-        style={[styles.track, value && styles.trackOn, pressScale.style]}>
+        style={[styles.track, value && styles.trackOn, pressScale.style]}
+      >
         <Animated.View
           style={[
             styles.thumb,
@@ -92,35 +95,37 @@ const TRACK_W = 52;
 const TRACK_H = 30;
 const THUMB = 24;
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-    minHeight: 44,
-  },
-  text: { flex: 1, gap: 2 },
-  label: { ...type.body, fontWeight: '600', color: colors.white },
-  help: { ...type.helper, fontSize: 13, color: colors.mutedOnDark },
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.md,
+      minHeight: 44,
+    },
+    text: { flex: 1, gap: 2 },
+    label: { ...type.body, fontWeight: '600', color: colors.white },
+    help: { ...type.helper, fontSize: 13, color: colors.muted },
 
-  track: {
-    width: TRACK_W,
-    height: TRACK_H,
-    borderRadius: radius.pill,
-    backgroundColor: colors.raised,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    padding: 2,
-    justifyContent: 'center',
-  },
-  trackOn: { backgroundColor: colors.accent, borderColor: colors.accent },
-  thumb: {
-    width: THUMB,
-    height: THUMB,
-    borderRadius: THUMB / 2,
-    backgroundColor: colors.faintOnDark,
-  },
-  /** Position is animated above; this is only the colour change. */
-  thumbOn: { backgroundColor: colors.white },
-});
+    track: {
+      width: TRACK_W,
+      height: TRACK_H,
+      borderRadius: radius.pill,
+      backgroundColor: colors.raised,
+      borderWidth: 1,
+      borderColor: colors.hairline,
+      padding: 2,
+      justifyContent: 'center',
+    },
+    trackOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+    thumb: {
+      width: THUMB,
+      height: THUMB,
+      borderRadius: THUMB / 2,
+      backgroundColor: colors.faint,
+    },
+    /** Position is animated above; this is only the colour change. */
+    thumbOn: { backgroundColor: colors.white },
+  }),
+);

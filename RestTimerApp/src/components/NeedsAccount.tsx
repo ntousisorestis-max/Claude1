@@ -2,7 +2,15 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Icon } from './Icon';
 import { useAccount } from '../cloud/AccountContext';
-import { colors, HAIRLINE, radius, sized, spacing, type } from '../theme';
+import {
+  HAIRLINE,
+  radius,
+  sized,
+  spacing,
+  themed,
+  type,
+  useColors,
+} from '../theme';
 
 /**
  * What Insights and Streaks show when there is nothing to show them from.
@@ -22,6 +30,8 @@ export function NeedsAccount({
 }: {
   empty: { title: string; body: string };
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const { status } = useAccount();
 
   // The unconfigured case is instructions rather than voice, so it's fixed here
@@ -40,7 +50,7 @@ export function NeedsAccount({
   return (
     <View style={styles.card}>
       <View style={styles.tile}>
-        <Icon name="user" color={colors.faintOnDark} size={20} />
+        <Icon name="user" color={colors.faint} size={20} />
       </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.body}>{body}</Text>
@@ -48,34 +58,40 @@ export function NeedsAccount({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-  },
-  tile: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
-    backgroundColor: colors.ink,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.xs,
-  },
-  title: { ...sized(type.title, 20), color: colors.white, textAlign: 'center' },
-  body: {
-    ...type.helper,
-    fontSize: 14,
-    color: colors.mutedOnDark,
-    lineHeight: 20,
-    textAlign: 'center',
-  },
-});
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    card: {
+      alignItems: 'center',
+      gap: spacing.sm,
+      backgroundColor: colors.surface,
+      borderWidth: 1.5,
+      borderStyle: 'dashed',
+      borderColor: colors.hairline,
+      borderRadius: radius.lg,
+      padding: spacing.lg,
+    },
+    tile: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.md,
+      backgroundColor: colors.ink,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: spacing.xs,
+    },
+    title: {
+      ...sized(type.title, 20),
+      color: colors.white,
+      textAlign: 'center',
+    },
+    body: {
+      ...type.helper,
+      fontSize: 14,
+      color: colors.muted,
+      lineHeight: 20,
+      textAlign: 'center',
+    },
+  }),
+);

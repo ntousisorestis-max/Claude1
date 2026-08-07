@@ -1,7 +1,7 @@
 import React, { useId } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { colors } from '../theme';
+import { themed, useColors } from '../theme';
 
 /**
  * The depth under everything: two soft violet blooms on the screen background.
@@ -49,6 +49,8 @@ export function GlowBackground({
 }: {
   tone?: 'onInk' | 'onAccent';
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const { width, height } = useWindowDimensions();
 
   // SVG gradient ids live in one global namespace on the web, so two glows on
@@ -89,7 +91,8 @@ export function GlowBackground({
             cy={height * 0.14}
             rx={mainRadius}
             ry={mainRadius}
-            gradientUnits="userSpaceOnUse">
+            gradientUnits="userSpaceOnUse"
+          >
             {stops(mainId, peak)}
           </RadialGradient>
 
@@ -100,25 +103,40 @@ export function GlowBackground({
             cy={height * 0.82}
             rx={secondRadius}
             ry={secondRadius}
-            gradientUnits="userSpaceOnUse">
+            gradientUnits="userSpaceOnUse"
+          >
             {stops(secondId, secondPeak)}
           </RadialGradient>
         </Defs>
 
-        <Rect x={0} y={0} width={width} height={height} fill={`url(#${mainId})`} />
-        <Rect x={0} y={0} width={width} height={height} fill={`url(#${secondId})`} />
+        <Rect
+          x={0}
+          y={0}
+          width={width}
+          height={height}
+          fill={`url(#${mainId})`}
+        />
+        <Rect
+          x={0}
+          y={0}
+          width={width}
+          height={height}
+          fill={`url(#${secondId})`}
+        />
       </Svg>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  fill: {
-    // RN 0.86's types don't expose absoluteFillObject; spell it out.
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-});
+const useStyles = themed(() =>
+  StyleSheet.create({
+    fill: {
+      // RN 0.86's types don't expose absoluteFillObject; spell it out.
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+    },
+  }),
+);

@@ -1,7 +1,15 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Icon, type IconName } from './Icon';
-import { colors, HAIRLINE, radius, sized, spacing, type } from '../theme';
+import {
+  HAIRLINE,
+  radius,
+  sized,
+  spacing,
+  themed,
+  type,
+  useColors,
+} from '../theme';
 
 /**
  * One card on the Settings tab: an icon tile, a heading, a line of
@@ -27,6 +35,8 @@ export function SettingsSection({
   description: string;
   children: React.ReactNode;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   return (
     <View style={styles.card}>
       <View style={styles.head}>
@@ -46,27 +56,34 @@ export function SettingsSection({
 
 const TILE = 44;
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    gap: spacing.md,
-  },
-  head: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
-  tile: {
-    width: TILE,
-    height: TILE,
-    borderRadius: radius.md,
-    backgroundColor: colors.accentWash,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headText: { flex: 1, gap: 3, paddingTop: 2 },
-  title: { ...sized(type.title, 21), color: colors.white },
-  description: { ...type.helper, fontSize: 14, color: colors.mutedOnDark, lineHeight: 20 },
-});
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      borderRadius: radius.lg,
+      padding: spacing.md,
+      gap: spacing.md,
+    },
+    head: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
+    tile: {
+      width: TILE,
+      height: TILE,
+      borderRadius: radius.md,
+      backgroundColor: colors.accentWash,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    headText: { flex: 1, gap: 3, paddingTop: 2 },
+    title: { ...sized(type.title, 21), color: colors.white },
+    description: {
+      ...type.helper,
+      fontSize: 14,
+      color: colors.muted,
+      lineHeight: 20,
+    },
+  }),
+);

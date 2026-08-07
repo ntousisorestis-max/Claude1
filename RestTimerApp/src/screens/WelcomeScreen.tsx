@@ -15,7 +15,15 @@ import { GradientButton } from '../components/GradientButton';
 import { Icon, type IconName } from '../components/Icon';
 import { WELCOME } from '../copy';
 import { useEnter } from '../hooks/useEnter';
-import { colors, HAIRLINE, radius, sized, spacing, type } from '../theme';
+import {
+  HAIRLINE,
+  radius,
+  sized,
+  spacing,
+  themed,
+  type,
+  useColors,
+} from '../theme';
 
 /**
  * The first thing anybody sees, and the only time they see it.
@@ -47,6 +55,8 @@ import { colors, HAIRLINE, radius, sized, spacing, type } from '../theme';
  * appear again.
  */
 export function WelcomeScreen({ onDone }: { onDone: () => void }) {
+  const styles = useStyles();
+  const colors = useColors();
   const enterHero = useEnter();
   const enterHead = useEnter(90);
   const enterSub = useEnter(160);
@@ -64,7 +74,8 @@ export function WelcomeScreen({ onDone }: { onDone: () => void }) {
       <SafeAreaView edges={['top', 'bottom']} style={styles.safe}>
         <ScrollView
           contentContainerStyle={styles.body}
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={false}
+        >
           <Animated.View style={[styles.hero, enterHero]}>
             <Halo />
             {/* Decorative: the wordmark directly underneath says the same
@@ -111,7 +122,7 @@ export function WelcomeScreen({ onDone }: { onDone: () => void }) {
           </Animated.View>
 
           <Animated.View style={[styles.foot, enterFoot]}>
-            <Icon name="shield" color={colors.faintOnDark} size={14} />
+            <Icon name="shield" color={colors.faint} size={14} />
             <Text style={styles.footText}>{WELCOME.reassurance}</Text>
           </Animated.View>
         </ScrollView>
@@ -132,6 +143,8 @@ function Feature({
   body: string;
   delay: number;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const enter = useEnter(delay);
 
   return (
@@ -166,6 +179,8 @@ const RINGS = [
  * second look, not the first.
  */
 function Halo() {
+  const styles = useStyles();
+  const colors = useColors();
   // SVG gradient ids share one global namespace on the web. See GlowBackground.
   const id = `halo-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const c = HALO / 2;
@@ -200,88 +215,95 @@ function Halo() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    // An overlay, not a sibling that shares the space: it covers the app that
-    // is already laid out underneath, exactly as the splash does. RN 0.86's
-    // types don't expose absoluteFillObject, so it is spelled out.
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors.ink,
-  },
-  safe: { flex: 1 },
-  body: {
-    flexGrow: 1,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
-    gap: spacing.lg,
-  },
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    screen: {
+      // An overlay, not a sibling that shares the space: it covers the app that
+      // is already laid out underneath, exactly as the splash does. RN 0.86's
+      // types don't expose absoluteFillObject, so it is spelled out.
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: colors.ink,
+    },
+    safe: { flex: 1 },
+    body: {
+      flexGrow: 1,
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.md,
+      paddingBottom: spacing.lg,
+      gap: spacing.lg,
+    },
 
-  hero: { height: HALO, alignItems: 'center', justifyContent: 'center' },
-  halo: { position: 'absolute' },
-  logo: { width: 124, height: 124 },
+    hero: { height: HALO, alignItems: 'center', justifyContent: 'center' },
+    halo: { position: 'absolute' },
+    logo: { width: 124, height: 124 },
 
-  words: { alignItems: 'center', gap: 2 },
-  eyebrow: { ...type.body, fontWeight: '600', color: colors.mutedOnDark },
-  /** 40px, not the display's 44: "Liftlock." wrapped on a 360px screen. */
-  name: { ...sized(type.display, 40), color: colors.white },
-  /**
-   * `accent` rather than `accentText`. It is a fill everywhere small, but at
-   * 40px black it is well past WCAG's large-text line and this is the one place
-   * the brand violet should be at full strength — same call the giant set
-   * numeral makes.
-   */
-  nameAccent: { color: colors.accent },
+    words: { alignItems: 'center', gap: 2 },
+    eyebrow: { ...type.body, fontWeight: '600', color: colors.muted },
+    /** 40px, not the display's 44: "Liftlock." wrapped on a 360px screen. */
+    name: { ...sized(type.display, 40), color: colors.white },
+    /**
+     * `accent` rather than `accentText`. It is a fill everywhere small, but at
+     * 40px black it is well past WCAG's large-text line and this is the one place
+     * the brand violet should be at full strength — same call the giant set
+     * numeral makes.
+     */
+    nameAccent: { color: colors.accent },
 
-  subheadline: {
-    ...type.helper,
-    fontSize: 16,
-    lineHeight: 24,
-    color: colors.mutedOnDark,
-    textAlign: 'center',
-  },
-  subAccent: { color: colors.accentText, fontWeight: '700' },
+    subheadline: {
+      ...type.helper,
+      fontSize: 16,
+      lineHeight: 24,
+      color: colors.muted,
+      textAlign: 'center',
+    },
+    subAccent: { color: colors.accentText, fontWeight: '700' },
 
-  features: { gap: spacing.sm },
-  feature: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    padding: spacing.md,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-  },
-  tile: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.sm + 2,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  featureText: { flex: 1, gap: 3 },
-  featureTitle: { ...type.body, fontSize: 17, fontWeight: '800', color: colors.white },
-  featureBody: {
-    ...type.helper,
-    fontSize: 14,
-    lineHeight: 19,
-    color: colors.mutedOnDark,
-  },
+    features: { gap: spacing.sm },
+    feature: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      padding: spacing.md,
+      borderRadius: radius.md,
+      backgroundColor: colors.surface,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+    },
+    tile: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.sm + 2,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    featureText: { flex: 1, gap: 3 },
+    featureTitle: {
+      ...type.body,
+      fontSize: 17,
+      fontWeight: '800',
+      color: colors.white,
+    },
+    featureBody: {
+      ...type.helper,
+      fontSize: 14,
+      lineHeight: 19,
+      color: colors.muted,
+    },
 
-  /** `auto` takes whatever vertical space the blocks above didn't. */
-  action: { marginTop: 'auto', paddingTop: spacing.xs },
+    /** `auto` takes whatever vertical space the blocks above didn't. */
+    action: { marginTop: 'auto', paddingTop: spacing.xs },
 
-  foot: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 7,
-  },
-  footText: { ...type.helper, fontSize: 13, color: colors.faintOnDark },
-});
+    foot: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 7,
+    },
+    footText: { ...type.helper, fontSize: 13, color: colors.faint },
+  }),
+);

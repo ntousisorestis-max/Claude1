@@ -8,7 +8,7 @@ import Svg, {
   Stop,
 } from 'react-native-svg';
 import { recentDays, weekdayOf } from '../cloud/days';
-import { colors, sized, spacing, type } from '../theme';
+import { sized, spacing, themed, type, useColors } from '../theme';
 import type { DayTotals } from '../cloud/types';
 
 /**
@@ -56,6 +56,8 @@ export function FocusChart({
   /** Whatever days the account has. Missing days are a real zero, not a gap. */
   days: DayTotals[];
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const [width, setWidth] = useState(0);
 
   const week = recentDays(today, 7);
@@ -146,7 +148,8 @@ export function FocusChart({
         {week.map(day => (
           <Text
             key={day}
-            style={[styles.tick, day === today && styles.tickToday]}>
+            style={[styles.tick, day === today && styles.tickToday]}
+          >
             {weekdayOf(day).slice(0, 1)}
           </Text>
         ))}
@@ -189,13 +192,15 @@ function smoothPath(
   return path;
 }
 
-const styles = StyleSheet.create({
-  plot: { height: HEIGHT },
-  axis: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: spacing.sm,
-  },
-  tick: { ...sized(type.tag, 10), color: colors.faintOnDark },
-  tickToday: { color: colors.accentText },
-});
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    plot: { height: HEIGHT },
+    axis: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: spacing.sm,
+    },
+    tick: { ...sized(type.tag, 10), color: colors.faint },
+    tickToday: { color: colors.accentText },
+  }),
+);

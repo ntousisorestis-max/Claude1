@@ -7,7 +7,7 @@ import notifee, {
   TriggerType,
 } from '@notifee/react-native';
 import { restOverBody } from './copy';
-import { colors } from './theme';
+import { palettes } from './theme';
 import type { Notification } from '@notifee/react-native';
 
 /**
@@ -39,7 +39,9 @@ async function ensureChannel(withSound: boolean): Promise<string> {
   if (!channelReady[key]) {
     channelReady[key] = notifee.createChannel({
       ...CHANNELS[key],
-      importance: withSound ? AndroidImportance.HIGH : AndroidImportance.DEFAULT,
+      importance: withSound
+        ? AndroidImportance.HIGH
+        : AndroidImportance.DEFAULT,
       // `undefined` keeps the system default; `none` silences the channel.
       sound: withSound ? undefined : 'none',
       vibration: withSound,
@@ -97,7 +99,11 @@ export async function scheduleRestOverNotification(
           // it Android silhouettes the full-colour launcher icon into a blob.
           smallIcon: 'ic_notification',
           // Tints the small icon and the app name in the shade.
-          color: colors.accent,
+          // The OS draws this notification, outside the app, where the app's
+          // theme has no reach. Taken from a palette by name rather than from
+          // a hook — and `accent` is the same violet in both, so there is
+          // nothing to choose between them.
+          color: palettes.dark.accent,
           // `default` is the id Android special-cases as "open the app";
           // launchActivity spells out which one, so a cold start lands somewhere.
           pressAction: { id: 'default', launchActivity: 'default' },
@@ -195,7 +201,10 @@ export function onRestNotificationPress(handler: PressHandler): () => void {
         }
       })
       .catch(err =>
-        console.warn('[rest-timer] could not read the launch notification', err),
+        console.warn(
+          '[rest-timer] could not read the launch notification',
+          err,
+        ),
       );
   }
 

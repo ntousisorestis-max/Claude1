@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, Image, StyleSheet } from 'react-native';
 import { GlowBackground } from '../components/GlowBackground';
 import { useReduceMotion } from '../hooks/useReduceMotion';
-import { colors, spacing } from '../theme';
+import { spacing, themed } from '../theme';
 
 /**
  * Timings, in ms. They add up to the whole splash: 1200ms door to door.
@@ -30,6 +30,7 @@ const PULSE_MS = 1000;
  * built or verified without a native build.
  */
 export function SplashScreen({ onDone }: { onDone: () => void }) {
+  const styles = useStyles();
   const reduceMotion = useReduceMotion();
   const enter = useRef(new Animated.Value(0)).current;
   const out = useRef(new Animated.Value(1)).current;
@@ -69,7 +70,12 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
   const logoStyle = {
     opacity: enter,
     transform: [
-      { scale: enter.interpolate({ inputRange: [0, 1], outputRange: [0.88, 1] }) },
+      {
+        scale: enter.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.88, 1],
+        }),
+      },
     ],
   };
 
@@ -108,6 +114,7 @@ function LoadingDots({
   reduceMotion: boolean;
   fade: Animated.Value;
 }) {
+  const styles = useStyles();
   const pulse = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -133,7 +140,10 @@ function LoadingDots({
       {[0, 1, 2].map(i => (
         <Animated.View
           key={i}
-          style={[styles.dot, reduceMotion ? styles.dotStill : dotWave(pulse, i)]}
+          style={[
+            styles.dot,
+            reduceMotion ? styles.dotStill : dotWave(pulse, i),
+          ]}
         />
       ))}
     </Animated.View>
@@ -162,27 +172,34 @@ function dotWave(pulse: Animated.Value, index: number) {
   };
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    // RN 0.86's types don't expose absoluteFillObject; spell it out.
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xl,
-  },
-  /**
-   * The mark sits straight on the screen: no card, no border, no radius, no
-   * background of its own. The only thing that can put a box around it is the
-   * PNG — a logo drawn edge-to-edge on its own colour will read as a tile here,
-   * however this is styled. The shipped placeholder is therefore transparent.
-   */
-  logo: { width: 168, height: 168 },
-  dots: { flexDirection: 'row', gap: spacing.sm },
-  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.accent },
-  dotStill: { opacity: 0.5 },
-});
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    screen: {
+      // RN 0.86's types don't expose absoluteFillObject; spell it out.
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: colors.ink,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.xl,
+    },
+    /**
+     * The mark sits straight on the screen: no card, no border, no radius, no
+     * background of its own. The only thing that can put a box around it is the
+     * PNG — a logo drawn edge-to-edge on its own colour will read as a tile here,
+     * however this is styled. The shipped placeholder is therefore transparent.
+     */
+    logo: { width: 168, height: 168 },
+    dots: { flexDirection: 'row', gap: spacing.sm },
+    dot: {
+      width: 7,
+      height: 7,
+      borderRadius: 4,
+      backgroundColor: colors.accent,
+    },
+    dotStill: { opacity: 0.5 },
+  }),
+);

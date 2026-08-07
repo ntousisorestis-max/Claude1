@@ -15,14 +15,16 @@ import { useCountUp } from '../hooks/useCountUp';
 import { useEnter } from '../hooks/useEnter';
 import { useWorkout } from '../state/WorkoutContext';
 import {
-  colors,
   describeDuration,
   formatMMSS,
   radius,
+  RECORD_GROUND,
   sized,
   spacing,
   tabular,
+  themed,
   type,
+  useColors,
 } from '../theme';
 
 /**
@@ -31,10 +33,10 @@ import {
  * Kept as a named constant because `npm run contrast` checks this exact value
  * against the text that sits on it.
  */
-const RECORD_GROUND = 'rgba(15, 11, 26, 0.32)';
 
 /** Also flooded: the workout is over, so the phone is yours again. */
 export function CompleteScreen() {
+  const styles = useStyles();
   const {
     state: { config, setsCompleted, totalRestSeconds, totalLockedSeconds },
     newWorkout,
@@ -84,7 +86,11 @@ export function CompleteScreen() {
         </Animated.View>
 
         <Animated.View style={[styles.card, enterCard]}>
-          <Row icon="dumbbell" label="EXERCISE" value={config.exerciseName || '—'} />
+          <Row
+            icon="dumbbell"
+            label="EXERCISE"
+            value={config.exerciseName || '—'}
+          />
           <Row
             icon="check"
             label="SETS COMPLETED"
@@ -114,6 +120,8 @@ export function CompleteScreen() {
  * Session-only: reset by the next Start, never stored.
  */
 function TimeReclaimed({ seconds }: { seconds: number }) {
+  const styles = useStyles();
+  const colors = useColors();
   const { value, unit } = describeDuration(seconds);
   const counted = useCountUp(value);
 
@@ -128,7 +136,11 @@ function TimeReclaimed({ seconds }: { seconds: number }) {
       {/* One small pop the instant the count-up arrives, so the number lands
           rather than merely stopping. Keyed on reaching the target — not on
           `counted` itself, which changes fifteen times on the way there. */}
-      <Pop value={counted >= value ? 'landed' : 'counting'} depth={1.06} style={styles.landed}>
+      <Pop
+        value={counted >= value ? 'landed' : 'counting'}
+        depth={1.06}
+        style={styles.landed}
+      >
         {/* Number and unit are separate so only the number moves — animating
             the whole string would flicker the word between singular and
             plural. */}
@@ -152,13 +164,16 @@ function TimeReclaimed({ seconds }: { seconds: number }) {
  * screen: it is waiting on a server.
  */
 function RecordBanner({ days }: { days: number }) {
+  const styles = useStyles();
+  const colors = useColors();
   const enter = useEnter(0);
 
   return (
     <Animated.View
       style={[styles.record, enter]}
       accessibilityRole="text"
-      accessibilityLabel={`New personal best: ${personalBestLine(days)}`}>
+      accessibilityLabel={`New personal best: ${personalBestLine(days)}`}
+    >
       <View style={styles.recordTile}>
         <Icon name="trophy" color={colors.white} size={18} />
       </View>
@@ -179,10 +194,12 @@ function Row({
   label: string;
   value: string;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   return (
     <View style={styles.row}>
       <View style={styles.rowLabelGroup}>
-        <Icon name={icon} color={colors.faintOnDark} size={15} strokeWidth={1.9} />
+        <Icon name={icon} color={colors.faint} size={15} strokeWidth={1.9} />
         <Text style={styles.rowLabel}>{label}</Text>
       </View>
       <Text style={styles.rowValue} numberOfLines={1}>
@@ -192,87 +209,101 @@ function Row({
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
-    gap: spacing.md,
-  },
-  body: { flex: 1, justifyContent: 'center', gap: spacing.lg },
-  hero: { gap: spacing.sm },
-  badge: { fontSize: 56 },
-  headline: { ...sized(type.mega, 52), color: colors.white },
-  subline: {
-    ...type.helper,
-    fontSize: 16,
-    color: colors.mutedOnAccent,
-    lineHeight: 22,
-    marginBottom: spacing.sm,
-  },
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    screen: {
+      flex: 1,
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+      paddingBottom: spacing.sm,
+      gap: spacing.md,
+    },
+    body: { flex: 1, justifyContent: 'center', gap: spacing.lg },
+    hero: { gap: spacing.sm },
+    badge: { fontSize: 56 },
+    headline: { ...sized(type.mega, 52), color: colors.white },
+    subline: {
+      ...type.helper,
+      fontSize: 16,
+      color: colors.mutedOnAccent,
+      lineHeight: 22,
+      marginBottom: spacing.sm,
+    },
 
-  /**
-   * Sunk into the violet, not floated on top of it.
-   *
-   * A white wash was the first instinct and it was wrong twice over: it
-   * lightens a ground that white text already sits on, dropping the eyebrow to
-   * about 4:1 — under AA before the glow touches it — and it makes the one
-   * celebratory thing on the screen the *least* legible. Darkening instead
-   * takes white to roughly 9:1 and reads as a plaque rather than a smudge.
-   */
-  record: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    backgroundColor: RECORD_GROUND,
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
-  recordTile: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.sm,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  recordText: { flex: 1, gap: 2 },
-  recordEyebrow: { ...sized(type.tag, 10), color: colors.mutedOnAccent },
-  recordLine: { ...type.body, fontWeight: '700', color: colors.white },
+    /**
+     * Sunk into the violet, not floated on top of it.
+     *
+     * A white wash was the first instinct and it was wrong twice over: it
+     * lightens a ground that white text already sits on, dropping the eyebrow to
+     * about 4:1 — under AA before the glow touches it — and it makes the one
+     * celebratory thing on the screen the *least* legible. Darkening instead
+     * takes white to roughly 9:1 and reads as a plaque rather than a smudge.
+     */
+    record: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      backgroundColor: RECORD_GROUND,
+      borderRadius: radius.md,
+      padding: spacing.md,
+    },
+    recordTile: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.sm,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    recordText: { flex: 1, gap: 2 },
+    recordEyebrow: { ...sized(type.tag, 10), color: colors.mutedOnAccent },
+    recordLine: { ...type.body, fontWeight: '700', color: colors.white },
 
-  reclaimed: { gap: spacing.xs },
-  reclaimedLabel: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  reclaimedEyebrow: { ...type.tag, color: colors.mutedOnAccent },
-  reclaimedLead: {
-    ...type.helper,
-    fontSize: 17,
-    color: colors.mutedOnAccent,
-    marginTop: spacing.sm,
-  },
-  landed: { alignSelf: 'flex-start' },
-  reclaimedValue: { ...sized(type.display, 38), ...tabular, color: colors.white },
+    reclaimed: { gap: spacing.xs },
+    reclaimedLabel: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
+    reclaimedEyebrow: { ...type.tag, color: colors.mutedOnAccent },
+    reclaimedLead: {
+      ...type.helper,
+      fontSize: 17,
+      color: colors.mutedOnAccent,
+      marginTop: spacing.sm,
+    },
+    landed: { alignSelf: 'flex-start' },
+    reclaimedValue: {
+      ...sized(type.display, 38),
+      ...tabular,
+      color: colors.white,
+    },
 
-  card: {
-    backgroundColor: colors.ink,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    gap: spacing.md,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  rowLabelGroup: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  rowLabel: { ...type.tag, color: colors.faintOnDark },
-  rowValue: {
-    ...type.body,
-    ...tabular,
-    fontWeight: '800',
-    color: colors.accentText,
-    flexShrink: 1,
-    textAlign: 'right',
-  },
-});
+    card: {
+      backgroundColor: colors.ink,
+      borderRadius: radius.lg,
+      padding: spacing.md,
+      gap: spacing.md,
+    },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: spacing.md,
+    },
+    rowLabelGroup: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
+    rowLabel: { ...type.tag, color: colors.faint },
+    rowValue: {
+      ...type.body,
+      ...tabular,
+      fontWeight: '800',
+      color: colors.accentText,
+      flexShrink: 1,
+      textAlign: 'right',
+    },
+  }),
+);

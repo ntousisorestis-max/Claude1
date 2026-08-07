@@ -78,7 +78,9 @@ function firebase(): Services {
   // the streaming transport Firestore prefers, and without this the first
   // listener can hang instead of failing. Harmless on web, where the detection
   // finds a working stream and uses it.
-  const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+  const db = initializeFirestore(app, {
+    experimentalAutoDetectLongPolling: true,
+  });
 
   // Persistence is not configured here on purpose. Each platform's build of
   // firebase/auth picks its own: browsers use localStorage, and React Native
@@ -126,7 +128,9 @@ function totalsFrom(data: Record<string, unknown> | undefined): FocusTotals {
     : NO_TOTALS;
 }
 
-function recordsFrom(data: Record<string, unknown> | undefined): PersonalRecords {
+function recordsFrom(
+  data: Record<string, unknown> | undefined,
+): PersonalRecords {
   return data
     ? {
         longestFocusSeconds: num(data, 'longestFocusSeconds'),
@@ -159,7 +163,10 @@ export const firebaseBackend: CloudBackend = {
     return onAuthStateChanged(auth, user => {
       onChange(
         user
-          ? { uid: user.uid, displayName: nameFor(user.displayName, user.email) }
+          ? {
+              uid: user.uid,
+              displayName: nameFor(user.displayName, user.email),
+            }
           : null,
       );
     });
@@ -212,7 +219,11 @@ export const firebaseBackend: CloudBackend = {
 
   async signUp(email, password, displayName) {
     const { auth } = firebase();
-    const credential = await createUserWithEmailAndPassword(auth, email, password);
+    const credential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password,
+    );
 
     const name = nameFor(displayName, email);
     await updateProfile(credential.user, { displayName: name });

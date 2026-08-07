@@ -2,7 +2,7 @@ import React, { useEffect, useId, useMemo, useRef } from 'react';
 import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { useReduceMotion } from '../hooks/useReduceMotion';
-import { colors } from '../theme';
+import { themed, useColors } from '../theme';
 
 /**
  * The header's illustration: a 3D render of the hourglass, lit from within.
@@ -66,6 +66,7 @@ const PARTICLES = [
 ] as const;
 
 export function HeroHourglass({ size = 150 }: { size?: number }) {
+  const styles = useStyles();
   const reduceMotion = useReduceMotion();
 
   const float = useRef(new Animated.Value(0)).current;
@@ -153,7 +154,8 @@ export function HeroHourglass({ size = 150 }: { size?: number }) {
     <View style={[styles.box, { width, height }]}>
       <Animated.View
         style={[styles.centre, { width: glow, height: glow }, bloom]}
-        pointerEvents="none">
+        pointerEvents="none"
+      >
         <Bloom size={glow} />
       </Animated.View>
 
@@ -210,6 +212,7 @@ function Particle({
   width: number;
   height: number;
 }) {
+  const styles = useStyles();
   const style = useMemo(() => {
     const at = (fn: (t: number) => number) => {
       const inputRange: number[] = [];
@@ -252,6 +255,7 @@ function Particle({
 
 /** The soft violet ground the object floats on. */
 function Bloom({ size }: { size: number }) {
+  const colors = useColors();
   // SVG gradient ids share one global namespace on the web. See GlowBackground.
   const id = `hourglass-glow-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
 
@@ -269,8 +273,14 @@ function Bloom({ size }: { size: number }) {
   );
 }
 
-const styles = StyleSheet.create({
-  box: { alignItems: 'center', justifyContent: 'center' },
-  centre: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
-  particle: { position: 'absolute', backgroundColor: colors.accent },
-});
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    box: { alignItems: 'center', justifyContent: 'center' },
+    centre: {
+      position: 'absolute',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    particle: { position: 'absolute', backgroundColor: colors.accent },
+  }),
+);

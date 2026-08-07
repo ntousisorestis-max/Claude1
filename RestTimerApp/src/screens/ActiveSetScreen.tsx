@@ -8,9 +8,10 @@ import { SetTicks } from '../components/SetTicks';
 import { pick, SKIPPED_REST_LINES } from '../copy';
 import { useEnter } from '../hooks/useEnter';
 import { useWorkout } from '../state/WorkoutContext';
-import { colors, spacing, tabular, type } from '../theme';
+import { spacing, tabular, themed, type } from '../theme';
 
 export function ActiveSetScreen() {
+  const styles = useStyles();
   const {
     state: { config, currentSet, setsCompleted, skippedRest },
     finishSet,
@@ -48,7 +49,9 @@ export function ActiveSetScreen() {
         {/* Seeded on the set, so it holds still for the whole set and differs
             from the last one the user was teased with. */}
         {skippedRest ? (
-          <Text style={styles.tease}>{pick(SKIPPED_REST_LINES, currentSet)}</Text>
+          <Text style={styles.tease}>
+            {pick(SKIPPED_REST_LINES, currentSet)}
+          </Text>
         ) : null}
 
         <SetTicks
@@ -84,32 +87,34 @@ export function ActiveSetScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
-    gap: spacing.lg,
-  },
-  head: { gap: spacing.md, paddingTop: spacing.lg },
-  slabWrap: { flex: 1 },
-  exercise: { ...type.display, color: colors.white },
-  setLabel: { ...type.tag, color: colors.faintOnDark, marginBottom: -spacing.xs },
-  popped: { alignSelf: 'flex-start' },
-  counter: { flexDirection: 'row', alignItems: 'baseline' },
-  current: { ...type.mega, ...tabular, color: colors.accent },
-  tease: {
-    ...type.helper,
-    fontSize: 15,
-    color: colors.faintOnDark,
-    fontStyle: 'italic',
-    marginTop: spacing.xs,
-  },
-  total: {
-    ...type.display,
-    ...tabular,
-    fontSize: 34,
-    color: colors.mutedOnDark,
-  },
-});
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    screen: {
+      flex: 1,
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+      paddingBottom: spacing.sm,
+      gap: spacing.lg,
+    },
+    head: { gap: spacing.md, paddingTop: spacing.lg },
+    slabWrap: { flex: 1 },
+    exercise: { ...type.display, color: colors.white },
+    setLabel: { ...type.tag, color: colors.faint, marginBottom: -spacing.xs },
+    popped: { alignSelf: 'flex-start' },
+    counter: { flexDirection: 'row', alignItems: 'baseline' },
+    current: { ...type.mega, ...tabular, color: colors.accent },
+    tease: {
+      ...type.helper,
+      fontSize: 15,
+      color: colors.faint,
+      fontStyle: 'italic',
+      marginTop: spacing.xs,
+    },
+    total: {
+      ...type.display,
+      ...tabular,
+      fontSize: 34,
+      color: colors.muted,
+    },
+  }),
+);

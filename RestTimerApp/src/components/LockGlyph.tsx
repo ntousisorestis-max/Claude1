@@ -110,9 +110,15 @@ export function LockGlyph({
 
   const scale = size / BOX;
   const lift = (distance: number) =>
-    open.interpolate({ inputRange: [0, 1], outputRange: [0, distance * scale] });
+    open.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, distance * scale],
+    });
 
-  const swell = beat.interpolate({ inputRange: [0, 1], outputRange: [1, 1.14] });
+  const swell = beat.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.14],
+  });
 
   return (
     // Purely decorative: it carries no text, and the panel around it owns the
@@ -121,7 +127,8 @@ export function LockGlyph({
       style={[
         styles.box,
         { width: size, height: size, transform: [{ scale: swell }] },
-      ]}>
+      ]}
+    >
       {/* The halo. Sits furthest back and never takes a tap; it only ever
           exists for the ~400ms of a beat, so it costs nothing at rest. */}
       <Animated.View
@@ -157,7 +164,8 @@ export function LockGlyph({
               { translateY: lift(OPEN_OFFSET.y) },
             ],
           },
-        ]}>
+        ]}
+      >
         <Svg width={size} height={size} viewBox={`0 0 ${BOX} ${BOX}`}>
           <Path
             d={SHACKLE}

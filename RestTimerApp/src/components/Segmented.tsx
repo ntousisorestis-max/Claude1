@@ -1,7 +1,7 @@
 import React from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { usePressScale } from '../hooks/usePressScale';
-import { colors, radius, tabular, type } from '../theme';
+import { radius, tabular, themed, type } from '../theme';
 
 /** Quick-select pills. The chosen one goes solid accent. */
 export function Segmented({
@@ -17,6 +17,7 @@ export function Segmented({
   format: (n: number) => string;
   label: string;
 }) {
+  const styles = useStyles();
   return (
     <View style={styles.row}>
       {options.map(option => (
@@ -46,6 +47,7 @@ function Cell({
   format: (n: number) => string;
   onChange: (next: number) => void;
 }) {
+  const styles = useStyles();
   const pressScale = usePressScale({ depth: 0.94, haptic: true });
 
   return (
@@ -56,7 +58,8 @@ function Cell({
         accessibilityState={{ selected }}
         accessibilityLabel={`${label} ${format(option)}`}
         onPress={() => onChange(option)}
-        style={[styles.cell, selected && styles.selected]}>
+        style={[styles.cell, selected && styles.selected]}
+      >
         <Text style={[styles.text, selected && styles.textSelected]}>
           {format(option)}
         </Text>
@@ -65,18 +68,20 @@ function Cell({
   );
 }
 
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 8 },
-  cellWrap: { flex: 1 },
-  cell: {
-    flex: 1,
-    height: 50,
-    borderRadius: radius.pill,
-    backgroundColor: colors.raised,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  selected: { backgroundColor: colors.accent },
-  text: { ...type.body, ...tabular, fontWeight: '600', color: colors.mutedOnDark },
-  textSelected: { color: colors.white, fontWeight: '800' },
-});
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    row: { flexDirection: 'row', gap: 8 },
+    cellWrap: { flex: 1 },
+    cell: {
+      flex: 1,
+      height: 50,
+      borderRadius: radius.pill,
+      backgroundColor: colors.raised,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    selected: { backgroundColor: colors.accent },
+    text: { ...type.body, ...tabular, fontWeight: '600', color: colors.muted },
+    textSelected: { color: colors.white, fontWeight: '800' },
+  }),
+);

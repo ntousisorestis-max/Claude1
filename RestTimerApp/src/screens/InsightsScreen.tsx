@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Animated,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { AuthSheet } from '../components/AuthSheet';
 import { FocusChart } from '../components/FocusChart';
 import { Icon, type IconName } from '../components/Icon';
@@ -15,14 +22,16 @@ import {
 import { useEnter } from '../hooks/useEnter';
 import { usePressScale } from '../hooks/usePressScale';
 import {
-  colors,
   describeSpan,
   HAIRLINE,
+  washOnAccent,
   radius,
   sized,
   spacing,
   tabular,
+  themed,
   type,
+  useColors,
 } from '../theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -56,6 +65,8 @@ const CARD_PAD = 16;
  * finds out about the moment they finish their first workout.
  */
 export function InsightsScreen() {
+  const styles = useStyles();
+  const colors = useColors();
   const { status, totals, records, days, today } = useAccount();
   const [signingIn, setSigningIn] = useState(false);
 
@@ -80,7 +91,9 @@ export function InsightsScreen() {
   const weekSpan = describeSpan(weekFocusSeconds);
   // Guarded, because the first thing every account divides by is zero.
   const perWorkout = describeSpan(
-    totals.workoutsFinished > 0 ? totals.focusSeconds / totals.workoutsFinished : 0,
+    totals.workoutsFinished > 0
+      ? totals.focusSeconds / totals.workoutsFinished
+      : 0,
   );
 
   // Lifetime seconds per set, used to price this week's focus in sets. See
@@ -133,7 +146,9 @@ export function InsightsScreen() {
           <Tile
             icon="timer"
             label="Avg. per workout"
-            value={signedIn && totals.workoutsFinished > 0 ? perWorkout.value : null}
+            value={
+              signedIn && totals.workoutsFinished > 0 ? perWorkout.value : null
+            }
             unit={perWorkout.unit}
           />
         </View>
@@ -183,7 +198,9 @@ export function InsightsScreen() {
             <RecordRow
               icon="clock"
               label="Longest focused workout"
-              value={`${longest.value}${longest.unit ? ` ${longest.unit}` : ''}`}
+              value={`${longest.value}${
+                longest.unit ? ` ${longest.unit}` : ''
+              }`}
             />
             <RecordRow
               icon="reps"
@@ -229,6 +246,8 @@ function Tile({
   value: string | null;
   unit: string;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const shown = value ?? '—';
 
   return (
@@ -237,7 +256,8 @@ function Tile({
       accessibilityRole="text"
       accessibilityLabel={
         value ? `${label}: ${value} ${unit}` : `${label}: nothing yet`
-      }>
+      }
+    >
       <View style={styles.tileTop}>
         <Icon name={icon} color={colors.accentText} size={17} />
         <Text style={styles.tileLabel}>{label.toUpperCase()}</Text>
@@ -264,8 +284,14 @@ function RecordRow({
   label: string;
   value: string;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   return (
-    <View style={styles.recordRow} accessibilityRole="text" accessibilityLabel={`${label}: ${value}`}>
+    <View
+      style={styles.recordRow}
+      accessibilityRole="text"
+      accessibilityLabel={`${label}: ${value}`}
+    >
       <View style={styles.recordTile}>
         <Icon name={icon} color={colors.accentText} size={17} />
       </View>
@@ -291,6 +317,8 @@ function SaveProgress({
   configured: boolean;
   onPress: () => void;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const press = usePressScale({ depth: 0.98, haptic: true });
 
   return (
@@ -310,7 +338,8 @@ function SaveProgress({
           accessibilityRole="button"
           accessibilityLabel={SAVE_PROGRESS.action}
           onPress={onPress}
-          style={[styles.accountAction, press.style]}>
+          style={[styles.accountAction, press.style]}
+        >
           <Text style={styles.accountActionText}>{SAVE_PROGRESS.action}</Text>
           <Icon name="chevron" color={colors.white} size={16} />
         </AnimatedPressable>
@@ -321,153 +350,185 @@ function SaveProgress({
   );
 }
 
-const styles = StyleSheet.create({
-  content: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xxl,
-    gap: SECTION_GAP,
-  },
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    content: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.md,
+      paddingBottom: spacing.xxl,
+      gap: SECTION_GAP,
+    },
 
-  hero: { gap: 2 },
-  eyebrow: { ...type.tag, color: colors.accentText, marginBottom: spacing.xs },
-  masthead: { ...sized(type.display, 42), color: colors.white },
-  stop: { color: colors.accent },
-  heroSub: {
-    ...type.helper,
-    fontSize: 14,
-    color: colors.mutedOnDark,
-    lineHeight: 20,
-    marginTop: spacing.sm,
-  },
+    hero: { gap: 2 },
+    eyebrow: {
+      ...type.tag,
+      color: colors.accentText,
+      marginBottom: spacing.xs,
+    },
+    masthead: { ...sized(type.display, 42), color: colors.white },
+    stop: { color: colors.accent },
+    heroSub: {
+      ...type.helper,
+      fontSize: 14,
+      color: colors.muted,
+      lineHeight: 20,
+      marginTop: spacing.sm,
+    },
 
-  grid: { gap: spacing.md },
-  gridRow: { flexDirection: 'row', gap: spacing.md },
-  tile: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-    padding: CARD_PAD,
-    gap: spacing.md,
-  },
-  tileTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  tileLabel: { ...sized(type.tag, 9), color: colors.accentText, flexShrink: 1 },
-  tilePop: { alignSelf: 'flex-start' },
-  tileFigure: { flexDirection: 'row', alignItems: 'baseline', gap: 5 },
-  tileValue: { ...sized(type.display, 30), ...tabular, color: colors.white },
-  /** The em-dash is a placeholder, so it sits at the muted tier, not white. */
-  tileValueEmpty: { color: colors.faintOnDark },
-  tileUnit: { ...type.helper, fontSize: 12, color: colors.mutedOnDark },
+    grid: { gap: spacing.md },
+    gridRow: { flexDirection: 'row', gap: spacing.md },
+    tile: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      borderRadius: radius.lg,
+      padding: CARD_PAD,
+      gap: spacing.md,
+    },
+    tileTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+    tileLabel: {
+      ...sized(type.tag, 9),
+      color: colors.accentText,
+      flexShrink: 1,
+    },
+    tilePop: { alignSelf: 'flex-start' },
+    tileFigure: { flexDirection: 'row', alignItems: 'baseline', gap: 5 },
+    tileValue: { ...sized(type.display, 30), ...tabular, color: colors.white },
+    /** The em-dash is a placeholder, so it sits at the muted tier, not white. */
+    tileValueEmpty: { color: colors.faint },
+    tileUnit: { ...type.helper, fontSize: 12, color: colors.muted },
 
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-    padding: CARD_PAD,
-    gap: spacing.md,
-  },
-  cardHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  cardTitle: { ...sized(type.tag, 10), color: colors.accentText },
-  cardAside: { ...type.body, fontWeight: '700', ...tabular, color: colors.white },
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      borderRadius: radius.lg,
+      padding: CARD_PAD,
+      gap: spacing.md,
+    },
+    cardHead: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    cardTitle: { ...sized(type.tag, 10), color: colors.accentText },
+    cardAside: {
+      ...type.body,
+      fontWeight: '700',
+      ...tabular,
+      color: colors.white,
+    },
 
-  /**
-   * The one filled card on the screen.
-   *
-   * It is the only section that says something rather than reporting something,
-   * so it gets the accent ground — a screen where everything is emphasised has
-   * nothing emphasised.
-   */
-  insight: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.md,
-    backgroundColor: colors.accentDeep,
-    borderRadius: radius.lg,
-    padding: CARD_PAD,
-  },
-  insightTile: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  insightText: { flex: 1, gap: 4 },
-  insightLead: { ...type.helper, fontSize: 14, color: colors.mutedOnAccent, lineHeight: 19 },
-  insightLine: { ...sized(type.title, 19), color: colors.white, lineHeight: 25 },
+    /**
+     * The one filled card on the screen.
+     *
+     * It is the only section that says something rather than reporting something,
+     * so it gets the accent ground — a screen where everything is emphasised has
+     * nothing emphasised.
+     */
+    insight: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: spacing.md,
+      backgroundColor: colors.accentDeep,
+      borderRadius: radius.lg,
+      padding: CARD_PAD,
+    },
+    insightTile: {
+      width: 40,
+      height: 40,
+      borderRadius: radius.md,
+      backgroundColor: washOnAccent(0.18),
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    insightText: { flex: 1, gap: 4 },
+    insightLead: {
+      ...type.helper,
+      fontSize: 14,
+      color: colors.mutedOnAccent,
+      lineHeight: 19,
+    },
+    insightLine: {
+      ...sized(type.title, 19),
+      color: colors.white,
+      lineHeight: 25,
+    },
 
-  records: { gap: spacing.sm },
-  recordRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  recordTile: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.sm,
-    backgroundColor: colors.accentWash,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  recordLabel: { ...type.helper, fontSize: 14, color: colors.mutedOnDark, flex: 1 },
-  recordValue: { ...sized(type.title, 19), ...tabular, color: colors.white },
+    records: { gap: spacing.sm },
+    recordRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+    recordTile: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.sm,
+      backgroundColor: colors.accentWash,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    recordLabel: { ...type.helper, fontSize: 14, color: colors.muted, flex: 1 },
+    recordValue: { ...sized(type.title, 19), ...tabular, color: colors.white },
 
-  account: {
-    backgroundColor: colors.surface,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-    padding: CARD_PAD,
-    gap: spacing.md,
-  },
-  accountHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  accountTile: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
-    backgroundColor: colors.accentWash,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  accountTitle: { ...sized(type.title, 21), color: colors.white, flex: 1 },
-  accountBody: {
-    ...type.helper,
-    fontSize: 14,
-    color: colors.mutedOnDark,
-    lineHeight: 20,
-  },
-  accountAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    minHeight: 56,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
-    backgroundColor: colors.accent,
-  },
-  /**
-   * 19px bold, not 16.
-   *
-   * White on `accent` is 4.23:1, which clears AA's 3.0 bar for *large* text and
-   * misses the 4.5 for body text. 18.66px bold is where WCAG draws that line,
-   * so the label is sized past it rather than the button being recoloured —
-   * the same fix `GradientButton` already carries, for the same reason.
-   */
-  accountActionText: { ...sized(type.action, 19), color: colors.white, flex: 1 },
+    account: {
+      backgroundColor: colors.surface,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      borderRadius: radius.lg,
+      padding: CARD_PAD,
+      gap: spacing.md,
+    },
+    accountHead: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+    },
+    accountTile: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.md,
+      backgroundColor: colors.accentWash,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    accountTitle: { ...sized(type.title, 21), color: colors.white, flex: 1 },
+    accountBody: {
+      ...type.helper,
+      fontSize: 14,
+      color: colors.muted,
+      lineHeight: 20,
+    },
+    accountAction: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      minHeight: 56,
+      paddingHorizontal: spacing.md,
+      borderRadius: radius.md,
+      backgroundColor: colors.accent,
+    },
+    /**
+     * 19px bold, not 16.
+     *
+     * White on `accent` is 4.23:1, which clears AA's 3.0 bar for *large* text and
+     * misses the 4.5 for body text. 18.66px bold is where WCAG draws that line,
+     * so the label is sized past it rather than the button being recoloured —
+     * the same fix `GradientButton` already carries, for the same reason.
+     */
+    accountActionText: {
+      ...sized(type.action, 19),
+      color: colors.white,
+      flex: 1,
+    },
 
-  note: {
-    ...type.helper,
-    fontSize: 13,
-    color: colors.faintOnDark,
-    lineHeight: 18,
-  },
-});
+    note: {
+      ...type.helper,
+      fontSize: 13,
+      color: colors.faint,
+      lineHeight: 18,
+    },
+  }),
+);

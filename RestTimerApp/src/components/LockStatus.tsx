@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Animated,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { blocker } from '../blocking';
 import { BrandIcon } from './BrandIcon';
@@ -7,7 +14,17 @@ import { LockGlyph } from './LockGlyph';
 import { allBlockableApps } from '../state/workoutReducer';
 import { useWorkout } from '../state/WorkoutContext';
 import { usePressScale } from '../hooks/usePressScale';
-import { colors, HAIRLINE, radius, spacing, TAP_TARGET, type, sized } from '../theme';
+import {
+  HAIRLINE,
+  washOnAccent,
+  radius,
+  sized,
+  spacing,
+  TAP_TARGET,
+  themed,
+  type,
+  useColors,
+} from '../theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -32,6 +49,8 @@ export function LockStatus({
   onAccent?: boolean;
   caption?: string;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const [locked, setLocked] = useState(false);
   const [preview, setPreview] = useState(false);
   const isMock = blocker.kind === 'mock';
@@ -84,7 +103,8 @@ export function LockStatus({
           styles.panel,
           onAccent ? styles.panelOnAccent : styles.panelOnInk,
           panelPress.style,
-        ]}>
+        ]}
+      >
         <LockGlyph
           locked={locked}
           color={onAccent ? colors.white : colors.accent}
@@ -97,7 +117,8 @@ export function LockStatus({
               styles.detail,
               onAccent ? styles.detailOnAccent : styles.detailOnInk,
             ]}
-            numberOfLines={2}>
+            numberOfLines={2}
+          >
             {detail}
           </Text>
         </View>
@@ -108,7 +129,8 @@ export function LockStatus({
       <Modal
         visible={preview}
         animationType="fade"
-        onRequestClose={() => setPreview(false)}>
+        onRequestClose={() => setPreview(false)}
+      >
         <View
           style={[
             styles.shield,
@@ -116,7 +138,8 @@ export function LockStatus({
               paddingTop: insets.top + spacing.lg,
               paddingBottom: insets.bottom + spacing.lg,
             },
-          ]}>
+          ]}
+        >
           <View style={styles.shieldTop}>
             {/* Boxed, or the glyph's own centring would stretch it across the
                 width and knock it out of line with the text below. */}
@@ -134,7 +157,11 @@ export function LockStatus({
               apps.map(app => (
                 <View key={app.id} style={styles.pill}>
                   {app.brand ? (
-                    <BrandIcon id={app.brand} color={app.tint} hole={colors.surface} />
+                    <BrandIcon
+                      id={app.brand}
+                      color={app.tint}
+                      hole={colors.surface}
+                    />
                   ) : (
                     <View style={[styles.dot, { backgroundColor: app.tint }]} />
                   )}
@@ -157,7 +184,8 @@ export function LockStatus({
               accessibilityRole="button"
               accessibilityLabel="Back to workout"
               onPress={() => setPreview(false)}
-              style={[styles.back, backPress.style]}>
+              style={[styles.back, backPress.style]}
+            >
               <Text style={styles.backText}>Back to workout</Text>
             </AnimatedPressable>
           </View>
@@ -167,61 +195,90 @@ export function LockStatus({
   );
 }
 
-const styles = StyleSheet.create({
-  panel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: HAIRLINE,
-  },
-  panelOnInk: { backgroundColor: colors.surface, borderColor: colors.hairline },
-  panelOnAccent: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderColor: 'rgba(255,255,255,0.28)',
-  },
-  words: { flex: 1, gap: 2 },
-  // White on both grounds — the panel behind it changes, the words don't.
-  title: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2, color: colors.white },
-  detail: { ...type.helper, fontSize: 13, lineHeight: 18 },
-  detailOnInk: { color: colors.mutedOnDark },
-  detailOnAccent: { color: colors.mutedOnAccent },
-  peek: { ...sized(type.tag, 10), color: colors.mutedOnDark },
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    panel: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md,
+      borderRadius: radius.md,
+      borderWidth: HAIRLINE,
+    },
+    panelOnInk: {
+      backgroundColor: colors.surface,
+      borderColor: colors.hairline,
+    },
+    panelOnAccent: {
+      backgroundColor: washOnAccent(0.12),
+      borderColor: washOnAccent(0.28),
+    },
+    words: { flex: 1, gap: 2 },
+    // White on both grounds — the panel behind it changes, the words don't.
+    title: {
+      fontSize: 16,
+      fontWeight: '800',
+      letterSpacing: -0.2,
+      color: colors.white,
+    },
+    detail: { ...type.helper, fontSize: 13, lineHeight: 18 },
+    detailOnInk: { color: colors.muted },
+    detailOnAccent: { color: colors.mutedOnAccent },
+    peek: { ...sized(type.tag, 10), color: colors.muted },
 
-  shield: {
-    flex: 1,
-    backgroundColor: colors.ink,
-    paddingHorizontal: spacing.lg,
-    justifyContent: 'space-between',
-  },
-  shieldTop: { flex: 1, justifyContent: 'center', gap: spacing.sm },
-  shieldGlyph: { alignItems: 'flex-start' },
-  shieldTitle: { ...sized(type.mega, 68), color: colors.accent, marginTop: spacing.lg },
-  shieldSub: { ...type.helper, fontSize: 17, color: colors.mutedOnDark, lineHeight: 24 },
-  shieldApps: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-  },
-  dot: { width: 10, height: 10, borderRadius: 5 },
-  pillText: { ...type.body, fontWeight: '600', color: colors.white },
-  shieldFoot: { gap: spacing.md, marginTop: spacing.lg },
-  shieldNote: { ...type.helper, fontSize: 13, color: colors.faintOnDark, lineHeight: 19 },
-  back: {
-    minHeight: TAP_TARGET,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backText: { ...type.action, color: colors.white },
-});
+    shield: {
+      flex: 1,
+      backgroundColor: colors.ink,
+      paddingHorizontal: spacing.lg,
+      justifyContent: 'space-between',
+    },
+    shieldTop: { flex: 1, justifyContent: 'center', gap: spacing.sm },
+    shieldGlyph: { alignItems: 'flex-start' },
+    shieldTitle: {
+      ...sized(type.mega, 68),
+      color: colors.accent,
+      marginTop: spacing.lg,
+    },
+    shieldSub: {
+      ...type.helper,
+      fontSize: 17,
+      color: colors.muted,
+      lineHeight: 24,
+    },
+    shieldApps: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.sm,
+      marginTop: spacing.md,
+    },
+    pill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.hairline,
+    },
+    dot: { width: 10, height: 10, borderRadius: 5 },
+    pillText: { ...type.body, fontWeight: '600', color: colors.white },
+    shieldFoot: { gap: spacing.md, marginTop: spacing.lg },
+    shieldNote: {
+      ...type.helper,
+      fontSize: 13,
+      color: colors.faint,
+      lineHeight: 19,
+    },
+    back: {
+      minHeight: TAP_TARGET,
+      borderRadius: radius.pill,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    backText: { ...type.action, color: colors.white },
+  }),
+);

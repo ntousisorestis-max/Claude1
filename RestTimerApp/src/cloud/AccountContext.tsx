@@ -9,7 +9,13 @@ import React, {
 } from 'react';
 import { personalBest } from '../haptics';
 import { describeAuthError, getBackend } from './backend';
-import { dayKey, NO_STREAK, streakToday, trainedToday, type StreakState } from './days';
+import {
+  dayKey,
+  NO_STREAK,
+  streakToday,
+  trainedToday,
+  type StreakState,
+} from './days';
 import { isFirebaseConfigured } from './firebaseConfig';
 import {
   NO_RECORDS,
@@ -73,7 +79,11 @@ type Account = {
   /** Set by the last failed sign-in/sign-up. Cleared when a new one starts. */
   error: string | null;
   busy: boolean;
-  signUp: (email: string, password: string, displayName: string) => Promise<boolean>;
+  signUp: (
+    email: string,
+    password: string,
+    displayName: string,
+  ) => Promise<boolean>;
   signIn: (email: string, password: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   clearError: () => void;
@@ -237,7 +247,12 @@ export function AccountProvider({
 
   const flush = useCallback(async () => {
     const uid = user?.uid;
-    if (!configured || !uid || flushing.current || outbox.current.length === 0) {
+    if (
+      !configured ||
+      !uid ||
+      flushing.current ||
+      outbox.current.length === 0
+    ) {
       return;
     }
     flushing.current = true;
@@ -393,7 +408,9 @@ export function AccountProvider({
     ],
   );
 
-  return <AccountContext.Provider value={value}>{children}</AccountContext.Provider>;
+  return (
+    <AccountContext.Provider value={value}>{children}</AccountContext.Provider>
+  );
 }
 
 export function useAccount() {

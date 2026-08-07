@@ -22,7 +22,10 @@ import { Circle, type CircleProps } from 'react-native-svg';
 const WebCircle = React.forwardRef<
   Circle,
   CircleProps & { collapsable?: boolean }
->(function CircleWithoutCollapsable({ collapsable: _collapsable, ...rest }, ref) {
+>(function CircleWithoutCollapsable(
+  { collapsable: _collapsable, ...rest },
+  ref,
+) {
   return <Circle ref={ref} {...rest} />;
 });
 

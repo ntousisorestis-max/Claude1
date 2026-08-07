@@ -2,7 +2,16 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Icon, type IconName } from './Icon';
 import { Pop } from './Pop';
-import { colors, HAIRLINE, radius, sized, spacing, tabular, type } from '../theme';
+import {
+  HAIRLINE,
+  radius,
+  sized,
+  spacing,
+  tabular,
+  themed,
+  type,
+  useColors,
+} from '../theme';
 
 /**
  * One number, given room.
@@ -29,11 +38,16 @@ export function StatCard({
   /** The line underneath that says where the number came from. */
   caption: string;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   return (
     <View
       style={styles.card}
       accessibilityRole="text"
-      accessibilityLabel={`${label}: ${value}${unit ? ` ${unit}` : ''}. ${caption}`}>
+      accessibilityLabel={`${label}: ${value}${
+        unit ? ` ${unit}` : ''
+      }. ${caption}`}
+    >
       <View style={styles.tile}>
         <Icon name={icon} color={colors.accentText} size={20} />
       </View>
@@ -52,40 +66,42 @@ export function StatCard({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.md,
-    backgroundColor: colors.surface,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-  },
-  tile: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
-    backgroundColor: colors.accentWash,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  body: { flex: 1, gap: 2 },
-  label: { ...sized(type.tag, 10), color: colors.accentText },
-  popped: { alignSelf: 'flex-start' },
-  // Baseline-aligned, so the unit sits on the number's feet rather than
-  // floating in the middle of it.
-  figure: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
-  value: { ...sized(type.display, 34), ...tabular, color: colors.white },
-  unit: { ...type.body, fontWeight: '600', color: colors.mutedOnDark },
-  caption: {
-    ...type.helper,
-    fontSize: 13,
-    color: colors.faintOnDark,
-    lineHeight: 18,
-    marginTop: 2,
-  },
-});
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    card: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: spacing.md,
+      backgroundColor: colors.surface,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      borderRadius: radius.lg,
+      padding: spacing.md,
+    },
+    tile: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.md,
+      backgroundColor: colors.accentWash,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    body: { flex: 1, gap: 2 },
+    label: { ...sized(type.tag, 10), color: colors.accentText },
+    popped: { alignSelf: 'flex-start' },
+    // Baseline-aligned, so the unit sits on the number's feet rather than
+    // floating in the middle of it.
+    figure: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
+    value: { ...sized(type.display, 34), ...tabular, color: colors.white },
+    unit: { ...type.body, fontWeight: '600', color: colors.muted },
+    caption: {
+      ...type.helper,
+      fontSize: 13,
+      color: colors.faint,
+      lineHeight: 18,
+      marginTop: 2,
+    },
+  }),
+);

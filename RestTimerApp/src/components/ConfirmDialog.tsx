@@ -1,7 +1,22 @@
 import React from 'react';
-import { Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Animated,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { usePressScale } from '../hooks/usePressScale';
-import { colors, HAIRLINE, radius, spacing, TAP_TARGET, type, sized } from '../theme';
+import {
+  HAIRLINE,
+  radius,
+  sized,
+  spacing,
+  TAP_TARGET,
+  themed,
+  type,
+} from '../theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -38,6 +53,7 @@ export function ConfirmDialog({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const styles = useStyles();
   const confirmPress = usePressScale({ haptic: true });
   const cancelPress = usePressScale({ haptic: true });
 
@@ -47,7 +63,8 @@ export function ConfirmDialog({
       transparent
       animationType="fade"
       // Android's hardware back must dismiss it, not fall through to the screen.
-      onRequestClose={onCancel}>
+      onRequestClose={onCancel}
+    >
       {/* Tapping outside cancels — the safe half of a destructive choice.
           Deliberately not in the accessibility tree: it would announce as a
           second button with the same name as Cancel, which is worse than not
@@ -57,7 +74,8 @@ export function ConfirmDialog({
         <Pressable
           accessibilityViewIsModal
           onPress={() => {}}
-          style={styles.card}>
+          style={styles.card}
+        >
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
 
@@ -67,7 +85,8 @@ export function ConfirmDialog({
               accessibilityRole="button"
               accessibilityLabel={confirmLabel}
               onPress={onConfirm}
-              style={[styles.confirm, confirmPress.style]}>
+              style={[styles.confirm, confirmPress.style]}
+            >
               <Text style={styles.confirmText}>{confirmLabel}</Text>
             </AnimatedPressable>
 
@@ -76,7 +95,8 @@ export function ConfirmDialog({
               accessibilityRole="button"
               accessibilityLabel={cancelLabel}
               onPress={onCancel}
-              style={[styles.cancel, cancelPress.style]}>
+              style={[styles.cancel, cancelPress.style]}
+            >
               <Text style={styles.cancelText}>{cancelLabel}</Text>
             </AnimatedPressable>
           </View>
@@ -86,57 +106,59 @@ export function ConfirmDialog({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(6, 4, 12, 0.78)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.lg,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 400,
-    backgroundColor: colors.surface,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    gap: spacing.sm,
-  },
-  title: { ...sized(type.title, 26), color: colors.white },
-  message: {
-    ...type.helper,
-    color: colors.mutedOnDark,
-    lineHeight: 22,
-    marginBottom: spacing.md,
-  },
-  actions: { gap: spacing.sm },
-  confirm: {
-    minHeight: TAP_TARGET,
-    borderRadius: radius.pill,
-    borderWidth: HAIRLINE,
-    borderColor: colors.danger,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  /**
-   * Bumped with `cancelText` purely so the two buttons match. Danger on the
-   * dark ground is 6.5:1 and was never the problem.
-   */
-  confirmText: { ...sized(type.action, 19), color: colors.danger },
-  cancel: {
-    minHeight: TAP_TARGET,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  /** The safe choice is the solid one: destructive actions shouldn't be the
-   * thing your thumb lands on by default. */
-  /**
-   * 19px bold. White on `accent` is 4.22:1 — over AA's 3.0 for large text,
-   * under the 4.5 for body text — and WCAG's line is 18.66px bold.
-   */
-  cancelText: { ...sized(type.action, 19), color: colors.white },
-});
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: colors.scrim,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: spacing.lg,
+    },
+    card: {
+      width: '100%',
+      maxWidth: 400,
+      backgroundColor: colors.surface,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      borderRadius: radius.lg,
+      padding: spacing.lg,
+      gap: spacing.sm,
+    },
+    title: { ...sized(type.title, 26), color: colors.white },
+    message: {
+      ...type.helper,
+      color: colors.muted,
+      lineHeight: 22,
+      marginBottom: spacing.md,
+    },
+    actions: { gap: spacing.sm },
+    confirm: {
+      minHeight: TAP_TARGET,
+      borderRadius: radius.pill,
+      borderWidth: HAIRLINE,
+      borderColor: colors.danger,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    /**
+     * Bumped with `cancelText` purely so the two buttons match. Danger on the
+     * dark ground is 6.5:1 and was never the problem.
+     */
+    confirmText: { ...sized(type.action, 19), color: colors.danger },
+    cancel: {
+      minHeight: TAP_TARGET,
+      borderRadius: radius.pill,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    /** The safe choice is the solid one: destructive actions shouldn't be the
+     * thing your thumb lands on by default. */
+    /**
+     * 19px bold. White on `accent` is 4.22:1 — over AA's 3.0 for large text,
+     * under the 4.5 for body text — and WCAG's line is 18.66px bold.
+     */
+    cancelText: { ...sized(type.action, 19), color: colors.white },
+  }),
+);

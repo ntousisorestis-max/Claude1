@@ -1,11 +1,18 @@
 import React, { useEffect, useId, useRef } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Animated,
+  Easing,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { Pop } from './Pop';
 import { ProgressRing } from './ProgressRing';
 import { tap } from '../haptics';
 import { useReduceMotion } from '../hooks/useReduceMotion';
-import { colors, sized, tabular, type } from '../theme';
+import { sized, tabular, themed, type, useColors } from '../theme';
 
 const SIZE = 216;
 const STROKE = 14;
@@ -43,6 +50,8 @@ export function StreakRing({
   /** The encouraging line under the ring. */
   line: string;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const reduceMotion = useReduceMotion();
   const breath = useRef(new Animated.Value(0)).current;
 
@@ -60,9 +69,7 @@ export function StreakRing({
         easing: Easing.inOut(Easing.quad),
         useNativeDriver: true,
       });
-    const loop = Animated.loop(
-      Animated.sequence([half(1), half(0)]),
-    );
+    const loop = Animated.loop(Animated.sequence([half(1), half(0)]));
     loop.start();
     return () => loop.stop();
   }, [breath, trainedToday, reduceMotion]);
@@ -97,7 +104,8 @@ export function StreakRing({
         }`}
         accessibilityHint={line}
         onPress={tap}
-        style={styles.ring}>
+        style={styles.ring}
+      >
         <Animated.View style={[styles.glow, glowStyle]} pointerEvents="none">
           <Bloom />
         </Animated.View>
@@ -107,7 +115,8 @@ export function StreakRing({
           size={SIZE}
           strokeWidth={STROKE}
           color={colors.accent}
-          trackColor={colors.hairline}>
+          trackColor={colors.hairline}
+        >
           <View style={styles.centre}>
             <Pop value={streak} depth={1.1}>
               <Text style={styles.value}>{streak}</Text>
@@ -124,6 +133,7 @@ export function StreakRing({
 
 /** The soft violet ground the ring floats on. */
 function Bloom() {
+  const colors = useColors();
   // SVG gradient ids share one global namespace on the web. See GlowBackground.
   const id = `streak-glow-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
 
@@ -141,27 +151,34 @@ function Bloom() {
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', gap: 18 },
-  ring: { width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' },
-  glow: {
-    position: 'absolute',
-    width: GLOW,
-    height: GLOW,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    wrap: { alignItems: 'center', gap: 18 },
+    ring: {
+      width: SIZE,
+      height: SIZE,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    glow: {
+      position: 'absolute',
+      width: GLOW,
+      height: GLOW,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
 
-  centre: { alignItems: 'center' },
-  value: { ...sized(type.mega, 76), ...tabular, color: colors.white },
-  unit: { ...sized(type.tag, 11), color: colors.accentText, marginTop: 2 },
+    centre: { alignItems: 'center' },
+    value: { ...sized(type.mega, 76), ...tabular, color: colors.white },
+    unit: { ...sized(type.tag, 11), color: colors.accentText, marginTop: 2 },
 
-  line: {
-    ...type.helper,
-    fontSize: 15,
-    lineHeight: 21,
-    color: colors.mutedOnDark,
-    textAlign: 'center',
-    paddingHorizontal: 8,
-  },
-});
+    line: {
+      ...type.helper,
+      fontSize: 15,
+      lineHeight: 21,
+      color: colors.muted,
+      textAlign: 'center',
+      paddingHorizontal: 8,
+    },
+  }),
+);

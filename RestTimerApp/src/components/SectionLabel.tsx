@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Icon, type IconName } from './Icon';
-import { colors, spacing, type } from '../theme';
+import { spacing, themed, type, useColors } from '../theme';
 
 /**
  * A section's micro-label with its icon.
@@ -17,15 +17,19 @@ export function SectionLabel({
   icon: IconName;
   children: string;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   return (
     <View style={styles.row}>
-      <Icon name={icon} color={colors.faintOnDark} size={15} strokeWidth={1.9} />
+      <Icon name={icon} color={colors.faint} size={15} strokeWidth={1.9} />
       <Text style={styles.label}>{children}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  label: { ...type.tag, color: colors.faintOnDark },
-});
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+    label: { ...type.tag, color: colors.faint },
+  }),
+);

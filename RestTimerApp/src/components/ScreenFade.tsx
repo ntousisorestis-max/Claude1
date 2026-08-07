@@ -50,9 +50,7 @@ export function ScreenFade({
     ],
   };
 
-  return (
-    <Animated.View style={[styles.fill, style]}>{children}</Animated.View>
-  );
+  return <Animated.View style={[styles.fill, style]}>{children}</Animated.View>;
 }
 
 const styles = StyleSheet.create({

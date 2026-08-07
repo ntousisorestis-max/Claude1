@@ -3,7 +3,7 @@ import { Animated, Easing, StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { AnimatedCircle } from './AnimatedCircle';
 import { useReduceMotion } from '../hooks/useReduceMotion';
-import { colors } from '../theme';
+import { themed, useColors } from '../theme';
 
 type Props = {
   /** 0 = empty, 1 = full. */
@@ -35,11 +35,17 @@ export function ProgressRing({
   progress,
   size = 264,
   strokeWidth = 14,
-  color = colors.accent,
-  trackColor = colors.hairline,
+  color,
+  trackColor,
   finishing = false,
   children,
 }: Props) {
+  const styles = useStyles();
+  // Resolved here rather than as default parameters, which are evaluated where
+  // no hook can be called. See BrandIcon.
+  const colors = useColors();
+  const stroke = color ?? colors.accent;
+  const track = trackColor ?? colors.hairline;
   const reduceMotion = useReduceMotion();
   const release = useRef(new Animated.Value(0)).current;
   const radius = (size - strokeWidth) / 2;
@@ -91,19 +97,24 @@ export function ProgressRing({
             }),
           },
         ],
-      }}>
+      }}
+    >
       {/* The track fades as the ring releases — one less thing on screen at
           the moment the countdown hands over to the lock. */}
       <Animated.View
         style={{
-          opacity: release.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
-        }}>
+          opacity: release.interpolate({
+            inputRange: [0, 1],
+            outputRange: [1, 0],
+          }),
+        }}
+      >
         <Svg width={size} height={size}>
           <Circle
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke={trackColor}
+            stroke={track}
             strokeWidth={strokeWidth}
             fill="none"
           />
@@ -115,7 +126,7 @@ export function ProgressRing({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={color}
+          stroke={stroke}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           fill="none"
@@ -133,14 +144,16 @@ export function ProgressRing({
   );
 }
 
-const styles = StyleSheet.create({
-  center: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const useStyles = themed(() =>
+  StyleSheet.create({
+    center: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  }),
+);

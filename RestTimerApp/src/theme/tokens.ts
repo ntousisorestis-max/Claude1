@@ -1,72 +1,12 @@
 /**
- * Violet on charcoal-purple.
+ * Everything visual that is *not* a colour: the type scale, the spacing ramp,
+ * the corner radii, and the formatters that turn numbers into things a person
+ * reads.
  *
- * The rule that holds it together: **colour is lock state.** Locked screens are
- * near-black with violet accents. The instant your apps unlock, the ground
- * floods violet and the content goes white.
- *
- * Why the flood uses a deeper violet than the buttons: a full screen of the
- * bright accent reads as loud, and black text on it only just clears contrast
- * minimums. The deeper tone with white content is calmer *and* more legible.
- *
- * The one deliberate exception to the rule is brand colour on the app icons —
- * those exist to tell TikTok from Instagram at a glance, a different job.
+ * None of it changes between light and dark, which is why it lives apart from
+ * the palettes. See ./palettes.ts for the colours and ./ThemeContext.tsx for
+ * how a component gets hold of them.
  */
-export const colors = {
-  /**
-   * Elevation ramp. Four steps rather than one flat black, so a card reads as
-   * sitting on the screen instead of being cut out of it. Each carries a
-   * little violet in it, so the ground never looks like dead grey.
-   */
-  ink: '#0F0B1A', // the screen itself
-  surface: '#17122A', // inputs, cards, unselected pills
-  raised: '#201A38', // interactive surfaces sitting on a card
-  hairline: '#2E2647', // borders and empty tick marks
-
-  /**
-   * Primary actions and selected states. **A fill, not an ink.**
-   *
-   * At 12–17px on any of this app's grounds it lands at 3.9–4.3:1, under the
-   * 4.5:1 that WCAG AA wants for text that size — and the background glow costs
-   * a little more on top. So it paints buttons, borders, ticks and the giant
-   * set numeral; anything small and violet uses `accentText`.
-   */
-  accent: '#8B5CF6',
-  /**
-   * The same violet, lifted for small text. Clears 4.5:1 on every ground it
-   * lands on — glowed ink, card surface and raised — with room to spare.
-   */
-  accentText: '#9E76F7',
-  /** The full-screen "unlocked" ground, and the slab's extruded shadow. */
-  accentDeep: '#6D42D9',
-  /** Pressed/active tick — one step down from the accent. */
-  accentDim: '#7048E8',
-  accentWash: 'rgba(139, 92, 246, 0.12)',
-
-  white: '#FFFFFF',
-  /** Purple-leaning greys — a neutral grey next to violet reads as dirty. */
-  mutedOnDark: '#A29BBC',
-  /**
-   * The de-emphasised tier. Lifted from #6C6489, which sat at 3.0–3.3:1 on this
-   * app's grounds — under AA before the glow existed, and worse after. This
-   * clears 4.5:1 everywhere while staying a clear step down from `mutedOnDark`,
-   * which is the only job it has.
-   */
-  faintOnDark: '#8F88AA',
-
-  /**
-   * Content on the flooded violet ground.
-   *
-   * Raised from 0.76/0.52: the deep violet is a light ground by contrast
-   * standards, and at the old alphas these sat at 4.2:1 and 2.8:1 — under AA
-   * before the glow touched them, and further under after.
-   */
-  mutedOnAccent: 'rgba(255, 255, 255, 0.88)',
-  faintOnAccent: 'rgba(255, 255, 255, 0.68)',
-
-  danger: '#FF6B81',
-} as const;
-
 export const spacing = {
   xs: 4,
   sm: 8,
@@ -190,7 +130,10 @@ export function describeSpan(totalSeconds: number): {
 
   if (safe < 3600) {
     const minutes = Math.round(safe / 60);
-    return { value: String(minutes), unit: minutes === 1 ? 'minute' : 'minutes' };
+    return {
+      value: String(minutes),
+      unit: minutes === 1 ? 'minute' : 'minutes',
+    };
   }
 
   const hours = Math.floor(safe / 3600);
@@ -198,5 +141,8 @@ export function describeSpan(totalSeconds: number): {
   // 59m30s rounds to 60, which would render as "4h 60m".
   return minutes === 60
     ? { value: `${hours + 1}h`, unit: '' }
-    : { value: minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`, unit: '' };
+    : {
+        value: minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`,
+        unit: '',
+      };
 }

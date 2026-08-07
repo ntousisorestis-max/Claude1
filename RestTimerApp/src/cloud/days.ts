@@ -66,7 +66,9 @@ export function daysApart(from: string, to: string): number {
 
 /** The last `count` days ending at `today`, oldest first. */
 export function recentDays(today: string, count: number): string[] {
-  return Array.from({ length: count }, (_, i) => shiftDay(today, i - (count - 1)));
+  return Array.from({ length: count }, (_, i) =>
+    shiftDay(today, i - (count - 1)),
+  );
 }
 
 /** Mon, Tue… for a day key, in the device's locale-independent short form. */
@@ -110,7 +112,11 @@ export function afterTrainingOn(state: StreakState, day: string): StreakState {
   const last = state.lastActiveDay;
 
   if (last == null) {
-    return { currentStreak: 1, bestStreak: Math.max(state.bestStreak, 1), lastActiveDay: day };
+    return {
+      currentStreak: 1,
+      bestStreak: Math.max(state.bestStreak, 1),
+      lastActiveDay: day,
+    };
   }
 
   const gap = daysApart(last, day);

@@ -14,13 +14,14 @@ import {
 import { EMPTY_STREAKS, STREAKS } from '../copy';
 import { useEnter } from '../hooks/useEnter';
 import {
-  colors,
   HAIRLINE,
   radius,
   sized,
   spacing,
   tabular,
+  themed,
   type,
+  useColors,
 } from '../theme';
 
 /** 24pt between sections, matching Insights. `spacing.lg` is 22. */
@@ -61,6 +62,8 @@ const CARD_PAD = 16;
  * an opaque selection token and never says what is in it. See WorkoutRecord.
  */
 export function StreaksScreen() {
+  const styles = useStyles();
+  const colors = useColors();
   const { status, streak, currentStreak, trainedToday, totals } = useAccount();
 
   const enterHero = useEnter();
@@ -141,6 +144,7 @@ export function StreaksScreen() {
  * has already been done is a trophy; this one is meant to be a direction.
  */
 function MilestoneCard({ rung, best }: { rung: Rung | null; best: number }) {
+  const styles = useStyles();
   if (!rung) {
     return (
       <>
@@ -203,6 +207,7 @@ function MilestoneCard({ rung, best }: { rung: Rung | null; best: number }) {
  * go down.
  */
 function ChallengeCard({ rung, done }: { rung: Rung | null; done: number }) {
+  const styles = useStyles();
   return (
     <>
       <View style={styles.cardHead}>
@@ -255,94 +260,114 @@ function ringLine(current: number, trainedToday: boolean): string {
   return current === 1 ? STREAKS.ring.firstDay : STREAKS.ring.banked;
 }
 
-const styles = StyleSheet.create({
-  content: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xxl,
-    gap: SECTION_GAP,
-  },
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    content: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.md,
+      paddingBottom: spacing.xxl,
+      gap: SECTION_GAP,
+    },
 
-  hero: { gap: 2 },
-  eyebrow: { ...type.tag, color: colors.accentText, marginBottom: spacing.xs },
-  masthead: { ...sized(type.display, 42), color: colors.white },
-  stop: { color: colors.accent },
+    hero: { gap: 2 },
+    eyebrow: {
+      ...type.tag,
+      color: colors.accentText,
+      marginBottom: spacing.xs,
+    },
+    masthead: { ...sized(type.display, 42), color: colors.white },
+    stop: { color: colors.accent },
 
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-    padding: CARD_PAD,
-    gap: spacing.md,
-  },
-  cardHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  cardTitle: { ...sized(type.tag, 10), color: colors.accentText },
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      borderRadius: radius.lg,
+      padding: CARD_PAD,
+      gap: spacing.md,
+    },
+    cardHead: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    cardTitle: { ...sized(type.tag, 10), color: colors.accentText },
 
-  best: { ...sized(type.tag, 10), color: colors.faintOnDark },
-  bestValue: { color: colors.mutedOnDark },
+    best: { ...sized(type.tag, 10), color: colors.faint },
+    bestValue: { color: colors.muted },
 
-  /** Target and unit on one baseline, so "30 days" reads as one thing. */
-  target: { flexDirection: 'row', alignItems: 'baseline', gap: 7 },
-  targetValue: { ...sized(type.display, 40), ...tabular, color: colors.white },
-  targetUnit: { ...type.body, fontWeight: '700', color: colors.mutedOnDark },
+    /** Target and unit on one baseline, so "30 days" reads as one thing. */
+    target: { flexDirection: 'row', alignItems: 'baseline', gap: 7 },
+    targetValue: {
+      ...sized(type.display, 40),
+      ...tabular,
+      color: colors.white,
+    },
+    targetUnit: { ...type.body, fontWeight: '700', color: colors.muted },
 
-  remaining: {
-    ...type.helper,
-    fontSize: 14,
-    color: colors.mutedOnDark,
-    lineHeight: 20,
-  },
-  past: { ...type.body, fontWeight: '600', color: colors.white, lineHeight: 23 },
+    remaining: {
+      ...type.helper,
+      fontSize: 14,
+      color: colors.muted,
+      lineHeight: 20,
+    },
+    past: {
+      ...type.body,
+      fontWeight: '600',
+      color: colors.white,
+      lineHeight: 23,
+    },
 
-  count: { flexDirection: 'row', alignItems: 'baseline' },
-  countNow: { ...sized(type.title, 22), ...tabular, color: colors.white },
-  countOf: { ...type.body, fontWeight: '600', color: colors.faintOnDark },
+    count: { flexDirection: 'row', alignItems: 'baseline' },
+    countNow: { ...sized(type.title, 22), ...tabular, color: colors.white },
+    countOf: { ...type.body, fontWeight: '600', color: colors.faint },
 
-  challengeTitle: { ...sized(type.title, 21), color: colors.white },
-  challengeBody: {
-    ...type.helper,
-    fontSize: 14,
-    color: colors.mutedOnDark,
-    lineHeight: 20,
-  },
+    challengeTitle: { ...sized(type.title, 21), color: colors.white },
+    challengeBody: {
+      ...type.helper,
+      fontSize: 14,
+      color: colors.muted,
+      lineHeight: 20,
+    },
 
-  shield: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.md,
-    backgroundColor: colors.surface,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-    padding: CARD_PAD,
-  },
-  shieldTile: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.sm + 2,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  shieldText: { flex: 1, gap: 4, paddingTop: 1 },
-  shieldTitle: { ...type.body, fontSize: 17, fontWeight: '800', color: colors.white },
-  shieldBody: {
-    ...type.helper,
-    fontSize: 14,
-    color: colors.mutedOnDark,
-    lineHeight: 20,
-  },
+    shield: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: spacing.md,
+      backgroundColor: colors.surface,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      borderRadius: radius.lg,
+      padding: CARD_PAD,
+    },
+    shieldTile: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.sm + 2,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    shieldText: { flex: 1, gap: 4, paddingTop: 1 },
+    shieldTitle: {
+      ...type.body,
+      fontSize: 17,
+      fontWeight: '800',
+      color: colors.white,
+    },
+    shieldBody: {
+      ...type.helper,
+      fontSize: 14,
+      color: colors.muted,
+      lineHeight: 20,
+    },
 
-  footer: {
-    ...type.helper,
-    fontSize: 13,
-    color: colors.faintOnDark,
-    lineHeight: 18,
-    textAlign: 'center',
-  },
-});
+    footer: {
+      ...type.helper,
+      fontSize: 13,
+      color: colors.faint,
+      lineHeight: 18,
+      textAlign: 'center',
+    },
+  }),
+);

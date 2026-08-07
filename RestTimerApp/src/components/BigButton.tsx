@@ -1,7 +1,14 @@
 import React from 'react';
-import { Animated, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import {
+  Animated,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { usePressScale } from '../hooks/usePressScale';
-import { colors, radius, spacing, TAP_TARGET, type } from '../theme';
+import { radius, spacing, TAP_TARGET, themed, type } from '../theme';
 
 type Variant = 'accent' | 'ink' | 'outlineOnAccent' | 'quiet' | 'danger';
 
@@ -50,6 +57,7 @@ export function BigButton({
   disabled = false,
   style,
 }: Props) {
+  const styles = useStyles();
   // Buttons are the app's primary actions, so they all tick.
   const { handlers, press } = usePressScale({ haptic: !disabled });
 
@@ -77,7 +85,8 @@ export function BigButton({
         // moment it becomes enabled.
         slab && { paddingRight: LIFT, paddingBottom: LIFT },
         style,
-      ]}>
+      ]}
+    >
       {slab ? <View style={styles.shadowBlock} /> : null}
 
       <Animated.View
@@ -99,7 +108,8 @@ export function BigButton({
               { scale: squash },
             ],
           },
-        ]}>
+        ]}
+      >
         <Text
           style={[
             styles.label,
@@ -110,7 +120,8 @@ export function BigButton({
             variant === 'danger' && styles.labelDanger,
             slab && styles.labelSlab,
             disabled && styles.labelDisabled,
-          ]}>
+          ]}
+        >
           {text ?? label}
         </Text>
       </Animated.View>
@@ -118,59 +129,61 @@ export function BigButton({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { position: 'relative' },
-  wrapSlab: { flex: 1 },
-  shadowBlock: {
-    position: 'absolute',
-    left: LIFT,
-    top: LIFT,
-    right: 0,
-    bottom: 0,
-    borderRadius: radius.lg,
-    backgroundColor: colors.accentDeep,
-  },
-  face: {
-    minHeight: TAP_TARGET,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  faceSlab: { flex: 1, borderRadius: radius.lg },
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    wrap: { position: 'relative' },
+    wrapSlab: { flex: 1 },
+    shadowBlock: {
+      position: 'absolute',
+      left: LIFT,
+      top: LIFT,
+      right: 0,
+      bottom: 0,
+      borderRadius: radius.lg,
+      backgroundColor: colors.accentDeep,
+    },
+    face: {
+      minHeight: TAP_TARGET,
+      borderRadius: radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
+    },
+    faceSlab: { flex: 1, borderRadius: radius.lg },
 
-  accent: { backgroundColor: colors.accent },
-  ink: { backgroundColor: colors.ink },
-  outlineOnAccent: { borderWidth: 2, borderColor: colors.white },
-  quiet: {},
-  danger: {},
+    accent: { backgroundColor: colors.accent },
+    ink: { backgroundColor: colors.ink },
+    outlineOnAccent: { borderWidth: 2, borderColor: colors.white },
+    quiet: {},
+    danger: {},
 
-  faceDisabled: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-  },
+    faceDisabled: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.hairline,
+    },
 
-  /** Tight, close to the edge — a halo, not a drop shadow. */
-  glow: {
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 14,
-  },
-  dropShadow: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.24,
-    shadowRadius: 10,
-  },
+    /** Tight, close to the edge — a halo, not a drop shadow. */
+    glow: {
+      shadowColor: colors.shadow,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: colors.shadowOpacity,
+      shadowRadius: 14,
+    },
+    dropShadow: {
+      shadowColor: colors.dropShadow,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.24,
+      shadowRadius: 10,
+    },
 
-  label: { ...type.action, color: colors.white },
-  labelOnAccent: { color: colors.white },
-  labelOnInk: { color: colors.white },
-  labelQuiet: { ...type.tag, color: colors.mutedOnDark },
-  labelDanger: { ...type.tag, color: colors.danger },
-  labelSlab: { fontSize: 34, fontWeight: '900', letterSpacing: -1 },
-  labelDisabled: { color: colors.faintOnDark },
-});
+    label: { ...type.action, color: colors.white },
+    labelOnAccent: { color: colors.white },
+    labelOnInk: { color: colors.white },
+    labelQuiet: { ...type.tag, color: colors.muted },
+    labelDanger: { ...type.tag, color: colors.danger },
+    labelSlab: { fontSize: 34, fontWeight: '900', letterSpacing: -1 },
+    labelDisabled: { color: colors.faint },
+  }),
+);

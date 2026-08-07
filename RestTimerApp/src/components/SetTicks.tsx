@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { useReduceMotion } from '../hooks/useReduceMotion';
-import { colors, radius } from '../theme';
+import { washOnAccent, radius, themed } from '../theme';
 
 /**
  * One chunky block per set, filled as they're banked.
@@ -20,6 +20,7 @@ export function SetTicks({
   current: number;
   onAccent?: boolean;
 }) {
+  const styles = useStyles();
   const reduceMotion = useReduceMotion();
   const pop = useRef(new Animated.Value(1)).current;
   const justBanked = useRef(completed);
@@ -48,7 +49,8 @@ export function SetTicks({
     <View
       style={styles.row}
       accessibilityRole="progressbar"
-      accessibilityLabel={`${completed} of ${total} sets complete`}>
+      accessibilityLabel={`${completed} of ${total} sets complete`}
+    >
       {Array.from({ length: total }, (_, i) => {
         const index = i + 1;
         const done = index <= completed;
@@ -81,13 +83,15 @@ export function SetTicks({
   );
 }
 
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 6 },
-  tick: { flex: 1, height: 10, borderRadius: radius.pill },
-  emptyOnInk: { backgroundColor: colors.hairline },
-  emptyOnAccent: { backgroundColor: 'rgba(255,255,255,0.24)' },
-  doneOnInk: { backgroundColor: colors.accent },
-  doneOnAccent: { backgroundColor: colors.white },
-  activeOnInk: { backgroundColor: colors.accentDim },
-  activeOnAccent: { backgroundColor: 'rgba(255,255,255,0.6)' },
-});
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    row: { flexDirection: 'row', gap: 6 },
+    tick: { flex: 1, height: 10, borderRadius: radius.pill },
+    emptyOnInk: { backgroundColor: colors.hairline },
+    emptyOnAccent: { backgroundColor: washOnAccent(0.24) },
+    doneOnInk: { backgroundColor: colors.accent },
+    doneOnAccent: { backgroundColor: colors.white },
+    activeOnInk: { backgroundColor: colors.accentDim },
+    activeOnAccent: { backgroundColor: washOnAccent(0.6) },
+  }),
+);

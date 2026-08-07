@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Animated,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { AuthSheet } from './AuthSheet';
 import { ConfirmDialog } from './ConfirmDialog';
 import { Icon, type IconName } from './Icon';
@@ -7,13 +14,14 @@ import { SettingsSection } from './SettingsSection';
 import { usePressScale } from '../hooks/usePressScale';
 import { useAccount } from '../cloud/AccountContext';
 import {
-  colors,
   describeDuration,
   HAIRLINE,
   radius,
   sized,
   spacing,
+  themed,
   type,
+  useColors,
 } from '../theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -27,6 +35,8 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  * tab when there is a Focusboard to sign into.
  */
 export function AccountCard() {
+  const styles = useStyles();
+  const colors = useColors();
   const { status, user, totals, sync, pendingCount, signOut } = useAccount();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [confirmingOut, setConfirmingOut] = useState(false);
@@ -40,7 +50,8 @@ export function AccountCard() {
           status === 'signed-in'
             ? 'Your focus time is saved to your account.'
             : 'Save your focus time so it survives closing the app.'
-        }>
+        }
+      >
         {status === 'unconfigured' ? <NotConfigured /> : null}
 
         {status === 'loading' ? (
@@ -145,10 +156,12 @@ export function AccountCard() {
  * is the app's normal state until someone follows the setup guide.
  */
 function NotConfigured() {
+  const styles = useStyles();
+  const colors = useColors();
   return (
     <>
       <View style={styles.setup}>
-        <Icon name="lock" color={colors.faintOnDark} size={18} />
+        <Icon name="lock" color={colors.faint} size={18} />
         <Text style={styles.setupText}>Accounts aren’t switched on yet.</Text>
       </View>
       <Text style={styles.note}>
@@ -161,11 +174,19 @@ function NotConfigured() {
 }
 
 /** One line of "is my data actually up there". */
-function SyncLine({ sync, pendingCount }: { sync: string; pendingCount: number }) {
+function SyncLine({
+  sync,
+  pendingCount,
+}: {
+  sync: string;
+  pendingCount: number;
+}) {
+  const styles = useStyles();
+  const colors = useColors();
   if (pendingCount > 0) {
     return (
       <View style={styles.syncRow}>
-        <Icon name="clock" color={colors.faintOnDark} size={13} />
+        <Icon name="clock" color={colors.faint} size={13} />
         <Text style={styles.syncText}>
           {pendingCount === 1
             ? 'A workout is waiting to be saved'
@@ -177,7 +198,7 @@ function SyncLine({ sync, pendingCount }: { sync: string; pendingCount: number }
   if (sync === 'syncing') {
     return (
       <View style={styles.syncRow}>
-        <ActivityIndicator size="small" color={colors.faintOnDark} />
+        <ActivityIndicator size="small" color={colors.faint} />
         <Text style={styles.syncText}>Saving…</Text>
       </View>
     );
@@ -199,6 +220,7 @@ function Total({
   unit: string;
   label: string;
 }) {
+  const styles = useStyles();
   return (
     <View style={styles.total}>
       <Text style={styles.totalValue}>{value}</Text>
@@ -218,6 +240,8 @@ function PrimaryRow({
   label: string;
   onPress: () => void;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const press = usePressScale({ depth: 0.98, haptic: true });
 
   return (
@@ -226,7 +250,8 @@ function PrimaryRow({
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
-      style={[styles.primary, press.style]}>
+      style={[styles.primary, press.style]}
+    >
       <Icon name={icon} color={colors.white} size={19} />
       <Text style={styles.primaryText}>{label}</Text>
       <Icon name="chevron" color={colors.white} size={16} />
@@ -244,6 +269,8 @@ function QuietRow({
   label: string;
   onPress: () => void;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const press = usePressScale({ depth: 0.98, haptic: true });
 
   return (
@@ -252,86 +279,98 @@ function QuietRow({
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
-      style={[styles.quiet, press.style]}>
-      <Icon name={icon} color={colors.mutedOnDark} size={18} />
+      style={[styles.quiet, press.style]}
+    >
+      <Icon name={icon} color={colors.muted} size={18} />
       <Text style={styles.quietText}>{label}</Text>
-      <Icon name="chevron" color={colors.faintOnDark} size={15} />
+      <Icon name="chevron" color={colors.faint} size={15} />
     </AnimatedPressable>
   );
 }
 
-const styles = StyleSheet.create({
-  loading: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    loading: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
 
-  who: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    backgroundColor: colors.ink,
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  initial: { ...sized(type.title, 20), color: colors.white },
-  whoText: { flex: 1, gap: 4 },
-  name: { ...sized(type.title, 20), color: colors.white },
-  syncRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  syncText: { ...type.helper, fontSize: 13, color: colors.faintOnDark },
-  syncOn: { color: colors.accentText },
+    who: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      backgroundColor: colors.ink,
+      borderRadius: radius.md,
+      padding: spacing.md,
+    },
+    avatar: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.pill,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    initial: { ...sized(type.title, 20), color: colors.white },
+    whoText: { flex: 1, gap: 4 },
+    name: { ...sized(type.title, 20), color: colors.white },
+    syncRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    syncText: { ...type.helper, fontSize: 13, color: colors.faint },
+    syncOn: { color: colors.accentText },
 
-  totals: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    backgroundColor: colors.ink,
-    borderRadius: radius.md,
-    paddingVertical: spacing.md,
-  },
-  total: { flex: 1, alignItems: 'center', gap: 1 },
-  totalValue: { ...sized(type.display, 26), color: colors.white },
-  totalUnit: { ...type.helper, fontSize: 12, color: colors.mutedOnDark },
-  totalLabel: { ...sized(type.tag, 9), color: colors.faintOnDark, marginTop: 4 },
-  divider: { width: HAIRLINE, backgroundColor: colors.hairline, marginVertical: 2 },
+    totals: {
+      flexDirection: 'row',
+      alignItems: 'stretch',
+      backgroundColor: colors.ink,
+      borderRadius: radius.md,
+      paddingVertical: spacing.md,
+    },
+    total: { flex: 1, alignItems: 'center', gap: 1 },
+    totalValue: { ...sized(type.display, 26), color: colors.white },
+    totalUnit: { ...type.helper, fontSize: 12, color: colors.muted },
+    totalLabel: { ...sized(type.tag, 9), color: colors.faint, marginTop: 4 },
+    divider: {
+      width: HAIRLINE,
+      backgroundColor: colors.hairline,
+      marginVertical: 2,
+    },
 
-  primary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    minHeight: 56,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
-    backgroundColor: colors.accent,
-  },
-  /**
-   * 19px bold, not 16.
-   *
-   * White on `accent` measures 4.22:1. That clears AA's 3.0 bar for large text
-   * and misses the 4.5 for body text, and WCAG puts the line at 18.66px bold —
-   * so the label is sized past it rather than the button being recoloured. The
-   * same fix `GradientButton` and the Insights account button carry.
-   */
-  primaryText: { ...sized(type.action, 19), color: colors.white, flex: 1 },
+    primary: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      minHeight: 56,
+      paddingHorizontal: spacing.md,
+      borderRadius: radius.md,
+      backgroundColor: colors.accent,
+    },
+    /**
+     * 19px bold, not 16.
+     *
+     * White on `accent` measures 4.22:1. That clears AA's 3.0 bar for large text
+     * and misses the 4.5 for body text, and WCAG puts the line at 18.66px bold —
+     * so the label is sized past it rather than the button being recoloured. The
+     * same fix `GradientButton` and the Insights account button carry.
+     */
+    primaryText: { ...sized(type.action, 19), color: colors.white, flex: 1 },
 
-  quiet: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    minHeight: 52,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-  },
-  quietText: { ...type.body, fontWeight: '600', color: colors.mutedOnDark, flex: 1 },
+    quiet: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      minHeight: 52,
+      paddingHorizontal: spacing.md,
+      borderRadius: radius.md,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+    },
+    quietText: {
+      ...type.body,
+      fontWeight: '600',
+      color: colors.muted,
+      flex: 1,
+    },
 
-  setup: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  setupText: { ...type.body, fontWeight: '600', color: colors.mutedOnDark },
+    setup: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+    setupText: { ...type.body, fontWeight: '600', color: colors.muted },
 
-  note: { ...type.helper, fontSize: 13, color: colors.faintOnDark, lineHeight: 18 },
-});
+    note: { ...type.helper, fontSize: 13, color: colors.faint, lineHeight: 18 },
+  }),
+);

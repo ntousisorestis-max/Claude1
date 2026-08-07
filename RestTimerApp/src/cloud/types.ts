@@ -149,7 +149,10 @@ export type CloudBackend = {
    * Watches the signed-in user's lifetime totals and streak. Unsubscribes when
    * they sign out.
    */
-  observeAccount(uid: string, onChange: (data: AccountData) => void): () => void;
+  observeAccount(
+    uid: string,
+    onChange: (data: AccountData) => void,
+  ): () => void;
   /**
    * Watches the most recent `count` days the user trained, newest first.
    *

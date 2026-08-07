@@ -45,7 +45,9 @@ function sameSaved(a: SavedState | null, b: SavedState): boolean {
     a.defaults.soundEnabled === b.defaults.soundEnabled &&
     sameIds(a.defaults.selectedAppIds, b.defaults.selectedAppIds) &&
     a.defaults.customApps.length === b.defaults.customApps.length &&
-    a.defaults.customApps.every((app, i) => app.id === b.defaults.customApps[i]?.id) &&
+    a.defaults.customApps.every(
+      (app, i) => app.id === b.defaults.customApps[i]?.id,
+    ) &&
     a.welcomed === b.welcomed &&
     a.exercises.length === b.exercises.length &&
     a.exercises.every((exercise, i) => sameExercise(exercise, b.exercises[i]))
@@ -89,7 +91,7 @@ type WorkoutActions = {
 };
 
 const WorkoutContext = createContext<
-  { state: WorkoutState; hydrated: boolean } & WorkoutActions | null
+  ({ state: WorkoutState; hydrated: boolean } & WorkoutActions) | null
 >(null);
 
 export function WorkoutProvider({
@@ -166,7 +168,9 @@ export function WorkoutProvider({
     if (state.appsLocked) {
       blocker.lockApps().catch(err => console.warn('[rest-timer] lock', err));
     } else {
-      blocker.unlockApps().catch(err => console.warn('[rest-timer] unlock', err));
+      blocker
+        .unlockApps()
+        .catch(err => console.warn('[rest-timer] unlock', err));
     }
   }, [state.appsLocked]);
 
@@ -248,7 +252,10 @@ export function WorkoutProvider({
   // ignores it unless we're actually resting — so a stale tap, or one that
   // arrives after the countdown already ended rest itself, can't skip a set.
   useEffect(
-    () => onRestNotificationPress(() => dispatch({ type: 'END_REST', now: Date.now() })),
+    () =>
+      onRestNotificationPress(() =>
+        dispatch({ type: 'END_REST', now: Date.now() }),
+      ),
     [],
   );
 
@@ -259,7 +266,8 @@ export function WorkoutProvider({
       addExercise: name =>
         dispatch({ type: 'ADD_EXERCISE', id: newExerciseId(), name }),
       removeExercise: id => dispatch({ type: 'REMOVE_EXERCISE', id }),
-      renameExercise: (id, name) => dispatch({ type: 'RENAME_EXERCISE', id, name }),
+      renameExercise: (id, name) =>
+        dispatch({ type: 'RENAME_EXERCISE', id, name }),
       setExerciseSets: (id, sets) =>
         dispatch({ type: 'SET_EXERCISE_SETS', id, sets }),
       setExerciseRest: (id, seconds) =>
@@ -267,8 +275,10 @@ export function WorkoutProvider({
       toggleExerciseApp: (id, appId) =>
         dispatch({ type: 'TOGGLE_EXERCISE_APP', id, appId }),
       deleteAllExercises: () => dispatch({ type: 'DELETE_ALL_EXERCISES' }),
-      toggleDefaultApp: appId => dispatch({ type: 'TOGGLE_DEFAULT_APP', appId }),
-      setSoundEnabled: enabled => dispatch({ type: 'SET_SOUND_ENABLED', enabled }),
+      toggleDefaultApp: appId =>
+        dispatch({ type: 'TOGGLE_DEFAULT_APP', appId }),
+      setSoundEnabled: enabled =>
+        dispatch({ type: 'SET_SOUND_ENABLED', enabled }),
       addCustomApp: name => dispatch({ type: 'ADD_CUSTOM_APP', name }),
       removeCustomApp: appId => dispatch({ type: 'REMOVE_CUSTOM_APP', appId }),
       startWorkout: id => {

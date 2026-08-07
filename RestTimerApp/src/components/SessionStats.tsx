@@ -2,7 +2,16 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Icon, type IconName } from './Icon';
 import { Pop } from './Pop';
-import { colors, describeDuration, HAIRLINE, radius, sized, spacing, type } from '../theme';
+import {
+  describeDuration,
+  HAIRLINE,
+  radius,
+  sized,
+  spacing,
+  themed,
+  type,
+  useColors,
+} from '../theme';
 import type { SessionTotals } from '../state/types';
 
 /**
@@ -14,6 +23,7 @@ import type { SessionTotals } from '../state/types';
  * would be a promise the app can't keep.
  */
 export function SessionStats({ session }: { session: SessionTotals }) {
+  const styles = useStyles();
   const focus = describeDuration(session.lockedSeconds);
 
   return (
@@ -51,11 +61,14 @@ function Stat({
   value: string;
   label: string;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   return (
     <View
       style={styles.stat}
       accessibilityRole="text"
-      accessibilityLabel={`${value} ${label}`}>
+      accessibilityLabel={`${value} ${label}`}
+    >
       <Icon name={icon} color={colors.accent} size={22} strokeWidth={1.9} />
       {/* Left-anchored, so a stat that pops doesn't shove its neighbours. */}
       <Pop value={value} style={styles.popped}>
@@ -66,20 +79,22 @@ function Stat({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.lg,
-    gap: spacing.lg,
-  },
-  title: { ...type.tag, color: colors.accentText },
-  row: { flexDirection: 'row' },
-  stat: { flex: 1, gap: spacing.sm },
-  popped: { alignSelf: 'flex-start' },
-  value: { ...sized(type.title, 28), color: colors.white },
-  label: { ...type.helper, fontSize: 13, color: colors.mutedOnDark },
-});
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      borderRadius: radius.lg,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.lg,
+      gap: spacing.lg,
+    },
+    title: { ...type.tag, color: colors.accentText },
+    row: { flexDirection: 'row' },
+    stat: { flex: 1, gap: spacing.sm },
+    popped: { alignSelf: 'flex-start' },
+    value: { ...sized(type.title, 28), color: colors.white },
+    label: { ...type.helper, fontSize: 13, color: colors.muted },
+  }),
+);

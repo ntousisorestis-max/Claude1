@@ -55,7 +55,9 @@ export type AppStorage = {
  * one will, so the wiring is proven rather than hypothetical, and swapping in
  * a persistent driver changes only how long the values survive.
  */
-export function createMemoryStorage(seed: SavedState | null = null): AppStorage {
+export function createMemoryStorage(
+  seed: SavedState | null = null,
+): AppStorage {
   let held: SavedState | null = seed;
 
   return {
@@ -81,7 +83,9 @@ export const memoryStorage = createMemoryStorage();
  * no real user in that situation would be looking at. Tests that mean "a
  * returning user" should say so.
  */
-export function createReturningStorage(saved: Partial<SavedState> = {}): AppStorage {
+export function createReturningStorage(
+  saved: Partial<SavedState> = {},
+): AppStorage {
   return createMemoryStorage({
     defaults: FACTORY_DEFAULTS,
     exercises: [],

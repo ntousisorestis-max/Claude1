@@ -1,9 +1,24 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Animated,
+  Easing,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { usePressScale } from '../hooks/usePressScale';
 import { useReduceMotion } from '../hooks/useReduceMotion';
-import { colors, HAIRLINE, radius, sized, spacing, type } from '../theme';
+import {
+  HAIRLINE,
+  radius,
+  sized,
+  spacing,
+  themed,
+  type,
+  useColors,
+} from '../theme';
 
 export type Tab = 'workout' | 'insights' | 'streaks' | 'settings';
 
@@ -29,6 +44,7 @@ export function TabBar({
   active: Tab;
   onChange: (tab: Tab) => void;
 }) {
+  const styles = useStyles();
   return (
     <View style={styles.bar}>
       {TABS.map(({ tab, label }) => (
@@ -55,7 +71,9 @@ function TabButton({
   active: boolean;
   onPress: (tab: Tab) => void;
 }) {
-  const tint = active ? colors.accentText : colors.faintOnDark;
+  const styles = useStyles();
+  const colors = useColors();
+  const tint = active ? colors.accentText : colors.faint;
   const pressScale = usePressScale({ depth: 0.92, haptic: true });
   const reduceMotion = useReduceMotion();
 
@@ -94,7 +112,8 @@ function TabButton({
       accessibilityState={{ selected: active }}
       accessibilityLabel={label}
       onPress={() => onPress(tab)}
-      style={styles.tab}>
+      style={styles.tab}
+    >
       <Animated.View style={[styles.tabInner, pressScale.style]}>
         {/* The glyph sits in a violet pill when selected. It's the only
             treatment here — a bar that grows an underline, a dot and a colour
@@ -177,6 +196,7 @@ function BarsGlyph({ tint }: { tint: string }) {
  * as a leaf at this size; mass is what makes it fire.
  */
 function FlameGlyph({ tint }: { tint: string }) {
+  const colors = useColors();
   return (
     <>
       <Path
@@ -193,42 +213,64 @@ function FlameGlyph({ tint }: { tint: string }) {
 
 /** Sliders — clearer at 24px than a gear, whose teeth turn to mush. */
 function SlidersGlyph({ tint }: { tint: string }) {
+  const colors = useColors();
   return (
     <>
-      <Path d="M4 7h16M4 17h16" stroke={tint} strokeWidth="2" strokeLinecap="round" />
-      <Circle cx="9.5" cy="7" r="3" fill={colors.ink} stroke={tint} strokeWidth="2" />
-      <Circle cx="15" cy="17" r="3" fill={colors.ink} stroke={tint} strokeWidth="2" />
+      <Path
+        d="M4 7h16M4 17h16"
+        stroke={tint}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <Circle
+        cx="9.5"
+        cy="7"
+        r="3"
+        fill={colors.ink}
+        stroke={tint}
+        strokeWidth="2"
+      />
+      <Circle
+        cx="15"
+        cy="17"
+        r="3"
+        fill={colors.ink}
+        stroke={tint}
+        strokeWidth="2"
+      />
     </>
   );
 }
 
-const styles = StyleSheet.create({
-  bar: {
-    flexDirection: 'row',
-    borderTopWidth: HAIRLINE,
-    borderTopColor: colors.hairline,
-    backgroundColor: colors.ink,
-    paddingTop: spacing.sm,
-  },
-  tab: { flex: 1, paddingVertical: spacing.sm },
-  tabInner: { alignItems: 'center', justifyContent: 'center', gap: 5 },
-  glyph: {
-    // Narrower than it was with two tabs. At four, a quarter of a 320pt phone
-    // is 80pt, and the old 22pt side padding made a 68pt pill that touched its
-    // neighbours.
-    paddingHorizontal: spacing.md,
-    paddingVertical: 5,
-    borderRadius: radius.pill,
-  },
-  /** Sits behind the glyph and fills the padded box the glyph defines. */
-  pill: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accentWash,
-  },
-  label: { ...sized(type.tag, 11) },
-});
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    bar: {
+      flexDirection: 'row',
+      borderTopWidth: HAIRLINE,
+      borderTopColor: colors.hairline,
+      backgroundColor: colors.ink,
+      paddingTop: spacing.sm,
+    },
+    tab: { flex: 1, paddingVertical: spacing.sm },
+    tabInner: { alignItems: 'center', justifyContent: 'center', gap: 5 },
+    glyph: {
+      // Narrower than it was with two tabs. At four, a quarter of a 320pt phone
+      // is 80pt, and the old 22pt side padding made a 68pt pill that touched its
+      // neighbours.
+      paddingHorizontal: spacing.md,
+      paddingVertical: 5,
+      borderRadius: radius.pill,
+    },
+    /** Sits behind the glyph and fills the padded box the glyph defines. */
+    pill: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      borderRadius: radius.pill,
+      backgroundColor: colors.accentWash,
+    },
+    label: { ...sized(type.tag, 11) },
+  }),
+);

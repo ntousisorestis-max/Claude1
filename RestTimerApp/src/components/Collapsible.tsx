@@ -1,5 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import {
+  Animated,
+  Easing,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+} from 'react-native';
 import { useReduceMotion } from '../hooks/useReduceMotion';
 
 /**
@@ -106,7 +112,8 @@ export function Collapsible({
       pointerEvents={open ? 'auto' : 'none'}
       accessibilityElementsHidden={!open}
       importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
-      aria-hidden={!open}>
+      aria-hidden={!open}
+    >
       {/* The measured child. It must be free to take its natural height, so the
           animated height lives on the parent and this one is never constrained. */}
       <View onLayout={onLayout}>{children}</View>

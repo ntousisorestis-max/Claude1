@@ -56,7 +56,9 @@ export function WorkoutSync() {
     recordWorkout({
       // Minted here, once, and reused by every retry of this workout. See
       // firebaseBackend.recordWorkout for why that matters.
-      id: `w_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+      id: `w_${Date.now().toString(36)}_${Math.random()
+        .toString(36)
+        .slice(2, 8)}`,
       exerciseName: state.config.exerciseName,
       focusSeconds: state.totalLockedSeconds,
       setsCompleted: state.setsCompleted,

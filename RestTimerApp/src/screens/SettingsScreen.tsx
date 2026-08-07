@@ -27,7 +27,15 @@ import {
   MAX_CUSTOM_APPS,
 } from '../state/workoutReducer';
 import { APP_NAME, APP_VERSION } from '../appInfo';
-import { colors, HAIRLINE, radius, sized, spacing, type } from '../theme';
+import {
+  HAIRLINE,
+  radius,
+  sized,
+  spacing,
+  themed,
+  type,
+  useColors,
+} from '../theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -39,6 +47,8 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  * which of them a new exercise starts with, and the one destructive action.
  */
 export function SettingsScreen() {
+  const styles = useStyles();
+  const colors = useColors();
   const {
     state: { defaults, exercises },
     toggleDefaultApp,
@@ -77,10 +87,12 @@ export function SettingsScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <ScrollView
         contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+      >
         <Animated.View style={[styles.hero, enter]}>
           <View style={styles.heroText}>
             <Text style={styles.eyebrow}>PREFERENCES</Text>
@@ -103,7 +115,8 @@ export function SettingsScreen() {
           <SettingsSection
             icon="bell"
             title="Alerts"
-            description="Get notified when your rest is over.">
+            description="Get notified when your rest is over."
+          >
             <View style={styles.rows}>
               <View style={styles.row}>
                 <RowTile icon="speaker" on={!silent} />
@@ -118,14 +131,18 @@ export function SettingsScreen() {
               {/* The same setting from the other side, not a second one. Two
                   independent switches over one behaviour can disagree, and
                   then neither of them is the truth. */}
-              <SilentModeRow on={silent} onPress={() => setSoundEnabled(silent)} />
+              <SilentModeRow
+                on={silent}
+                onPress={() => setSoundEnabled(silent)}
+              />
             </View>
           </SettingsSection>
 
           <SettingsSection
             icon="phone"
             title="Apps to Block"
-            description="These start ticked on a new exercise. Changing them here leaves the exercises you already have alone.">
+            description="These start ticked on a new exercise. Changing them here leaves the exercises you already have alone."
+          >
             <View style={styles.apps}>
               {apps.map(app => (
                 <AppPill
@@ -134,7 +151,9 @@ export function SettingsScreen() {
                   checked={defaults.selectedAppIds.includes(app.id)}
                   label={`${app.name} on new exercises`}
                   onPress={() => toggleDefaultApp(app.id)}
-                  onRemove={app.brand ? undefined : () => removeCustomApp(app.id)}
+                  onRemove={
+                    app.brand ? undefined : () => removeCustomApp(app.id)
+                  }
                 />
               ))}
             </View>
@@ -146,7 +165,7 @@ export function SettingsScreen() {
                   onChangeText={setDraft}
                   onSubmitEditing={submitApp}
                   placeholder="App name"
-                  placeholderTextColor={colors.faintOnDark}
+                  placeholderTextColor={colors.faint}
                   style={styles.input}
                   maxLength={MAX_APP_NAME_LENGTH}
                   returnKeyType="done"
@@ -154,7 +173,9 @@ export function SettingsScreen() {
                   accessibilityLabel="New app name"
                 />
                 {duplicate ? (
-                  <Text style={styles.warn}>{trimmed} is already in the list.</Text>
+                  <Text style={styles.warn}>
+                    {trimmed} is already in the list.
+                  </Text>
                 ) : null}
                 <View style={styles.composerRow}>
                   <PillButton
@@ -196,7 +217,8 @@ export function SettingsScreen() {
               />
             }
             title="Exercises"
-            description="Manage your saved exercises.">
+            description="Manage your saved exercises."
+          >
             <DangerRow
               label="Delete all exercises"
               disabled={count === 0}
@@ -233,7 +255,9 @@ export function SettingsScreen() {
         <ConfirmDialog
           visible={confirming}
           title={
-            count === 1 ? 'Delete your exercise?' : `Delete all ${count} exercises?`
+            count === 1
+              ? 'Delete your exercise?'
+              : `Delete all ${count} exercises?`
           }
           message="Every exercise and everything set on it goes. This can’t be undone."
           confirmLabel="Delete them all"
@@ -262,6 +286,8 @@ export function SettingsScreen() {
  * importance. This surfaces it and gives it a name.
  */
 function SilentModeRow({ on, onPress }: { on: boolean; onPress: () => void }) {
+  const styles = useStyles();
+  const colors = useColors();
   const press = usePressScale({ depth: 0.99, haptic: true });
 
   return (
@@ -273,10 +299,13 @@ function SilentModeRow({ on, onPress }: { on: boolean; onPress: () => void }) {
       aria-checked={on}
       accessibilityLabel="Silent mode"
       onPress={onPress}
-      style={[styles.row, styles.rowTop, press.style]}>
+      style={[styles.row, styles.rowTop, press.style]}
+    >
       <RowTile icon="bellOff" on={on} />
       <View style={styles.rowText}>
-        <Text style={[styles.rowTitle, on && styles.rowTitleOn]}>Silent mode</Text>
+        <Text style={[styles.rowTitle, on && styles.rowTitleOn]}>
+          Silent mode
+        </Text>
         <Text style={styles.rowHelp}>
           {on
             ? 'On. Alerts still pop up — they just stay quiet.'
@@ -284,7 +313,9 @@ function SilentModeRow({ on, onPress }: { on: boolean; onPress: () => void }) {
         </Text>
       </View>
       <View style={[styles.mark, on && styles.markOn]}>
-        {on ? <Icon name="check" color={colors.white} size={12} strokeWidth={2.6} /> : null}
+        {on ? (
+          <Icon name="check" color={colors.white} size={12} strokeWidth={2.6} />
+        ) : null}
       </View>
     </AnimatedPressable>
   );
@@ -292,11 +323,13 @@ function SilentModeRow({ on, onPress }: { on: boolean; onPress: () => void }) {
 
 /** The small square glyph that starts each row in the Alerts card. */
 function RowTile({ icon, on }: { icon: 'speaker' | 'bellOff'; on: boolean }) {
+  const styles = useStyles();
+  const colors = useColors();
   return (
     <View style={[styles.rowTile, on && styles.rowTileOn]}>
       <Icon
         name={icon}
-        color={on ? colors.accentText : colors.faintOnDark}
+        color={on ? colors.accentText : colors.faint}
         size={18}
       />
     </View>
@@ -310,6 +343,8 @@ function AddAnotherApp({
   disabled: boolean;
   onPress: () => void;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const press = usePressScale({ depth: 0.98, haptic: !disabled });
 
   return (
@@ -320,10 +355,11 @@ function AddAnotherApp({
       accessibilityState={{ disabled }}
       onPress={onPress}
       disabled={disabled}
-      style={[styles.add, disabled && styles.addOff, press.style]}>
+      style={[styles.add, disabled && styles.addOff, press.style]}
+    >
       <Icon
         name="plus"
-        color={disabled ? colors.faintOnDark : colors.accentText}
+        color={disabled ? colors.faint : colors.accentText}
         size={18}
       />
       <Text style={[styles.addText, disabled && styles.addTextOff]}>
@@ -344,6 +380,7 @@ function PillButton({
   solid?: boolean;
   onPress: () => void;
 }) {
+  const styles = useStyles();
   const press = usePressScale({ depth: 0.95, haptic: !disabled });
 
   return (
@@ -359,13 +396,15 @@ function PillButton({
         solid && styles.pillSolid,
         disabled && styles.pillOff,
         press.style,
-      ]}>
+      ]}
+    >
       <Text
         style={[
           styles.pillText,
           solid && styles.pillTextSolid,
           disabled && styles.pillTextOff,
-        ]}>
+        ]}
+      >
         {label}
       </Text>
     </AnimatedPressable>
@@ -382,6 +421,8 @@ function DangerRow({
   disabled: boolean;
   onPress: () => void;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const press = usePressScale({ depth: 0.98, haptic: !disabled });
 
   return (
@@ -392,10 +433,11 @@ function DangerRow({
       accessibilityState={{ disabled }}
       onPress={onPress}
       disabled={disabled}
-      style={[styles.danger, disabled && styles.dangerOff, press.style]}>
+      style={[styles.danger, disabled && styles.dangerOff, press.style]}
+    >
       <Icon
         name="trash"
-        color={disabled ? colors.faintOnDark : colors.danger}
+        color={disabled ? colors.faint : colors.danger}
         size={19}
       />
       <Text style={[styles.dangerText, disabled && styles.dangerTextOff]}>
@@ -403,174 +445,201 @@ function DangerRow({
       </Text>
       <Icon
         name="chevron"
-        color={disabled ? colors.faintOnDark : colors.danger}
+        color={disabled ? colors.faint : colors.danger}
         size={16}
       />
     </AnimatedPressable>
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  content: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xxl,
-    gap: spacing.lg,
-  },
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    flex: { flex: 1 },
+    content: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.md,
+      paddingBottom: spacing.xxl,
+      gap: spacing.lg,
+    },
 
-  hero: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  heroText: { flex: 1, gap: 2 },
-  eyebrow: { ...type.tag, color: colors.accentText, marginBottom: spacing.xs },
-  masthead: { ...sized(type.display, 42), color: colors.white },
-  stop: { color: colors.accent },
-  heroSub: {
-    ...type.helper,
-    fontSize: 14,
-    color: colors.mutedOnDark,
-    lineHeight: 20,
-    marginTop: spacing.sm,
-  },
+    hero: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+    heroText: { flex: 1, gap: 2 },
+    eyebrow: {
+      ...type.tag,
+      color: colors.accentText,
+      marginBottom: spacing.xs,
+    },
+    masthead: { ...sized(type.display, 42), color: colors.white },
+    stop: { color: colors.accent },
+    heroSub: {
+      ...type.helper,
+      fontSize: 14,
+      color: colors.muted,
+      lineHeight: 20,
+      marginTop: spacing.sm,
+    },
 
-  sections: { gap: spacing.lg },
-  /** Wide-and-short mark in a square tile, so it's sized for what it paints. */
-  tileLogo: { width: 30, height: 30 },
+    sections: { gap: spacing.lg },
+    /** Wide-and-short mark in a square tile, so it's sized for what it paints. */
+    tileLogo: { width: 30, height: 30 },
 
-  /** One step darker than the card, so a row reads as sunk into it. */
-  rows: { backgroundColor: colors.ink, borderRadius: radius.md, overflow: 'hidden' },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-  },
-  rowTop: { borderTopWidth: HAIRLINE, borderTopColor: colors.hairline },
-  rowTile: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surface,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rowTileOn: { backgroundColor: colors.accentWash, borderColor: colors.accent },
-  rowText: { flex: 1, gap: 2 },
-  rowTitle: { ...type.body, fontWeight: '600', color: colors.white },
-  rowTitleOn: { color: colors.accentText },
-  rowHelp: { ...type.helper, fontSize: 13, color: colors.mutedOnDark, lineHeight: 18 },
-  mark: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  markOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+    /** One step darker than the card, so a row reads as sunk into it. */
+    rows: {
+      backgroundColor: colors.ink,
+      borderRadius: radius.md,
+      overflow: 'hidden',
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md,
+    },
+    rowTop: { borderTopWidth: HAIRLINE, borderTopColor: colors.hairline },
+    rowTile: {
+      width: 38,
+      height: 38,
+      borderRadius: radius.sm,
+      backgroundColor: colors.surface,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    rowTileOn: {
+      backgroundColor: colors.accentWash,
+      borderColor: colors.accent,
+    },
+    rowText: { flex: 1, gap: 2 },
+    rowTitle: { ...type.body, fontWeight: '600', color: colors.white },
+    rowTitleOn: { color: colors.accentText },
+    rowHelp: {
+      ...type.helper,
+      fontSize: 13,
+      color: colors.muted,
+      lineHeight: 18,
+    },
+    mark: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      borderWidth: 1.5,
+      borderColor: colors.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    markOn: { backgroundColor: colors.accent, borderColor: colors.accent },
 
-  apps: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+    apps: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
 
-  add: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    minHeight: 52,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: colors.hairline,
-  },
-  addOff: { opacity: 0.45 },
-  addText: { ...type.body, fontWeight: '600', color: colors.accentText },
-  addTextOff: { color: colors.faintOnDark },
+    add: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.sm,
+      minHeight: 52,
+      borderRadius: radius.md,
+      borderWidth: 1.5,
+      borderStyle: 'dashed',
+      borderColor: colors.hairline,
+    },
+    addOff: { opacity: 0.45 },
+    addText: { ...type.body, fontWeight: '600', color: colors.accentText },
+    addTextOff: { color: colors.faint },
 
-  composer: { gap: spacing.sm },
-  input: {
-    ...type.body,
-    color: colors.white,
-    backgroundColor: colors.ink,
-    borderWidth: HAIRLINE,
-    borderColor: colors.accent,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-  },
-  composerRow: { flexDirection: 'row', gap: spacing.sm },
-  pill: {
-    flex: 1,
-    minHeight: 48,
-    borderRadius: radius.pill,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pillSolid: { backgroundColor: colors.accent, borderColor: colors.accent },
-  pillOff: { backgroundColor: colors.ink, borderColor: colors.hairline },
-  /**
-   * 19px bold on the base, so "Add app" and "Cancel" stay the same size.
-   * Only the solid one needed it — white on `accent` is 4.22:1, which clears
-   * AA at large-text size and misses it at body size. The outlined one is
-   * `mutedOnDark` on ink and passes either way.
-   */
-  pillText: { ...sized(type.action, 19), color: colors.mutedOnDark },
-  pillTextSolid: { color: colors.white },
-  pillTextOff: { color: colors.faintOnDark },
-  warn: { ...type.helper, fontSize: 13, color: colors.danger },
+    composer: { gap: spacing.sm },
+    input: {
+      ...type.body,
+      color: colors.white,
+      backgroundColor: colors.ink,
+      borderWidth: HAIRLINE,
+      borderColor: colors.accent,
+      borderRadius: radius.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md,
+    },
+    composerRow: { flexDirection: 'row', gap: spacing.sm },
+    pill: {
+      flex: 1,
+      minHeight: 48,
+      borderRadius: radius.pill,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    pillSolid: { backgroundColor: colors.accent, borderColor: colors.accent },
+    pillOff: { backgroundColor: colors.ink, borderColor: colors.hairline },
+    /**
+     * 19px bold on the base, so "Add app" and "Cancel" stay the same size.
+     * Only the solid one needed it — white on `accent` is 4.22:1, which clears
+     * AA at large-text size and misses it at body size. The outlined one is
+     * `mutedOnDark` on ink and passes either way.
+     */
+    pillText: { ...sized(type.action, 19), color: colors.muted },
+    pillTextSolid: { color: colors.white },
+    pillTextOff: { color: colors.faint },
+    warn: { ...type.helper, fontSize: 13, color: colors.danger },
 
-  danger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    minHeight: 56,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: HAIRLINE,
-    borderColor: colors.danger,
-    backgroundColor: 'rgba(255, 107, 129, 0.07)',
-  },
-  dangerOff: { borderColor: colors.hairline, backgroundColor: colors.ink },
-  dangerText: { ...type.body, fontWeight: '700', color: colors.danger, flex: 1 },
-  dangerTextOff: { color: colors.faintOnDark },
+    danger: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      minHeight: 56,
+      paddingHorizontal: spacing.md,
+      borderRadius: radius.md,
+      borderWidth: HAIRLINE,
+      borderColor: colors.danger,
+      backgroundColor: colors.dangerWash,
+    },
+    dangerOff: { borderColor: colors.hairline, backgroundColor: colors.ink },
+    dangerText: {
+      ...type.body,
+      fontWeight: '700',
+      color: colors.danger,
+      flex: 1,
+    },
+    dangerTextOff: { color: colors.faint },
 
-  about: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    backgroundColor: colors.surface,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-  },
-  aboutTile: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
-    backgroundColor: colors.accentWash,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  aboutText: { flex: 1, gap: 3 },
-  aboutTitleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  aboutName: { ...sized(type.title, 20), color: colors.white },
-  versionPill: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accentWash,
-    borderWidth: HAIRLINE,
-    borderColor: colors.accent,
-  },
-  versionText: { ...sized(type.tag, 10), color: colors.accentText },
-  aboutSub: { ...type.helper, fontSize: 13, color: colors.mutedOnDark },
+    about: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      backgroundColor: colors.surface,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      borderRadius: radius.lg,
+      padding: spacing.md,
+    },
+    aboutTile: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.md,
+      backgroundColor: colors.accentWash,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    aboutText: { flex: 1, gap: 3 },
+    aboutTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
+    aboutName: { ...sized(type.title, 20), color: colors.white },
+    versionPill: {
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 3,
+      borderRadius: radius.pill,
+      backgroundColor: colors.accentWash,
+      borderWidth: HAIRLINE,
+      borderColor: colors.accent,
+    },
+    versionText: { ...sized(type.tag, 10), color: colors.accentText },
+    aboutSub: { ...type.helper, fontSize: 13, color: colors.muted },
 
-  note: { ...type.helper, fontSize: 13, color: colors.faintOnDark, lineHeight: 18 },
-});
+    note: { ...type.helper, fontSize: 13, color: colors.faint, lineHeight: 18 },
+  }),
+);

@@ -35,7 +35,7 @@ import { WelcomeScreen } from './src/screens/WelcomeScreen';
 import { ExercisesScreen } from './src/screens/ExercisesScreen';
 import { getDeviceStorage } from './src/state/deviceStorage';
 import { useWorkout, WorkoutProvider } from './src/state/WorkoutContext';
-import { colors } from './src/theme';
+import { themed, useColors } from './src/theme';
 import type { CloudBackend } from './src/cloud/types';
 import type { AppStorage } from './src/state/storage';
 import type { Phase } from './src/state/types';
@@ -96,6 +96,8 @@ function TabScreen({ tab }: { tab: Tab }) {
  * countdown is re-rendering underneath it.
  */
 function Ground() {
+  const styles = useStyles();
+  const colors = useColors();
   const { state } = useWorkout();
   const reduceMotion = useReduceMotion();
   const { width, height } = useWindowDimensions();
@@ -111,7 +113,10 @@ function Ground() {
   const diameter = Math.ceil(Math.hypot(width, height)) + 2;
   const reveal = useRef(new Animated.Value(free ? 1 : 0)).current;
   /** The dark-ground glow is simply the inverse: one fades out as the other in. */
-  const dimGlow = reveal.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
+  const dimGlow = reveal.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0],
+  });
 
   useEffect(() => {
     if (reduceMotion) {
@@ -166,15 +171,24 @@ function Ground() {
           the reveal: violet on the near-black, light on the violet. A violet
           bloom on a violet ground would be invisible, and the screen would go
           flat at exactly the moment it floods. */}
-      <Animated.View pointerEvents="none" style={[styles.glow, { opacity: dimGlow }]}>
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.glow, { opacity: dimGlow }]}
+      >
         <GlowBackground tone="onInk" />
       </Animated.View>
-      <Animated.View pointerEvents="none" style={[styles.glow, { opacity: reveal }]}>
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.glow, { opacity: reveal }]}
+      >
         <GlowBackground tone="onAccent" />
       </Animated.View>
 
       {/* Content is light on both grounds now, so the bar never flips. */}
-      <StatusBar barStyle="light-content" backgroundColor={free ? colors.accentDeep : colors.ink} />
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={free ? colors.accentDeep : colors.ink}
+      />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.screen}>
           {/* Keyed on tab *and* phase, so both kinds of change transition. */}
@@ -248,12 +262,14 @@ function App({
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.ink, overflow: 'hidden' },
-  screen: { flex: 1 },
-  disc: { position: 'absolute', backgroundColor: colors.accentDeep },
-  glow: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  safe: { flex: 1 },
-});
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    root: { flex: 1, backgroundColor: colors.ink, overflow: 'hidden' },
+    screen: { flex: 1 },
+    disc: { position: 'absolute', backgroundColor: colors.accentDeep },
+    glow: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+    safe: { flex: 1 },
+  }),
+);
 
 export default App;

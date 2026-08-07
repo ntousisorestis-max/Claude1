@@ -25,7 +25,15 @@ import {
   MAX_EXERCISES,
 } from '../state/workoutReducer';
 import { APP_NAME } from '../appInfo';
-import { colors, HAIRLINE, radius, spacing, type, sized } from '../theme';
+import {
+  HAIRLINE,
+  radius,
+  sized,
+  spacing,
+  themed,
+  type,
+  useColors,
+} from '../theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -38,6 +46,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  * either overwriting the other.
  */
 export function ExercisesScreen() {
+  const styles = useStyles();
   const {
     state: { exercises, defaults, session },
     addExercise,
@@ -59,10 +68,12 @@ export function ExercisesScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <ScrollView
         contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+      >
         <Animated.View style={[styles.hero, enter]}>
           <View style={styles.brandRow}>
             {/* The real mark, not the line-icon dumbbell — that one is drawn
@@ -179,6 +190,8 @@ function AddExercise({
   /** Null while the list is empty: there's nothing to go back to. */
   onCancel: (() => void) | null;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const [draft, setDraft] = useState('');
   const enter = useEnter();
   const savePress = usePressScale({ depth: 0.94 });
@@ -207,7 +220,7 @@ function AddExercise({
         onChangeText={setDraft}
         onSubmitEditing={submit}
         placeholder="Bench press"
-        placeholderTextColor={colors.faintOnDark}
+        placeholderTextColor={colors.faint}
         style={styles.input}
         maxLength={MAX_EXERCISE_NAME_LENGTH}
         returnKeyType="done"
@@ -227,7 +240,8 @@ function AddExercise({
           accessibilityState={{ disabled: !canSave }}
           onPress={submit}
           disabled={!canSave}
-          style={[styles.save, !canSave && styles.saveOff, savePress.style]}>
+          style={[styles.save, !canSave && styles.saveOff, savePress.style]}
+        >
           <Text style={[styles.saveText, !canSave && styles.saveTextOff]}>
             Save exercise
           </Text>
@@ -239,7 +253,8 @@ function AddExercise({
             accessibilityRole="button"
             accessibilityLabel="Cancel"
             onPress={onCancel}
-            style={[styles.cancel, cancelPress.style]}>
+            style={[styles.cancel, cancelPress.style]}
+          >
             <Text style={styles.cancelText}>Cancel</Text>
           </AnimatedPressable>
         ) : null}
@@ -260,6 +275,7 @@ function AddButton({
   disabled: boolean;
   onPress: () => void;
 }) {
+  const styles = useStyles();
   const press = usePressScale({ depth: 0.97, haptic: !disabled });
 
   return (
@@ -270,7 +286,8 @@ function AddButton({
       accessibilityState={{ disabled }}
       onPress={onPress}
       disabled={disabled}
-      style={[styles.add, disabled && styles.addOff, press.style]}>
+      style={[styles.add, disabled && styles.addOff, press.style]}
+    >
       <Text style={[styles.addText, disabled && styles.addTextOff]}>
         + Add exercise
       </Text>
@@ -278,100 +295,110 @@ function AddButton({
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  content: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xxl,
-    gap: spacing.lg,
-  },
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    flex: { flex: 1 },
+    content: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.md,
+      paddingBottom: spacing.xxl,
+      gap: spacing.lg,
+    },
 
-  hero: { gap: spacing.md },
-  brandRow: { flexDirection: 'row', alignItems: 'center' },
-  /** The mark is wide and short inside a square canvas, so the box is sized
-   * for the height it actually paints rather than for the file. */
-  brandLogo: { width: 40, height: 40 },
-  /** Text and illustration share the row; the text takes what's left. */
-  heroBody: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  heroText: { flex: 1, gap: 2 },
-  eyebrow: { ...type.tag, color: colors.accentText, marginBottom: spacing.xs },
-  /** Two lines, tight, one white and one violet — the header's whole idea. */
-  masthead: { ...sized(type.display, 38), color: colors.white },
-  mastheadAccent: { color: colors.accentText },
-  stop: { color: colors.accent },
-  heroSub: {
-    ...type.helper,
-    color: colors.mutedOnDark,
-    lineHeight: 21,
-    marginTop: spacing.sm,
-  },
+    hero: { gap: spacing.md },
+    brandRow: { flexDirection: 'row', alignItems: 'center' },
+    /** The mark is wide and short inside a square canvas, so the box is sized
+     * for the height it actually paints rather than for the file. */
+    brandLogo: { width: 40, height: 40 },
+    /** Text and illustration share the row; the text takes what's left. */
+    heroBody: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+    heroText: { flex: 1, gap: 2 },
+    eyebrow: {
+      ...type.tag,
+      color: colors.accentText,
+      marginBottom: spacing.xs,
+    },
+    /** Two lines, tight, one white and one violet — the header's whole idea. */
+    masthead: { ...sized(type.display, 38), color: colors.white },
+    mastheadAccent: { color: colors.accentText },
+    stop: { color: colors.accent },
+    heroSub: {
+      ...type.helper,
+      color: colors.muted,
+      lineHeight: 21,
+      marginTop: spacing.sm,
+    },
 
-  list: { gap: spacing.md },
+    list: { gap: spacing.md },
 
-  emptyState: {
-    gap: spacing.sm,
-    paddingVertical: spacing.lg,
-  },
-  emptyTitle: { ...sized(type.title, 24), color: colors.white },
-  emptyBody: { ...type.helper, color: colors.mutedOnDark, lineHeight: 22 },
+    emptyState: {
+      gap: spacing.sm,
+      paddingVertical: spacing.lg,
+    },
+    emptyTitle: { ...sized(type.title, 24), color: colors.white },
+    emptyBody: { ...type.helper, color: colors.muted, lineHeight: 22 },
 
-  composer: {
-    backgroundColor: colors.surface,
-    borderWidth: HAIRLINE,
-    borderColor: colors.accent,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    gap: spacing.md,
-  },
-  label: { ...type.tag, color: colors.faintOnDark },
-  input: {
-    ...type.title,
-    fontSize: 24,
-    color: colors.white,
-    backgroundColor: colors.ink,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-  },
-  warn: { ...type.helper, fontSize: 13, color: colors.danger },
-  composerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  save: {
-    flex: 1,
-    minHeight: 52,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveOff: {
-    backgroundColor: colors.ink,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-  },
-  saveText: { ...sized(type.action, 17), color: colors.white },
-  saveTextOff: { color: colors.faintOnDark },
-  cancel: {
-    minHeight: 52,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelText: { ...type.tag, color: colors.mutedOnDark },
+    composer: {
+      backgroundColor: colors.surface,
+      borderWidth: HAIRLINE,
+      borderColor: colors.accent,
+      borderRadius: radius.md,
+      padding: spacing.md,
+      gap: spacing.md,
+    },
+    label: { ...type.tag, color: colors.faint },
+    input: {
+      ...type.title,
+      fontSize: 24,
+      color: colors.white,
+      backgroundColor: colors.ink,
+      borderRadius: radius.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md,
+    },
+    warn: { ...type.helper, fontSize: 13, color: colors.danger },
+    composerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
+    save: {
+      flex: 1,
+      minHeight: 52,
+      borderRadius: radius.pill,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    saveOff: {
+      backgroundColor: colors.ink,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+    },
+    saveText: { ...sized(type.action, 17), color: colors.white },
+    saveTextOff: { color: colors.faint },
+    cancel: {
+      minHeight: 52,
+      paddingHorizontal: spacing.lg,
+      borderRadius: radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cancelText: { ...type.tag, color: colors.muted },
 
-  add: {
-    minHeight: 60,
-    borderRadius: radius.md,
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addOff: { opacity: 0.4 },
-  addText: { ...sized(type.action, 17), color: colors.accentText },
-  addTextOff: { color: colors.faintOnDark },
+    add: {
+      minHeight: 60,
+      borderRadius: radius.md,
+      borderWidth: 2,
+      borderStyle: 'dashed',
+      borderColor: colors.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    addOff: { opacity: 0.4 },
+    addText: { ...sized(type.action, 17), color: colors.accentText },
+    addTextOff: { color: colors.faint },
 
-  note: { ...type.helper, fontSize: 13, color: colors.faintOnDark, lineHeight: 18 },
-});
+    note: { ...type.helper, fontSize: 13, color: colors.faint, lineHeight: 18 },
+  }),
+);

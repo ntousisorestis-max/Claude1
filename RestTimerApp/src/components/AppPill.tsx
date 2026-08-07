@@ -4,7 +4,7 @@ import { BrandIcon } from './BrandIcon';
 import { Icon } from './Icon';
 import { usePressScale } from '../hooks/usePressScale';
 import { useReduceMotion } from '../hooks/useReduceMotion';
-import { colors, HAIRLINE, radius, spacing, type } from '../theme';
+import { HAIRLINE, radius, spacing, themed, type, useColors } from '../theme';
 import type { BlockableApp } from '../state/types';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -32,6 +32,8 @@ export function AppPill({
   onPress: () => void;
   onRemove?: () => void;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const reduceMotion = useReduceMotion();
   const pressScale = usePressScale({ depth: 0.94, haptic: true });
   const pop = useRef(new Animated.Value(1)).current;
@@ -67,12 +69,13 @@ export function AppPill({
         aria-checked={checked}
         accessibilityLabel={label}
         onPress={onPress}
-        style={[styles.app, checked && styles.appOn]}>
+        style={[styles.app, checked && styles.appOn]}
+      >
         {app.brand ? (
           <BrandIcon
             id={app.brand}
             // Full brand colour when it's going to be blocked, drained when not.
-            color={checked ? app.tint : colors.faintOnDark}
+            color={checked ? app.tint : colors.faint}
             hole={checked ? colors.raised : colors.surface}
           />
         ) : (
@@ -81,12 +84,14 @@ export function AppPill({
             style={[
               styles.monogram,
               { borderColor: checked ? app.tint : colors.hairline },
-            ]}>
+            ]}
+          >
             <Text
               style={[
                 styles.monogramText,
-                { color: checked ? app.tint : colors.faintOnDark },
-              ]}>
+                { color: checked ? app.tint : colors.faint },
+              ]}
+            >
               {app.name.slice(0, 1).toUpperCase()}
             </Text>
           </View>
@@ -99,7 +104,14 @@ export function AppPill({
         {/* A tick, not just a border colour. On a wrapped grid of five, "which
             of these is on" has to be answerable without comparing outlines. */}
         <View style={[styles.mark, checked && styles.markOn]}>
-          {checked ? <Icon name="check" color={colors.white} size={11} strokeWidth={2.6} /> : null}
+          {checked ? (
+            <Icon
+              name="check"
+              color={colors.white}
+              size={11}
+              strokeWidth={2.6}
+            />
+          ) : null}
         </View>
 
         {onRemove ? <RemoveMark name={app.name} onPress={onRemove} /> : null}
@@ -110,6 +122,7 @@ export function AppPill({
 
 /** The one tappable in the app that had no press feel of its own. */
 function RemoveMark({ name, onPress }: { name: string; onPress: () => void }) {
+  const styles = useStyles();
   const press = usePressScale({ depth: 0.82, haptic: true });
 
   return (
@@ -119,46 +132,49 @@ function RemoveMark({ name, onPress }: { name: string; onPress: () => void }) {
       accessibilityLabel={`Remove ${name}`}
       onPress={onPress}
       hitSlop={8}
-      style={[styles.remove, press.style]}>
+      style={[styles.remove, press.style]}
+    >
       <Text style={styles.removeMark}>×</Text>
     </AnimatedPressable>
   );
 }
 
-const styles = StyleSheet.create({
-  app: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-  },
-  appOn: { backgroundColor: colors.raised, borderColor: colors.accent },
-  appName: { ...type.body, fontWeight: '600', color: colors.faintOnDark },
-  appNameOn: { color: colors.white },
-  monogram: {
-    width: 20,
-    height: 20,
-    borderRadius: radius.sm,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  monogramText: { fontSize: 11, fontWeight: '800' },
-  mark: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 1.5,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  markOn: { backgroundColor: colors.accent, borderColor: colors.accent },
-  remove: { paddingLeft: spacing.xs },
-  removeMark: { fontSize: 20, lineHeight: 22, color: colors.faintOnDark },
-});
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    app: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md,
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+    },
+    appOn: { backgroundColor: colors.raised, borderColor: colors.accent },
+    appName: { ...type.body, fontWeight: '600', color: colors.faint },
+    appNameOn: { color: colors.white },
+    monogram: {
+      width: 20,
+      height: 20,
+      borderRadius: radius.sm,
+      borderWidth: 1.5,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    monogramText: { fontSize: 11, fontWeight: '800' },
+    mark: {
+      width: 18,
+      height: 18,
+      borderRadius: 9,
+      borderWidth: 1.5,
+      borderColor: colors.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    markOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+    remove: { paddingLeft: spacing.xs },
+    removeMark: { fontSize: 20, lineHeight: 22, color: colors.faint },
+  }),
+);

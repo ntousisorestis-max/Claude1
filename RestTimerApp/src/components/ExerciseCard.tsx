@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Animated,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { AppPill } from './AppPill';
 import { Collapsible } from './Collapsible';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -16,7 +23,15 @@ import {
   MIN_SETS,
   REST_PRESETS,
 } from '../state/workoutReducer';
-import { colors, HAIRLINE, radius, sized, spacing, type } from '../theme';
+import {
+  HAIRLINE,
+  radius,
+  sized,
+  spacing,
+  themed,
+  type,
+  useColors,
+} from '../theme';
 import type { BlockableApp, Exercise } from '../state/types';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -73,6 +88,8 @@ export function ExerciseCard({
    */
   nameTaken: (name: string) => boolean;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const [open, setOpen] = useState<Record<Section, boolean>>(ALL_CLOSED);
   const [confirming, setConfirming] = useState(false);
 
@@ -99,7 +116,10 @@ export function ExerciseCard({
         {/* Top-right, and reachable without opening anything. Deleting used to
             live behind an expanded section, which meant the way to remove an
             exercise was to first go and edit it. */}
-        <DeleteButton name={exercise.name} onPress={() => setConfirming(true)} />
+        <DeleteButton
+          name={exercise.name}
+          onPress={() => setConfirming(true)}
+        />
       </View>
 
       <View style={styles.rows}>
@@ -249,6 +269,7 @@ function Section({
   divided?: boolean;
   children: React.ReactNode;
 }) {
+  const styles = useStyles();
   return <View style={divided ? styles.divided : undefined}>{children}</View>;
 }
 
@@ -260,6 +281,7 @@ function Section({
  * than as one movement.
  */
 function Panel({ children }: { children: React.ReactNode }) {
+  const styles = useStyles();
   return <View style={styles.panel}>{children}</View>;
 }
 
@@ -289,25 +311,28 @@ function SettingRow({
   open: boolean;
   onPress: () => void;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const press = usePressScale({ depth: 0.99, haptic: true });
 
   return (
     <AnimatedPressable
       {...press.handlers}
       accessibilityRole="button"
-      accessibilityLabel={`${announceAs ?? `${label} for ${exercise}, ${value}`}. ${
-        open ? 'Close' : 'Edit'
-      }`}
+      accessibilityLabel={`${
+        announceAs ?? `${label} for ${exercise}, ${value}`
+      }. ${open ? 'Close' : 'Edit'}`}
       accessibilityState={{ expanded: open }}
       onPress={onPress}
-      style={[styles.row, press.style]}>
+      style={[styles.row, press.style]}
+    >
       <Icon name={icon} color={colors.accentText} size={17} />
       <Text style={styles.rowLabel}>{label}</Text>
       <Text style={styles.rowValue} numberOfLines={1}>
         {value}
       </Text>
       <View style={open ? styles.chevronOpen : undefined}>
-        <Icon name="chevron" color={colors.faintOnDark} size={16} />
+        <Icon name="chevron" color={colors.faint} size={16} />
       </View>
     </AnimatedPressable>
   );
@@ -333,7 +358,15 @@ function estimate(totalSets: number, restSeconds: number): string {
  * warnings. `hitSlop` buys it a proper tap target without a 44pt box crowding
  * the exercise name.
  */
-function DeleteButton({ name, onPress }: { name: string; onPress: () => void }) {
+function DeleteButton({
+  name,
+  onPress,
+}: {
+  name: string;
+  onPress: () => void;
+}) {
+  const styles = useStyles();
+  const colors = useColors();
   const press = usePressScale({ depth: 0.9, haptic: true });
 
   return (
@@ -343,8 +376,9 @@ function DeleteButton({ name, onPress }: { name: string; onPress: () => void }) 
       accessibilityLabel={`Delete ${name}`}
       onPress={onPress}
       hitSlop={12}
-      style={[styles.delete, press.style]}>
-      <Icon name="trash" color={colors.faintOnDark} size={18} />
+      style={[styles.delete, press.style]}
+    >
+      <Icon name="trash" color={colors.faint} size={18} />
     </AnimatedPressable>
   );
 }
@@ -370,6 +404,8 @@ function NameEditor({
   onRename: (name: string) => void;
   onDone: () => void;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const [draft, setDraft] = useState(name);
 
   // Reopening starts from whatever the name is now, so an abandoned edit does
@@ -400,7 +436,7 @@ function NameEditor({
         onChangeText={setDraft}
         onSubmitEditing={save}
         placeholder="Exercise name"
-        placeholderTextColor={colors.faintOnDark}
+        placeholderTextColor={colors.faint}
         style={styles.renameInput}
         maxLength={MAX_EXERCISE_NAME_LENGTH}
         returnKeyType="done"
@@ -424,6 +460,7 @@ function SavePill({
   disabled: boolean;
   onPress: () => void;
 }) {
+  const styles = useStyles();
   const press = usePressScale({ depth: 0.95, haptic: !disabled });
 
   return (
@@ -434,7 +471,8 @@ function SavePill({
       accessibilityState={{ disabled }}
       onPress={onPress}
       disabled={disabled}
-      style={[styles.savePill, disabled && styles.savePillOff, press.style]}>
+      style={[styles.savePill, disabled && styles.savePillOff, press.style]}
+    >
       <Text style={[styles.savePillText, disabled && styles.savePillTextOff]}>
         Save name
       </Text>
@@ -442,98 +480,107 @@ function SavePill({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    gap: spacing.md,
-  },
-  cardOpen: { borderColor: colors.accent },
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      borderRadius: radius.lg,
+      padding: spacing.md,
+      gap: spacing.md,
+    },
+    cardOpen: { borderColor: colors.accent },
 
-  head: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
-  headText: { flex: 1, gap: spacing.xs },
-  eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  eyebrow: { ...type.tag, color: colors.accentText },
-  name: { ...sized(type.title, 28), color: colors.white },
+    head: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
+    headText: { flex: 1, gap: spacing.xs },
+    eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+    eyebrow: { ...type.tag, color: colors.accentText },
+    name: { ...sized(type.title, 28), color: colors.white },
 
-  /** One step darker than the card, so the rows read as sunk into it. */
-  rows: { backgroundColor: colors.ink, borderRadius: radius.md, overflow: 'hidden' },
-  /** On the section, not the row: the hairline belongs under the panel too. */
-  divided: { borderBottomWidth: HAIRLINE, borderBottomColor: colors.hairline },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 15,
-  },
-  rowLabel: { ...type.helper, color: colors.mutedOnDark },
-  rowValue: {
-    ...type.body,
-    fontWeight: '700',
-    color: colors.white,
-    flex: 1,
-    textAlign: 'right',
-  },
-  chevronOpen: { transform: [{ rotate: '90deg' }] },
+    /** One step darker than the card, so the rows read as sunk into it. */
+    rows: {
+      backgroundColor: colors.ink,
+      borderRadius: radius.md,
+      overflow: 'hidden',
+    },
+    /** On the section, not the row: the hairline belongs under the panel too. */
+    divided: {
+      borderBottomWidth: HAIRLINE,
+      borderBottomColor: colors.hairline,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: 15,
+    },
+    rowLabel: { ...type.helper, color: colors.muted },
+    rowValue: {
+      ...type.body,
+      fontWeight: '700',
+      color: colors.white,
+      flex: 1,
+      textAlign: 'right',
+    },
+    chevronOpen: { transform: [{ rotate: '90deg' }] },
 
-  panel: {
-    gap: spacing.md,
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.md,
-  },
-  apps: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+    panel: {
+      gap: spacing.md,
+      paddingHorizontal: spacing.md,
+      paddingBottom: spacing.md,
+    },
+    apps: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
 
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-  },
-  estimate: { ...type.helper, fontSize: 13, color: colors.faintOnDark },
-  /**
-   * Quiet by default. It carries `faintOnDark` rather than `danger` because it
-   * is on screen permanently on every card — a column of red buttons down a
-   * list of saved exercises reads as a list of problems. The confirmation
-   * dialog it opens is where the red belongs.
-   */
-  delete: {
-    width: 34,
-    height: 34,
-    borderRadius: radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-  },
+    footer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.md,
+    },
+    estimate: { ...type.helper, fontSize: 13, color: colors.faint },
+    /**
+     * Quiet by default. It carries `faintOnDark` rather than `danger` because it
+     * is on screen permanently on every card — a column of red buttons down a
+     * list of saved exercises reads as a list of problems. The confirmation
+     * dialog it opens is where the red belongs.
+     */
+    delete: {
+      width: 34,
+      height: 34,
+      borderRadius: radius.sm,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+    },
 
-  rename: { gap: spacing.sm },
-  renameInput: {
-    ...type.body,
-    color: colors.white,
-    backgroundColor: colors.ink,
-    borderWidth: HAIRLINE,
-    borderColor: colors.accent,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    minHeight: 52,
-  },
-  renameWarn: { ...type.helper, fontSize: 13, color: colors.danger },
-  savePill: {
-    minHeight: 48,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  savePillOff: { backgroundColor: colors.raised },
-  /**
-   * 19px bold. White on `accent` is 4.22:1 — over AA's 3.0 for large text,
-   * under the 4.5 for body text — and WCAG's line is 18.66px bold.
-   */
-  savePillText: { ...sized(type.action, 19), color: colors.white },
-  savePillTextOff: { color: colors.faintOnDark },
-});
+    rename: { gap: spacing.sm },
+    renameInput: {
+      ...type.body,
+      color: colors.white,
+      backgroundColor: colors.ink,
+      borderWidth: HAIRLINE,
+      borderColor: colors.accent,
+      borderRadius: radius.md,
+      paddingHorizontal: spacing.md,
+      minHeight: 52,
+    },
+    renameWarn: { ...type.helper, fontSize: 13, color: colors.danger },
+    savePill: {
+      minHeight: 48,
+      borderRadius: radius.pill,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    savePillOff: { backgroundColor: colors.raised },
+    /**
+     * 19px bold. White on `accent` is 4.22:1 — over AA's 3.0 for large text,
+     * under the 4.5 for body text — and WCAG's line is 18.66px bold.
+     */
+    savePillText: { ...sized(type.action, 19), color: colors.white },
+    savePillTextOff: { color: colors.faint },
+  }),
+);

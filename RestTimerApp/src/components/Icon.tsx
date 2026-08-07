@@ -84,11 +84,11 @@ const PATHS: Record<IconName, Stroke[]> = {
     'M10 10.5v6',
     'M14 10.5v6',
   ],
-  clock: ['M12 21.5a9.5 9.5 0 1 0 0-19 9.5 9.5 0 0 0 0 19z', 'M12 6.5V12l4 2.5'],
-  check: [
-    'M21 11.2V12a9.5 9.5 0 1 1-5.6-8.7',
-    'M21.5 4.5 12 14.02l-2.8-2.8',
+  clock: [
+    'M12 21.5a9.5 9.5 0 1 0 0-19 9.5 9.5 0 0 0 0 19z',
+    'M12 6.5V12l4 2.5',
   ],
+  check: ['M21 11.2V12a9.5 9.5 0 1 1-5.6-8.7', 'M21.5 4.5 12 14.02l-2.8-2.8'],
   /** Focus time. Outer flame plus an inner one, so it reads at a glance. */
   flame: [
     // The kink where the two sides meet at the tip is what separates a flame

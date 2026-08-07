@@ -69,7 +69,10 @@ export function allBlockableApps(customApps: CustomApp[]): BlockableApp[] {
 
 /** `TikTok` -> `custom:tiktok`. Stable, so a re-add can't duplicate an id. */
 export function customAppId(name: string): string {
-  return `custom:${name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+  return `custom:${name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')}`;
 }
 
 /**
@@ -80,7 +83,9 @@ export function customAppId(name: string): string {
  * by the caller and handed to the reducer, which stays pure.
  */
 export function newExerciseId(): string {
-  return `ex_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  return `ex_${Date.now().toString(36)}_${Math.random()
+    .toString(36)
+    .slice(2, 8)}`;
 }
 
 /** Exported so "delete everything" and the tests share one definition. */
@@ -264,7 +269,10 @@ export function workoutReducer(
       if (clash) {
         return state;
       }
-      return editExercise(state, action.id, exercise => ({ ...exercise, name }));
+      return editExercise(state, action.id, exercise => ({
+        ...exercise,
+        name,
+      }));
     }
 
     case 'SET_EXERCISE_SETS':
@@ -327,14 +335,20 @@ export function workoutReducer(
 
       // Either way the set just ended, so the locked stretch ends with it.
       const banked = bankLocked(state, action.now);
-      const session = { ...banked.session, setsCompleted: state.session.setsCompleted + 1 };
+      const session = {
+        ...banked.session,
+        setsCompleted: state.session.setsCompleted + 1,
+      };
 
       // Last set: no rest period, straight to the summary with apps unlocked.
       if (setsCompleted >= state.config.totalSets) {
         return {
           ...state,
           ...banked,
-          session: { ...session, workoutsFinished: session.workoutsFinished + 1 },
+          session: {
+            ...session,
+            workoutsFinished: session.workoutsFinished + 1,
+          },
           phase: 'complete',
           setsCompleted,
           restStartedAt: null,
@@ -366,7 +380,8 @@ export function workoutReducer(
         ...state,
         phase: 'active',
         currentSet: state.currentSet + 1,
-        totalRestSeconds: state.totalRestSeconds + restElapsed(state, action.now),
+        totalRestSeconds:
+          state.totalRestSeconds + restElapsed(state, action.now),
         restStartedAt: null,
         restEndsAt: null,
         // Locked again, so a new stretch of reclaimed time starts.
@@ -443,14 +458,20 @@ export function workoutReducer(
       const clash = known.some(
         app => app.id === id || app.name.toLowerCase() === name.toLowerCase(),
       );
-      if (!name || clash || state.defaults.customApps.length >= MAX_CUSTOM_APPS) {
+      if (
+        !name ||
+        clash ||
+        state.defaults.customApps.length >= MAX_CUSTOM_APPS
+      ) {
         return state;
       }
 
       const custom = {
         id,
         name,
-        tint: CUSTOM_TINTS[state.defaults.customApps.length % CUSTOM_TINTS.length],
+        tint: CUSTOM_TINTS[
+          state.defaults.customApps.length % CUSTOM_TINTS.length
+        ],
       };
       return {
         ...state,

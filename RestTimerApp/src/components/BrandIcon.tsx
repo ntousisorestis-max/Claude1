@@ -1,6 +1,6 @@
 import React from 'react';
 import Svg, { Circle, Ellipse, Path, Rect } from 'react-native-svg';
-import { colors } from '../theme';
+import { useColors } from '../theme';
 
 /**
  * Simplified brand marks for the apps you can block.
@@ -19,13 +19,18 @@ type Props = {
   id: BrandId;
   color: string;
   size?: number;
+  /** What shows through a knocked-out shape. Defaults to the card it sits on. */
   hole?: string;
 };
 
-export function BrandIcon({ id, color, size = 20, hole = colors.surface }: Props) {
+export function BrandIcon({ id, color, size = 20, hole }: Props) {
+  // Resolved in the body, not as a default parameter: defaults are evaluated
+  // where the palette isn't available, and a hook can't be called there.
+  const colors = useColors();
+
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
-      {glyph(id, color, hole)}
+      {glyph(id, color, hole ?? colors.surface)}
     </Svg>
   );
 }
@@ -56,7 +61,14 @@ function glyph(id: BrandId, c: string, hole: string) {
             strokeWidth="2"
             fill="none"
           />
-          <Circle cx="12" cy="12" r="4.4" stroke={c} strokeWidth="2" fill="none" />
+          <Circle
+            cx="12"
+            cy="12"
+            r="4.4"
+            stroke={c}
+            strokeWidth="2"
+            fill="none"
+          />
           <Circle cx="17.4" cy="6.6" r="1.4" fill={c} />
         </>
       );

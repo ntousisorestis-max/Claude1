@@ -15,7 +15,16 @@ import { useEnter } from '../hooks/useEnter';
 import { useReduceMotion } from '../hooks/useReduceMotion';
 import { pick, randomSeed, REST_LINES } from '../copy';
 import { useWorkout } from '../state/WorkoutContext';
-import { colors, formatMMSS, spacing, tabular, type, sized } from '../theme';
+import {
+  formatMMSS,
+  washOnAccent,
+  sized,
+  spacing,
+  tabular,
+  themed,
+  type,
+  useColors,
+} from '../theme';
 
 /** Under this many seconds left, the clock starts ticking visibly. */
 const URGENT_AT = 5;
@@ -25,6 +34,8 @@ const MAX_RING = 320;
 
 /** The flooded screen: your apps are open, and you can see that across the room. */
 export function RestingScreen() {
+  const styles = useStyles();
+  const colors = useColors();
   const {
     state: { config, currentSet, setsCompleted, restEndsAt },
     endRest,
@@ -65,8 +76,11 @@ export function RestingScreen() {
           // being cut off by it.
           finishing={secondsLeft <= 1}
           color={colors.white}
-          trackColor="rgba(255,255,255,0.22)">
-          <Animated.Text style={[styles.clock, { transform: [{ scale: beat }] }]}>
+          trackColor={washOnAccent(0.22)}
+        >
+          <Animated.Text
+            style={[styles.clock, { transform: [{ scale: beat }] }]}
+          >
             {formatMMSS(secondsLeft)}
           </Animated.Text>
           <Text style={styles.until}>
@@ -145,27 +159,34 @@ function useHeartbeat(secondsLeft: number) {
   return scale;
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
-    gap: spacing.md,
-  },
-  head: { paddingTop: spacing.sm },
-  // Smaller than it was: the ring outranks it now.
-  title: { ...sized(type.display, 34), color: colors.white },
-  dial: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.lg },
-  clock: { ...sized(type.mega, 84), ...tabular, color: colors.white },
-  until: { ...type.tag, color: colors.mutedOnAccent, marginTop: spacing.xs },
-  line: {
-    ...type.body,
-    fontSize: 17,
-    fontWeight: '600',
-    color: colors.mutedOnAccent,
-    textAlign: 'center',
-  },
-  foot: { gap: spacing.sm },
-  next: { ...type.body, fontWeight: '700', color: colors.white },
-});
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    screen: {
+      flex: 1,
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+      paddingBottom: spacing.sm,
+      gap: spacing.md,
+    },
+    head: { paddingTop: spacing.sm },
+    // Smaller than it was: the ring outranks it now.
+    title: { ...sized(type.display, 34), color: colors.white },
+    dial: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.lg,
+    },
+    clock: { ...sized(type.mega, 84), ...tabular, color: colors.white },
+    until: { ...type.tag, color: colors.mutedOnAccent, marginTop: spacing.xs },
+    line: {
+      ...type.body,
+      fontSize: 17,
+      fontWeight: '600',
+      color: colors.mutedOnAccent,
+      textAlign: 'center',
+    },
+    foot: { gap: spacing.sm },
+    next: { ...type.body, fontWeight: '700', color: colors.white },
+  }),
+);

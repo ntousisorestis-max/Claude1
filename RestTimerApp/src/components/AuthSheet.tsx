@@ -15,7 +15,16 @@ import {
 import { Icon } from './Icon';
 import { usePressScale } from '../hooks/usePressScale';
 import { useAccount } from '../cloud/AccountContext';
-import { colors, HAIRLINE, radius, sized, spacing, TAP_TARGET, type } from '../theme';
+import {
+  HAIRLINE,
+  radius,
+  sized,
+  spacing,
+  TAP_TARGET,
+  themed,
+  type,
+  useColors,
+} from '../theme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -43,6 +52,8 @@ export function AuthSheet({
   visible: boolean;
   onClose: () => void;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const { signIn, signUp, error, clearError, busy } = useAccount();
 
   const [mode, setMode] = useState<Mode>('signUp');
@@ -87,20 +98,24 @@ export function AuthSheet({
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={onClose}>
+      onRequestClose={onClose}
+    >
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         {/* Not in the accessibility tree — it would announce as a second
             button named the same as Close. See ConfirmDialog. */}
         <Pressable accessible={false} onPress={onClose} style={styles.backdrop}>
           <Pressable
             accessibilityViewIsModal
             onPress={() => {}}
-            style={styles.card}>
+            style={styles.card}
+          >
             <ScrollView
               keyboardShouldPersistTaps="handled"
-              contentContainerStyle={styles.body}>
+              contentContainerStyle={styles.body}
+            >
               <View style={styles.head}>
                 <View style={styles.tile}>
                   <Icon name="user" color={colors.accentText} size={20} />
@@ -178,7 +193,8 @@ export function AuthSheet({
                     : 'Create a new account'
                 }
                 onPress={swap}
-                style={styles.swap}>
+                style={styles.swap}
+              >
                 <Text style={styles.swapText}>
                   {signingUp
                     ? 'Already have an account? Sign in'
@@ -190,7 +206,8 @@ export function AuthSheet({
                 accessibilityRole="button"
                 accessibilityLabel="Close"
                 onPress={onClose}
-                style={styles.close}>
+                style={styles.close}
+              >
                 <Text style={styles.closeText}>Not now</Text>
               </Pressable>
             </ScrollView>
@@ -207,13 +224,15 @@ function Field({
   hint,
   ...input
 }: { label: string; hint?: string } & React.ComponentProps<typeof TextInput>) {
+  const styles = useStyles();
+  const colors = useColors();
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label.toUpperCase()}</Text>
       <TextInput
         {...input}
         accessibilityLabel={label}
-        placeholderTextColor={colors.faintOnDark}
+        placeholderTextColor={colors.faint}
         style={styles.input}
       />
       {hint ? <Text style={styles.hint}>{hint}</Text> : null}
@@ -232,6 +251,8 @@ function Submit({
   disabled: boolean;
   onPress: () => void;
 }) {
+  const styles = useStyles();
+  const colors = useColors();
   const press = usePressScale({ depth: 0.97, haptic: !disabled });
 
   return (
@@ -242,7 +263,8 @@ function Submit({
       accessibilityState={{ disabled, busy }}
       onPress={onPress}
       disabled={disabled}
-      style={[styles.submit, disabled && styles.submitOff, press.style]}>
+      style={[styles.submit, disabled && styles.submitOff, press.style]}
+    >
       {/* The spinner replaces the label rather than sitting beside it, so the
           button doesn't change width the instant it's pressed. */}
       {busy ? (
@@ -256,87 +278,94 @@ function Submit({
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(6, 4, 12, 0.78)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.lg,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 420,
-    maxHeight: '92%',
-    backgroundColor: colors.surface,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    borderRadius: radius.lg,
-  },
-  body: { padding: spacing.lg, gap: spacing.md },
+const useStyles = themed(colors =>
+  StyleSheet.create({
+    flex: { flex: 1 },
+    backdrop: {
+      flex: 1,
+      backgroundColor: colors.scrim,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: spacing.lg,
+    },
+    card: {
+      width: '100%',
+      maxWidth: 420,
+      maxHeight: '92%',
+      backgroundColor: colors.surface,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      borderRadius: radius.lg,
+    },
+    body: { padding: spacing.lg, gap: spacing.md },
 
-  head: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
-  tile: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
-    backgroundColor: colors.accentWash,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headText: { flex: 1, gap: 3, paddingTop: 2 },
-  title: { ...sized(type.title, 24), color: colors.white },
-  subtitle: {
-    ...type.helper,
-    fontSize: 14,
-    color: colors.mutedOnDark,
-    lineHeight: 20,
-  },
+    head: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
+    tile: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.md,
+      backgroundColor: colors.accentWash,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    headText: { flex: 1, gap: 3, paddingTop: 2 },
+    title: { ...sized(type.title, 24), color: colors.white },
+    subtitle: {
+      ...type.helper,
+      fontSize: 14,
+      color: colors.muted,
+      lineHeight: 20,
+    },
 
-  field: { gap: 6 },
-  label: { ...sized(type.tag, 11), color: colors.accentText },
-  input: {
-    ...type.body,
-    color: colors.white,
-    backgroundColor: colors.ink,
-    borderWidth: HAIRLINE,
-    borderColor: colors.hairline,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    minHeight: 52,
-  },
-  hint: { ...type.helper, fontSize: 13, color: colors.faintOnDark },
+    field: { gap: 6 },
+    label: { ...sized(type.tag, 11), color: colors.accentText },
+    input: {
+      ...type.body,
+      color: colors.white,
+      backgroundColor: colors.ink,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      borderRadius: radius.md,
+      paddingHorizontal: spacing.md,
+      minHeight: 52,
+    },
+    hint: { ...type.helper, fontSize: 13, color: colors.faint },
 
-  error: {
-    backgroundColor: 'rgba(255, 107, 129, 0.09)',
-    borderWidth: HAIRLINE,
-    borderColor: colors.danger,
-    borderRadius: radius.md,
-    padding: spacing.md,
-  },
-  errorText: { ...type.helper, fontSize: 14, color: colors.danger, lineHeight: 20 },
+    error: {
+      backgroundColor: colors.dangerWash,
+      borderWidth: HAIRLINE,
+      borderColor: colors.danger,
+      borderRadius: radius.md,
+      padding: spacing.md,
+    },
+    errorText: {
+      ...type.helper,
+      fontSize: 14,
+      color: colors.danger,
+      lineHeight: 20,
+    },
 
-  submit: {
-    minHeight: TAP_TARGET,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: spacing.xs,
-  },
-  submitOff: { backgroundColor: colors.raised },
-  /**
-   * 19px bold. White on `accent` is 4.22:1 — over AA's 3.0 for large text,
-   * under the 4.5 for body text — and WCAG's line is 18.66px bold.
-   */
-  submitText: { ...sized(type.action, 19), color: colors.white },
-  submitTextOff: { color: colors.faintOnDark },
+    submit: {
+      minHeight: TAP_TARGET,
+      borderRadius: radius.pill,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: spacing.xs,
+    },
+    submitOff: { backgroundColor: colors.raised },
+    /**
+     * 19px bold. White on `accent` is 4.22:1 — over AA's 3.0 for large text,
+     * under the 4.5 for body text — and WCAG's line is 18.66px bold.
+     */
+    submitText: { ...sized(type.action, 19), color: colors.white },
+    submitTextOff: { color: colors.faint },
 
-  swap: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  swapText: { ...type.body, fontWeight: '600', color: colors.accentText },
-  close: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  closeText: { ...type.helper, fontSize: 14, color: colors.faintOnDark },
-});
+    swap: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+    swapText: { ...type.body, fontWeight: '600', color: colors.accentText },
+    close: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+    closeText: { ...type.helper, fontSize: 14, color: colors.faint },
+  }),
+);

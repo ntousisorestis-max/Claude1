@@ -71,7 +71,8 @@ export function getBackend(): CloudBackend {
  * UI can import for free.
  */
 const AUTH_MESSAGES: Record<string, string> = {
-  'auth/email-already-in-use': 'That email already has an account. Try signing in instead.',
+  'auth/email-already-in-use':
+    'That email already has an account. Try signing in instead.',
   'auth/invalid-email': 'That doesn’t look like an email address.',
   'auth/missing-password': 'Enter a password.',
   'auth/weak-password': 'Passwords need to be at least 6 characters.',
@@ -79,13 +80,15 @@ const AUTH_MESSAGES: Record<string, string> = {
   'auth/user-not-found': 'No account with that email. Create one instead?',
   'auth/wrong-password': 'Wrong email or password.',
   'auth/too-many-requests': 'Too many tries. Wait a minute and try again.',
-  'auth/network-request-failed': 'Can’t reach the server. Check your connection.',
+  'auth/network-request-failed':
+    'Can’t reach the server. Check your connection.',
   'auth/operation-not-allowed':
     'Email sign-in isn’t switched on for this Firebase project yet. See FIREBASE_SETUP.md, step 3.',
 };
 
 /** The message to actually show for a thrown Firebase error. */
 export function describeAuthError(err: unknown): string {
-  const code = typeof err === 'object' && err && 'code' in err ? String(err.code) : '';
+  const code =
+    typeof err === 'object' && err && 'code' in err ? String(err.code) : '';
   return AUTH_MESSAGES[code] ?? 'Something went wrong. Try again in a moment.';
 }
