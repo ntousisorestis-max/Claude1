@@ -54,7 +54,7 @@ function createFakeCloud() {
         notifyAccount = null;
       };
     },
-    observeDays(_uid, _count, onChange) {
+    observeDays(_uid, _since, onChange) {
       notifyDays = onChange;
       onChange([]);
       return () => {
@@ -133,7 +133,10 @@ const press = (root: ReactTestInstance, accessibilityLabel: string) => {
 };
 
 /** Presses something whose handler is async, and lets it settle. */
-const pressAsync = async (root: ReactTestInstance, accessibilityLabel: string) => {
+const pressAsync = async (
+  root: ReactTestInstance,
+  accessibilityLabel: string,
+) => {
   const [node] = root.findAll(
     n =>
       n.props?.accessibilityLabel === accessibilityLabel &&
@@ -160,7 +163,11 @@ const pressStartingWith = (root: ReactTestInstance, prefix: string) => {
   ReactTestRenderer.act(() => node.props.onPress());
 };
 
-const fill = (root: ReactTestInstance, accessibilityLabel: string, value: string) => {
+const fill = (
+  root: ReactTestInstance,
+  accessibilityLabel: string,
+  value: string,
+) => {
   const [input] = root.findAll(
     n =>
       n.props?.accessibilityLabel === accessibilityLabel &&
@@ -172,7 +179,11 @@ const fill = (root: ReactTestInstance, accessibilityLabel: string, value: string
   ReactTestRenderer.act(() => input.props.onChangeText(value));
 };
 
-const typeInto = (root: ReactTestInstance, placeholder: string, value: string) => {
+const typeInto = (
+  root: ReactTestInstance,
+  placeholder: string,
+  value: string,
+) => {
   const [input] = root.findAll(n => n.props?.placeholder === placeholder);
   ReactTestRenderer.act(() => input.props.onChangeText(value));
 };

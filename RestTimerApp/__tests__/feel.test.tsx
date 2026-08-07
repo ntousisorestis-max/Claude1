@@ -41,7 +41,7 @@ function createFakeCloud() {
       onChange({ totals: NO_TOTALS, streak: NO_STREAK, records: NO_RECORDS });
       return () => {};
     },
-    observeDays(_uid, _count, onChange: (days: DayTotals[]) => void) {
+    observeDays(_uid, _since, onChange: (days: DayTotals[]) => void) {
       onChange([]);
       return () => {};
     },

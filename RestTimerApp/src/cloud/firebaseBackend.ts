@@ -14,10 +14,9 @@ import {
   documentId,
   increment,
   initializeFirestore,
-  limit,
   onSnapshot,
-  orderBy,
   query,
+  where,
   runTransaction,
   serverTimestamp,
   type Firestore,
@@ -172,7 +171,7 @@ export const firebaseBackend: CloudBackend = {
     });
   },
 
-  observeAccount(uid, onChange) {
+  observeAccount(uid, onChange, onError) {
     const { db } = firebase();
     return onSnapshot(
       doc(db, 'users', uid),
@@ -184,21 +183,35 @@ export const firebaseBackend: CloudBackend = {
           records: recordsFrom(data),
         });
       },
-      // A listener that errors is a listener that has stopped. Say so in the
-      // log rather than leaving the UI on stale numbers with no explanation.
-      err => console.warn('[focusboard] account listener stopped', err),
+      // A listener that errors is a listener that has stopped.
+      err => onError?.(err),
     );
   },
 
-  observeDays(uid, count, onChange) {
+  observeDays(uid, since, onChange, onError) {
     const { db } = firebase();
-    // Ordered by document id, which is the day key — `YYYY-MM-DD` sorts
-    // chronologically as a string, so this needs no extra field and no
-    // composite index. Newest first, so `limit` keeps the recent end.
+    /**
+     * A range on the document id, and no ordering at all.
+     *
+     * This used to be `orderBy(documentId(), 'desc')` with a limit, on the
+     * reasoning that `YYYY-MM-DD` sorts chronologically as a string so no
+     * index would be needed. Half right: Firestore builds the *ascending*
+     * document-id index automatically and a **descending** one has to be
+     * created by hand. So the query never ran against the real database —
+     * every call came back `failed-precondition`, the error went to
+     * `console.warn`, and the Insights chart drew its empty state forever.
+     *
+     * It was missed because the smoke test fetched one day document directly,
+     * which is a different path through the rules from a collection query.
+     *
+     * The fix is not an index. Neither reader of this data cares about order —
+     * the chart builds a Map keyed by day and Insights filters and sums — so
+     * asking for a window and sorting nothing needs no index, no console
+     * click, and stays correct if the readers change.
+     */
     const recent = query(
       collection(db, 'users', uid, 'days'),
-      orderBy(documentId(), 'desc'),
-      limit(count),
+      where(documentId(), '>=', since),
     );
     return onSnapshot(
       recent,
@@ -213,7 +226,7 @@ export const firebaseBackend: CloudBackend = {
               setsCompleted: num(entry.data(), 'setsCompleted'),
             })),
         ),
-      err => console.warn('[focusboard] days listener stopped', err),
+      err => onError?.(err),
     );
   },
 

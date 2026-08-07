@@ -121,6 +121,14 @@ export function describeDuration(totalSeconds: number): {
  * Kept separate rather than folded into `describeDuration` because that one
  * feeds a count-up animation on the complete screen, which needs a number it
  * can tween. This returns a string on purpose.
+ *
+ * ## Under a minute it says seconds
+ *
+ * It used to round everything to whole minutes, which turned eleven seconds of
+ * real focus time into a screen reading "0 minutes" next to "3 workouts done".
+ * That is arithmetically correct and reads as broken, which is worse than
+ * either — an honest zero is fine, a zero that isn't one is not. Anything under
+ * a minute now reports the seconds it actually measured.
  */
 export function describeSpan(totalSeconds: number): {
   value: string;
@@ -128,12 +136,20 @@ export function describeSpan(totalSeconds: number): {
 } {
   const safe = Math.max(0, Math.round(totalSeconds));
 
+  if (safe < 60) {
+    return { value: String(safe), unit: safe === 1 ? 'second' : 'seconds' };
+  }
+
   if (safe < 3600) {
     const minutes = Math.round(safe / 60);
-    return {
-      value: String(minutes),
-      unit: minutes === 1 ? 'minute' : 'minutes',
-    };
+    // 59m30s rounds to 60, which would render as "60 minutes" — the same
+    // wrongness the hour branch below already guards against.
+    return minutes === 60
+      ? { value: '1h', unit: '' }
+      : {
+          value: String(minutes),
+          unit: minutes === 1 ? 'minute' : 'minutes',
+        };
   }
 
   const hours = Math.floor(safe / 3600);

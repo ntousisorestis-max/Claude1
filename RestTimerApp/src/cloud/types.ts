@@ -120,6 +120,15 @@ export type AccountData = {
   records: PersonalRecords;
 };
 
+/**
+ * A live listener has stopped.
+ *
+ * Reported rather than logged, because a listener that has fallen over and a
+ * user who genuinely has no data look identical on screen — which is precisely
+ * how a query that never worked went unnoticed. See AccountContext.
+ */
+export type WatchFailed = (reason: unknown) => void;
+
 /** Where the account layer currently is. Drives everything the UI says. */
 export type AccountStatus =
   /** No Firebase config — the app is running in its original local-only mode. */
@@ -152,17 +161,22 @@ export type CloudBackend = {
   observeAccount(
     uid: string,
     onChange: (data: AccountData) => void,
+    onError?: WatchFailed,
   ): () => void;
   /**
-   * Watches the most recent `count` days the user trained, newest first.
+   * Watches every day from `since` onward, as `YYYY-MM-DD`, inclusive.
    *
    * Days with no training have no document, so this returns only the days that
-   * happened — the caller lines them up against the calendar it wants to draw.
+   * happened, in no particular order — the caller lines them up against the
+   * calendar it wants to draw. A window rather than a count, and unordered on
+   * purpose: see firebaseBackend.ts for why ordering by document id was a
+   * query that could never run.
    */
   observeDays(
     uid: string,
-    count: number,
+    since: string,
     onChange: (days: DayTotals[]) => void,
+    onError?: WatchFailed,
   ): () => void;
   signUp(email: string, password: string, displayName: string): Promise<void>;
   signIn(email: string, password: string): Promise<void>;

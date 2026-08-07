@@ -279,6 +279,17 @@ export const SAVE_PROGRESS = {
 
 export const EMPTY_CHART = 'Your week fills in as you train.';
 
+/**
+ * When a listener has stopped and the screen genuinely doesn't know.
+ *
+ * Deliberately different from `EMPTY_CHART`, because "you haven't trained" and
+ * "we couldn't ask" are different facts and showing the first when the second
+ * is true is how a broken query hid for a month. It says nothing is lost,
+ * because nothing is — the numbers are on the server either way.
+ */
+export const DATA_UNREACHABLE =
+  'Can’t reach your history right now. Nothing’s lost — it’ll fill back in.';
+
 export const EMPTY_RECORDS =
   'No records yet. Your first finished workout sets all of them.';
 

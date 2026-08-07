@@ -598,6 +598,31 @@ sum, and no amount of adding tells you the largest single entry. So
 same idempotent transaction as the totals, and ratchet upward in
 `firestore.rules` alongside `bestStreak`.
 
+**The days query could never have worked, and nothing said so.** It asked for
+"the newest 14" — `orderBy(documentId(), 'desc')` with a limit — on the
+reasoning that `YYYY-MM-DD` sorts chronologically as a string so no index was
+needed. Half right: Firestore builds the *ascending* document-id index
+automatically and a **descending** one has to be created by hand. Every call
+came back `failed-precondition`, the error went to `console.warn`, and the chart
+drew "your week fills in as you train" at somebody who had been training for a
+month. It survived a live smoke test because that test fetched one day document
+directly, which is a different path through the rules from a collection query.
+
+The fix is not an index. Neither reader of that data cares about order — the
+chart builds a `Map` keyed by day, Insights filters and sums — so it now asks
+for a *window*, `where(documentId(), '>=', since)`, which needs no ordering,
+no index and no console click, and stays correct if the readers change.
+
+**A stopped listener now says so.** The reason that bug hid is that a listener
+which has fallen over and an account with nothing in it look identical on
+screen. `AccountContext` carries a `dataError`, and the chart has three states
+rather than two: filling in, genuinely empty, and *couldn't ask*.
+
+**Under a minute, spans are reported in seconds.** `describeSpan` used to round
+everything to whole minutes, which turned eleven seconds of real focus time into
+a screen reading "0 minutes" next to "3 workouts done" — arithmetically correct
+and indistinguishable from broken.
+
 **Empty states are real.** Grid tiles draw an em-dash rather than a zero, the
 chart draws its axis and a flat baseline, records say what would set them, and
 the conversion card is simply absent. No demo numbers — a placeholder that looks

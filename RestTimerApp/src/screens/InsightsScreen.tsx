@@ -14,6 +14,7 @@ import { Pop } from '../components/Pop';
 import { useAccount } from '../cloud/AccountContext';
 import { recentDays } from '../cloud/days';
 import {
+  DATA_UNREACHABLE,
   EMPTY_CHART,
   EMPTY_RECORDS,
   extraSetsLine,
@@ -67,7 +68,7 @@ const CARD_PAD = 16;
 export function InsightsScreen() {
   const styles = useStyles();
   const colors = useColors();
-  const { status, totals, records, days, today } = useAccount();
+  const { status, totals, records, days, today, dataError } = useAccount();
   const [signingIn, setSigningIn] = useState(false);
 
   const enterHero = useEnter();
@@ -168,7 +169,16 @@ export function InsightsScreen() {
 
         <FocusChart today={today} days={signedIn ? days : []} />
 
-        {signedIn && weekFocusSeconds > 0 ? null : (
+        {/* Three states, not two. An account with nothing in it and a
+            listener that has fallen over both draw a flat line, and telling
+            somebody their week "fills in as they train" when it already has
+            is the failure this whole screen was reported for. */}
+        {signedIn && dataError ? (
+          <View style={styles.unreachable}>
+            <Icon name="bellOff" color={colors.danger} size={15} />
+            <Text style={styles.unreachableText}>{DATA_UNREACHABLE}</Text>
+          </View>
+        ) : signedIn && weekFocusSeconds > 0 ? null : (
           <Text style={styles.note}>{EMPTY_CHART}</Text>
         )}
       </Animated.View>
@@ -529,6 +539,22 @@ const useStyles = themed(colors =>
       fontSize: 13,
       color: colors.faint,
       lineHeight: 18,
+    },
+    /** Quiet, not alarming — nothing is broken on the user's side. */
+    unreachable: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: spacing.sm,
+      backgroundColor: colors.dangerWash,
+      borderRadius: radius.sm,
+      padding: spacing.sm,
+    },
+    unreachableText: {
+      ...type.helper,
+      fontSize: 13,
+      color: colors.danger,
+      lineHeight: 18,
+      flex: 1,
     },
   }),
 );

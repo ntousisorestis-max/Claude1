@@ -8,7 +8,7 @@
 import React from 'react';
 import ReactTestRenderer, { type ReactTestInstance } from 'react-test-renderer';
 import App from '../App';
-import { EMPTY_CHART, EMPTY_RECORDS } from '../src/copy';
+import { DATA_UNREACHABLE, EMPTY_CHART, EMPTY_RECORDS } from '../src/copy';
 import { createReturningStorage } from '../src/state/storage';
 import { NO_STREAK, type StreakState } from '../src/cloud/days';
 import {
@@ -30,6 +30,9 @@ function createFakeCloud() {
   let notifyUser: ((user: AuthUser | null) => void) | null = null;
   let notifyAccount: ((data: AccountData) => void) | null = null;
   let notifyDays: ((days: DayTotals[]) => void) | null = null;
+  /** The window the app asked for, so the query's shape can be asserted. */
+  let daysSince: string | null = null;
+  let failDays: ((reason: unknown) => void) | null = null;
   const recorded: WorkoutRecord[] = [];
   /** The last snapshot pushed, so one field can be changed without the rest. */
   let latest: AccountData = {
@@ -49,8 +52,10 @@ function createFakeCloud() {
       onChange({ totals: NO_TOTALS, streak: NO_STREAK, records: NO_RECORDS });
       return () => {};
     },
-    observeDays(_uid, _count, onChange) {
+    observeDays(_uid, since, onChange, onError) {
+      daysSince = since;
       notifyDays = onChange;
+      failDays = onError ?? null;
       onChange([]);
       return () => {};
     },
@@ -74,7 +79,11 @@ function createFakeCloud() {
     // Partial, so a test names only the numbers it cares about — and adding a
     // field to FocusTotals doesn't mean editing every call site.
     push(totals: Partial<FocusTotals>, streak: StreakState = NO_STREAK) {
-      latest = { totals: { ...NO_TOTALS, ...totals }, streak, records: latest.records };
+      latest = {
+        totals: { ...NO_TOTALS, ...totals },
+        streak,
+        records: latest.records,
+      };
       ReactTestRenderer.act(() => notifyAccount?.(latest));
     },
     pushRecords(records: PersonalRecords) {
@@ -83,6 +92,14 @@ function createFakeCloud() {
     },
     pushDays(days: DayTotals[]) {
       ReactTestRenderer.act(() => notifyDays?.(days));
+    },
+    /** What `since` the days listener was opened with. */
+    get daysSince() {
+      return daysSince;
+    },
+    /** Stops the days listener the way a rejected query does. */
+    breakDays() {
+      ReactTestRenderer.act(() => failDays?.(new Error('failed-precondition')));
     },
   };
 }
@@ -107,7 +124,10 @@ const press = (root: ReactTestInstance, accessibilityLabel: string) => {
   ReactTestRenderer.act(() => node.props.onPress());
 };
 
-const pressAsync = async (root: ReactTestInstance, accessibilityLabel: string) => {
+const pressAsync = async (
+  root: ReactTestInstance,
+  accessibilityLabel: string,
+) => {
   const [node] = root.findAll(
     n =>
       n.props?.accessibilityLabel === accessibilityLabel &&
@@ -128,7 +148,11 @@ const pressStartingWith = (root: ReactTestInstance, prefix: string) => {
   ReactTestRenderer.act(() => node.props.onPress());
 };
 
-const fill = (root: ReactTestInstance, accessibilityLabel: string, value: string) => {
+const fill = (
+  root: ReactTestInstance,
+  accessibilityLabel: string,
+  value: string,
+) => {
   const [input] = root.findAll(
     n =>
       n.props?.accessibilityLabel === accessibilityLabel &&
@@ -137,7 +161,11 @@ const fill = (root: ReactTestInstance, accessibilityLabel: string, value: string
   ReactTestRenderer.act(() => input.props.onChangeText(value));
 };
 
-const typeInto = (root: ReactTestInstance, placeholder: string, value: string) => {
+const typeInto = (
+  root: ReactTestInstance,
+  placeholder: string,
+  value: string,
+) => {
   const [input] = root.findAll(n => n.props?.placeholder === placeholder);
   ReactTestRenderer.act(() => input.props.onChangeText(value));
 };
@@ -252,6 +280,38 @@ describe('Insights and Streaks', () => {
     expect(hasText(root, 'Save your progress')).toBe(false);
   });
 
+  it('asks for a window of days, not a count', async () => {
+    // The shape of the query is the bug. It used to ask for "the newest N",
+    // which needs the days ordered — by document id, descending, which
+    // Firestore will not do without an index somebody has to create by hand.
+    // Every call came back `failed-precondition`, the error went to the
+    // console, and the chart drew its empty state at somebody who had been
+    // training. A window needs no ordering and therefore no index.
+    const root = await launch();
+    await signIn(root);
+
+    // Fourteen days back from today, inclusive of both ends.
+    expect(cloud.daysSince).toBe('2026-07-21');
+    expect(typeof cloud.daysSince).toBe('string');
+  });
+
+  it('says the data is unreachable rather than pretending it is empty', async () => {
+    const root = await launch();
+    await signIn(root);
+    cloud.pushDays([{ ...day('2026-08-03'), focusSeconds: 600 }]);
+
+    press(root, 'Insights');
+    expect(hasText(root, EMPTY_CHART)).toBe(false);
+
+    // The listener falls over the way a rejected query does.
+    cloud.breakDays();
+
+    expect(hasText(root, DATA_UNREACHABLE)).toBe(true);
+    // And crucially *not* the empty-state line, which would be a different
+    // claim about the same blank chart — the one that hid this for a month.
+    expect(hasText(root, EMPTY_CHART)).toBe(false);
+  });
+
   it('prices this week against a lifetime pace, not against itself', async () => {
     // 3600s over 60 sets is a minute a set; a 600s week is ten sets' worth.
     // Dividing all-time focus by all-time focus-per-set would just print 60
@@ -313,7 +373,9 @@ describe('Insights and Streaks', () => {
     // The ring announces the number and today's state together — the two Texts
     // inside it would otherwise read as "3" and "DAY STREAK".
     expect(hasLabel(root, '3 days, trained today')).toBe(true);
-    expect(hasText(root, 'Today’s in the bank. Nothing left to prove.')).toBe(true);
+    expect(hasText(root, 'Today’s in the bank. Nothing left to prove.')).toBe(
+      true,
+    );
 
     // Best ever 11 puts the next milestone at 14, three days out.
     expect(hasText(root, '11 days')).toBe(true);
@@ -370,9 +432,9 @@ describe('Insights and Streaks', () => {
 
     press(root, 'Streaks');
     expect(hasLabel(root, '6 days, not trained today yet')).toBe(true);
-    expect(hasText(root, 'Still alive. One workout today and it stays that way.')).toBe(
-      true,
-    );
+    expect(
+      hasText(root, 'Still alive. One workout today and it stays that way.'),
+    ).toBe(true);
   });
 
   it('shows a broken streak as zero without touching the best ever', async () => {
@@ -388,7 +450,10 @@ describe('Insights and Streaks', () => {
     press(root, 'Streaks');
     expect(hasLabel(root, '0 days, not trained today yet')).toBe(true);
     expect(
-      hasText(root, 'Nothing running yet. Finish a workout today and that’s day one.'),
+      hasText(
+        root,
+        'Nothing running yet. Finish a workout today and that’s day one.',
+      ),
     ).toBe(true);
     // The record survives the streak that set it, and still drives the ladder:
     // best 9 puts the next milestone at 14.

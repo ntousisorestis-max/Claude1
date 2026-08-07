@@ -25,7 +25,11 @@ const BENCH: Exercise = {
 };
 
 /** Renders nothing; hands the live state back to the test. */
-function Probe({ onState }: { onState: (s: ReturnType<typeof useWorkout>) => void }) {
+function Probe({
+  onState,
+}: {
+  onState: (s: ReturnType<typeof useWorkout>) => void;
+}) {
   const ctx = useWorkout();
   onState(ctx);
   return null;

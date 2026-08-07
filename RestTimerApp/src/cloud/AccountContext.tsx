@@ -12,6 +12,7 @@ import { describeAuthError, getBackend } from './backend';
 import {
   dayKey,
   NO_STREAK,
+  shiftDay,
   streakToday,
   trainedToday,
   type StreakState,
@@ -76,6 +77,12 @@ type Account = {
   sync: SyncStatus;
   /** Workouts finished but not yet accepted by the server. */
   pendingCount: number;
+  /**
+   * True when a live listener has stopped and the numbers on screen may be
+   * missing rather than empty. Distinguishing the two is the whole point —
+   * see the state's own note.
+   */
+  dataError: boolean;
   /** Set by the last failed sign-in/sign-up. Cleared when a new one starts. */
   error: string | null;
   busy: boolean;
@@ -130,6 +137,16 @@ export function AccountProvider({
   /** The last best-streak seen, so a *rise* in it can be spotted. */
   const lastBest = useRef<number | null>(null);
   const [days, setDays] = useState<DayTotals[]>([]);
+  /**
+   * Set when a live listener stops.
+   *
+   * Its own state rather than a log line, because a listener that has fallen
+   * over and an account with nothing in it look identical on screen. That is
+   * exactly how the days query — which never once ran against the real
+   * database — went unnoticed for a month while the chart drew "your week
+   * fills in as you train" at somebody who had been training.
+   */
+  const [dataError, setDataError] = useState(false);
   const [records, setRecords] = useState<PersonalRecords>(NO_RECORDS);
   const [sync, setSync] = useState<SyncStatus>('idle');
   const [pendingCount, setPendingCount] = useState(0);
@@ -164,34 +181,34 @@ export function AccountProvider({
     if (!configured || !user) {
       return;
     }
-    return cloud.observeAccount(user.uid, data => {
-      setTotals(data.totals);
-      setStreak(data.streak);
-      setRecords(data.records);
+    return cloud.observeAccount(
+      user.uid,
+      data => {
+        setTotals(data.totals);
+        setStreak(data.streak);
+        setRecords(data.records);
 
-      // A record is a *rise* in the best-ever streak, so it can only be
-      // recognised by having seen the previous value. The first snapshot after
-      // signing in therefore establishes the baseline and never counts —
-      // otherwise every launch would congratulate the user for a record they
-      // set weeks ago.
-      const previous = lastBest.current;
-      lastBest.current = data.streak.bestStreak;
-      if (previous != null && data.streak.bestStreak > previous) {
-        setJustSetRecord(data.streak.bestStreak);
-        // The one piece of feedback in the app that isn't fired from the
-        // phase-change effect in WorkoutContext, because it isn't a phase
-        // change: it depends on a server round-trip that lands some moments
-        // *after* the workout already ended.
-        personalBest();
-      }
-    });
-  }, [cloud, configured, user]);
-
-  useEffect(() => {
-    if (!configured || !user) {
-      return;
-    }
-    return cloud.observeDays(user.uid, DAYS_WATCHED, setDays);
+        // A record is a *rise* in the best-ever streak, so it can only be
+        // recognised by having seen the previous value. The first snapshot after
+        // signing in therefore establishes the baseline and never counts —
+        // otherwise every launch would congratulate the user for a record they
+        // set weeks ago.
+        const previous = lastBest.current;
+        lastBest.current = data.streak.bestStreak;
+        if (previous != null && data.streak.bestStreak > previous) {
+          setJustSetRecord(data.streak.bestStreak);
+          // The one piece of feedback in the app that isn't fired from the
+          // phase-change effect in WorkoutContext, because it isn't a phase
+          // change: it depends on a server round-trip that lands some moments
+          // *after* the workout already ended.
+          personalBest();
+        }
+      },
+      reason => {
+        console.warn('[focusboard] account listener stopped', reason);
+        setDataError(true);
+      },
+    );
   }, [cloud, configured, user]);
 
   /* --- Today ------------------------------------------------------------- */
@@ -227,6 +244,34 @@ export function AccountProvider({
     );
     return () => clearTimeout(timer);
   }, [today]);
+
+  /**
+   * The days behind the Insights chart.
+   *
+   * Below `today` because the window is measured from it, and re-subscribed
+   * when the day rolls over so the window slides with the calendar rather than
+   * with whenever the app was last launched.
+   */
+  useEffect(() => {
+    if (!configured || !user) {
+      return;
+    }
+    // Re-subscribed when the day rolls over, so the window slides with the
+    // calendar rather than with whenever the app was last launched.
+    const since = shiftDay(today, -(DAYS_WATCHED - 1));
+    return cloud.observeDays(
+      user.uid,
+      since,
+      nextDays => {
+        setDataError(false);
+        setDays(nextDays);
+      },
+      reason => {
+        console.warn('[focusboard] days listener stopped', reason);
+        setDataError(true);
+      },
+    );
+  }, [cloud, configured, user, today]);
 
   /* --- The outbox -------------------------------------------------------- */
 
@@ -378,6 +423,7 @@ export function AccountProvider({
       clearRecord,
       sync,
       pendingCount,
+      dataError,
       error,
       busy,
       signUp,
@@ -398,6 +444,7 @@ export function AccountProvider({
       clearRecord,
       sync,
       pendingCount,
+      dataError,
       error,
       busy,
       signUp,
