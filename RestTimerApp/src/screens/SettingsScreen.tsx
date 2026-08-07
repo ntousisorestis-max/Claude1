@@ -17,7 +17,9 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { HeroDumbbell } from '../components/HeroDumbbell';
 import { Icon } from '../components/Icon';
 import { SettingsSection } from '../components/SettingsSection';
+import { Segmented } from '../components/Segmented';
 import { Toggle } from '../components/Toggle';
+import { APPEARANCE } from '../copy';
 import { useEnter } from '../hooks/useEnter';
 import { usePressScale } from '../hooks/usePressScale';
 import { useWorkout } from '../state/WorkoutContext';
@@ -46,13 +48,17 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  * global: how the rest-over alert behaves, the pool of blockable apps and
  * which of them a new exercise starts with, and the one destructive action.
  */
+/** The three, in the order a picker like this is always ordered. */
+const THEME_OPTIONS = ['system', 'light', 'dark'] as const;
+
 export function SettingsScreen() {
   const styles = useStyles();
   const colors = useColors();
   const {
-    state: { defaults, exercises },
+    state: { defaults, exercises, theme },
     toggleDefaultApp,
     setSoundEnabled,
+    setTheme,
     addCustomApp,
     removeCustomApp,
     deleteAllExercises,
@@ -111,6 +117,20 @@ export function SettingsScreen() {
           {/* First, because it's the only thing here that decides whether
               anything you do in this app outlives the app being closed. */}
           <AccountCard />
+
+          <SettingsSection
+            icon="phone"
+            title={APPEARANCE.title}
+            description={APPEARANCE.description}
+          >
+            <Segmented
+              options={THEME_OPTIONS}
+              value={theme}
+              onChange={setTheme}
+              format={option => APPEARANCE.options[option]}
+              label="Appearance"
+            />
+          </SettingsSection>
 
           <SettingsSection
             icon="bell"
@@ -314,7 +334,12 @@ function SilentModeRow({ on, onPress }: { on: boolean; onPress: () => void }) {
       </View>
       <View style={[styles.mark, on && styles.markOn]}>
         {on ? (
-          <Icon name="check" color={colors.white} size={12} strokeWidth={2.6} />
+          <Icon
+            name="check"
+            color={colors.textOnAccent}
+            size={12}
+            strokeWidth={2.6}
+          />
         ) : null}
       </View>
     </AnimatedPressable>

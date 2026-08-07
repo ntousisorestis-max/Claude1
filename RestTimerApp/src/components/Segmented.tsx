@@ -3,18 +3,25 @@ import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { usePressScale } from '../hooks/usePressScale';
 import { radius, tabular, themed, type } from '../theme';
 
-/** Quick-select pills. The chosen one goes solid accent. */
-export function Segmented({
+/**
+ * Quick-select pills. The chosen one goes solid accent.
+ *
+ * Generic over what is being picked. It started as a rest-time picker and was
+ * hardcoded to numbers; the theme choice is three strings and wants exactly the
+ * same control, and one row of pills that works for both beats two that drift
+ * apart.
+ */
+export function Segmented<T extends string | number>({
   options,
   value,
   onChange,
   format,
   label,
 }: {
-  options: number[];
-  value: number;
-  onChange: (next: number) => void;
-  format: (n: number) => string;
+  options: readonly T[];
+  value: T;
+  onChange: (next: T) => void;
+  format: (option: T) => string;
   label: string;
 }) {
   const styles = useStyles();
@@ -34,18 +41,18 @@ export function Segmented({
   );
 }
 
-function Cell({
+function Cell<T extends string | number>({
   option,
   selected,
   label,
   format,
   onChange,
 }: {
-  option: number;
+  option: T;
   selected: boolean;
   label: string;
-  format: (n: number) => string;
-  onChange: (next: number) => void;
+  format: (option: T) => string;
+  onChange: (next: T) => void;
 }) {
   const styles = useStyles();
   const pressScale = usePressScale({ depth: 0.94, haptic: true });
@@ -82,6 +89,6 @@ const useStyles = themed(colors =>
     },
     selected: { backgroundColor: colors.accent },
     text: { ...type.body, ...tabular, fontWeight: '600', color: colors.muted },
-    textSelected: { color: colors.white, fontWeight: '800' },
+    textSelected: { color: colors.textOnAccent, fontWeight: '800' },
   }),
 );

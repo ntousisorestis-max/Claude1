@@ -79,7 +79,16 @@ export type Palette = {
   /** The de-emphasised tier — notes, micro-labels. */
   faint: string;
 
-  /** Content on the flooded violet ground. Identical across themes. */
+  /**
+   * Content on violet — the flood, a button, a filled tile, a selected pill.
+   *
+   * **Not `white`.** `white` means "the strongest text colour on this theme's
+   * ground", which on a light page is near-black. Violet fills don't change
+   * between themes, so what sits on them mustn't either: using `white` for a
+   * button label gives you dark text on a violet button the moment somebody
+   * switches to light mode.
+   */
+  textOnAccent: string;
   mutedOnAccent: string;
   faintOnAccent: string;
   /** The lit edge of a violet object. See ON_ACCENT. */
@@ -139,6 +148,7 @@ export type Palette = {
  */
 const ON_ACCENT = {
   accentDeep: '#6D42D9',
+  textOnAccent: '#FFFFFF',
   /** The lit edge of a violet object, where the light lands first. */
   accentLit: '#C4A5FF',
   /** A specular highlight. Always white; the opacity does the work. */
@@ -245,8 +255,65 @@ export const washOnAccent = (alpha: number) => `rgba(255, 255, 255, ${alpha})`;
 /**
  * The personal-best banner on the complete screen: the dark ground sunk into
  * the flood. Fixed, for the same reason — it only ever appears on the violet.
+ *
+ * Kept as parts as well as a string so the contrast budget can composite it
+ * rather than parse it back out of `rgba(…)`.
  */
+export const RECORD_SUNK = { color: '#0F0B1A', alpha: 0.32 } as const;
 export const RECORD_GROUND = 'rgba(15, 11, 26, 0.32)';
+
+/**
+ * Darkens a colour until it can be told apart from the ground it sits on.
+ *
+ * For the app tints. Those are somebody else's brand colours, picked to read
+ * on a near-black pill — on a near-white one TikTok's lands at 1.67:1, which
+ * is a logo you cannot see. Rather than keeping two tints per app (and a
+ * migration for the custom ones people have already saved), the light variant
+ * is derived: the hue is kept and the channels are walked down together until
+ * the pair clears the bar.
+ *
+ * Memoised, because it is called per pill per render and the answer for a
+ * given colour never changes.
+ */
+const legibleCache = new Map<string, string>();
+
+export function legibleOn(color: string, ground: string, need = 3.2): string {
+  const key = `${color}|${ground}|${need}`;
+  const cached = legibleCache.get(key);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const parse = (h: string) =>
+    [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const channel = (c: number) => {
+    const v = c / 255;
+    return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  };
+  const lum = (px: number[]) =>
+    0.2126 * channel(px[0]) + 0.7152 * channel(px[1]) + 0.0722 * channel(px[2]);
+  const contrast = (a: number[], b: number[]) => {
+    const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  };
+
+  const base = parse(color);
+  const onto = parse(ground);
+  let result = color;
+
+  // 40 steps of 2.5% is enough to reach black from anything, and stopping at
+  // the first pass keeps as much of the original colour as the bar allows.
+  for (let step = 0; step <= 40; step++) {
+    const scaled = base.map(c => Math.round(c * (1 - step * 0.025)));
+    if (contrast(scaled, onto) >= need) {
+      result = '#' + scaled.map(c => c.toString(16).padStart(2, '0')).join('');
+      break;
+    }
+  }
+
+  legibleCache.set(key, result);
+  return result;
+}
 
 export const palettes = { dark, light } as const;
 

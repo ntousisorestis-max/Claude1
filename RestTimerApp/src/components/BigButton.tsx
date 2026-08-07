@@ -154,7 +154,7 @@ const useStyles = themed(colors =>
 
     accent: { backgroundColor: colors.accent },
     ink: { backgroundColor: colors.ink },
-    outlineOnAccent: { borderWidth: 2, borderColor: colors.white },
+    outlineOnAccent: { borderWidth: 2, borderColor: colors.textOnAccent },
     quiet: {},
     danger: {},
 
@@ -179,7 +179,7 @@ const useStyles = themed(colors =>
     },
 
     label: { ...type.action, color: colors.white },
-    labelOnAccent: { color: colors.white },
+    labelOnAccent: { color: colors.textOnAccent },
     labelOnInk: { color: colors.white },
     labelQuiet: { ...type.tag, color: colors.muted },
     labelDanger: { ...type.tag, color: colors.danger },

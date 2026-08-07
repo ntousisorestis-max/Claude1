@@ -126,6 +126,6 @@ const useStyles = themed(colors =>
       backgroundColor: colors.faint,
     },
     /** Position is animated above; this is only the colour change. */
-    thumbOn: { backgroundColor: colors.white },
+    thumbOn: { backgroundColor: colors.textOnAccent },
   }),
 );

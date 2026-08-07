@@ -177,7 +177,7 @@ export function InsightsScreen() {
       {showsInsight ? (
         <Animated.View style={[styles.insight, enterInsight]}>
           <View style={styles.insightTile}>
-            <Icon name="reps" color={colors.white} size={20} />
+            <Icon name="reps" color={colors.textOnAccent} size={20} />
           </View>
           <View style={styles.insightText}>
             <Text style={styles.insightLead}>
@@ -341,7 +341,7 @@ function SaveProgress({
           style={[styles.accountAction, press.style]}
         >
           <Text style={styles.accountActionText}>{SAVE_PROGRESS.action}</Text>
-          <Icon name="chevron" color={colors.white} size={16} />
+          <Icon name="chevron" color={colors.textOnAccent} size={16} />
         </AnimatedPressable>
       ) : (
         <Text style={styles.note}>{SAVE_PROGRESS.setup}</Text>

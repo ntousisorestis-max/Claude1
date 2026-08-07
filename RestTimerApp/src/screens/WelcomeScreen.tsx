@@ -23,6 +23,7 @@ import {
   themed,
   type,
   useColors,
+  useTheme,
 } from '../theme';
 
 /**
@@ -57,6 +58,7 @@ import {
 export function WelcomeScreen({ onDone }: { onDone: () => void }) {
   const styles = useStyles();
   const colors = useColors();
+  const { name } = useTheme();
   const enterHero = useEnter();
   const enterHead = useEnter(90);
   const enterSub = useEnter(160);
@@ -65,7 +67,10 @@ export function WelcomeScreen({ onDone }: { onDone: () => void }) {
 
   return (
     <View style={styles.screen}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.ink} />
+      <StatusBar
+        barStyle={name === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.ink}
+      />
 
       {/* Its own copy: this is overlaid on top of the app rather than living
           inside it, so the root glow is behind this screen's ground. */}
@@ -150,7 +155,7 @@ function Feature({
   return (
     <Animated.View style={[styles.feature, enter]}>
       <View style={styles.tile}>
-        <Icon name={icon} color={colors.white} size={21} />
+        <Icon name={icon} color={colors.textOnAccent} size={21} />
       </View>
       <View style={styles.featureText}>
         <Text style={styles.featureTitle}>{title}</Text>

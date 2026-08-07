@@ -115,7 +115,7 @@ export function StreaksScreen() {
           {/* 4 — the rule, stated rather than implied */}
           <Animated.View style={[styles.shield, enterShield]}>
             <View style={styles.shieldTile}>
-              <Icon name="shield" color={colors.white} size={20} />
+              <Icon name="shield" color={colors.textOnAccent} size={20} />
             </View>
             <View style={styles.shieldText}>
               <Text style={styles.shieldTitle}>{STREAKS.shield.title}</Text>

@@ -102,6 +102,58 @@ describe('persistence seam', () => {
     app.unmount();
   });
 
+  it('writes back when the theme changes', async () => {
+    // The one that would have caught it. `sameSaved` skips the write when the
+    // payload matches what was last persisted, and it compares field by field
+    // — so a new field left out of it means the setting works perfectly all
+    // session and is gone on the next launch. Every field on SavedState wants
+    // a test like this one.
+    const storage = createMemoryStorage();
+    const app = await mount(storage);
+
+    await ReactTestRenderer.act(async () => {
+      app.actions.setTheme('light');
+    });
+
+    await expect(storage.load()).resolves.toMatchObject({ theme: 'light' });
+
+    app.unmount();
+  });
+
+  it('restores the saved theme, and refuses a junk one', async () => {
+    const good = createMemoryStorage({
+      defaults: FACTORY_DEFAULTS,
+      welcomed: true,
+      exercises: [],
+      theme: 'dark',
+    });
+    const app = await mount(good);
+    expect(app.state.theme).toBe('dark');
+    app.unmount();
+
+    // A payload from before the field existed, and one with nonsense in it,
+    // both land on `system` rather than putting the app into a theme that
+    // doesn't exist.
+    const old = createMemoryStorage({
+      defaults: FACTORY_DEFAULTS,
+      welcomed: true,
+      exercises: [],
+    });
+    const oldApp = await mount(old);
+    expect(oldApp.state.theme).toBe('system');
+    oldApp.unmount();
+
+    const junk = createMemoryStorage({
+      defaults: FACTORY_DEFAULTS,
+      welcomed: true,
+      exercises: [],
+      theme: 'sepia' as never,
+    });
+    const junkApp = await mount(junk);
+    expect(junkApp.state.theme).toBe('system');
+    junkApp.unmount();
+  });
+
   it('does not write before the load has settled', async () => {
     // Otherwise an empty list would clobber the saved one on launch.
     const storage = createMemoryStorage({

@@ -268,7 +268,7 @@ function Submit({
       {/* The spinner replaces the label rather than sitting beside it, so the
           button doesn't change width the instant it's pressed. */}
       {busy ? (
-        <ActivityIndicator color={colors.white} />
+        <ActivityIndicator color={colors.textOnAccent} />
       ) : (
         <Text style={[styles.submitText, disabled && styles.submitTextOff]}>
           {label}
@@ -360,7 +360,7 @@ const useStyles = themed(colors =>
      * 19px bold. White on `accent` is 4.22:1 — over AA's 3.0 for large text,
      * under the 4.5 for body text — and WCAG's line is 18.66px bold.
      */
-    submitText: { ...sized(type.action, 19), color: colors.white },
+    submitText: { ...sized(type.action, 19), color: colors.textOnAccent },
     submitTextOff: { color: colors.faint },
 
     swap: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },

@@ -1,41 +1,41 @@
 /**
- * Guards the background glow against eating legibility.
+ * Guards both palettes against eating legibility.
  *
  *     npm run contrast          (needs `npm run build:web` + a server on :8099)
  *
- * The glow lightens the screen background, and every point of background
- * lightness is contrast taken away from the text on top of it. This checks that
- * what's left still clears WCAG AA, two ways, because either alone can lie:
+ * The background glow lightens the screen, and every point of lightness is
+ * contrast taken away from the text on top of it. This checks that what's left
+ * still clears WCAG AA, in **light and dark**, two ways — because either alone
+ * can lie:
  *
- * 1. **Analytic** — each palette colour against the glow's peak composited over
- *    the ground. That's the lightest the background can ever be, anywhere on
- *    any screen, so passing here passes everywhere.
- * 2. **Measured** — real pixels from a real browser, sampled in the side
- *    gutters with text made transparent, confirming the model matches what
- *    actually renders rather than what the maths hoped for.
+ * 1. **Analytic** — each palette colour against that theme's glow peak
+ *    composited over that theme's ground. That's the worst the background can
+ *    ever be, anywhere on any screen, so passing here passes everywhere.
+ * 2. **Measured** — real pixels from a real browser in both colour schemes,
+ *    sampled in the side gutters with text made transparent, confirming the
+ *    model matches what renders rather than what the maths hoped for.
  *
- * If you raise the peaks in GlowBackground.tsx, run this.
+ * ## The palettes are imported, not copied
+ *
+ * This used to restate every hex value as a local constant, which meant the
+ * budget could pass while the app looked different — the two drifting apart is
+ * exactly the failure a budget exists to prevent. Node strips the types and
+ * imports `src/theme/palettes.ts` directly, so what is checked *is* what ships.
+ * That is what `--experimental-strip-types` in the npm script is for.
  */
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 import sharp from 'sharp';
+import { legibleOn, palettes, RECORD_SUNK } from '../src/theme/palettes.ts';
+import { BLOCKABLE_APPS } from '../src/state/workoutReducer.ts';
 
 const BASE = process.argv[2] ?? 'http://127.0.0.1:8099/';
-
-// Must match src/theme.ts and src/components/GlowBackground.tsx.
-const INK = '#0F0B1A';
-const ACCENT_DEEP = '#6D42D9';
-const ACCENT = '#8B5CF6';
-const ACCENT_TEXT = '#9E76F7';
-const WHITE = '#FFFFFF';
-const SURFACE = '#17122A';
-const RAISED = '#201A38';
-const HAIRLINE = '#2E2647';
-const PEAK_ON_INK = 0.12;
-const PEAK_ON_ACCENT = 0.06;
 
 /** AA: 4.5 for body text, 3.0 for large (>=18.66px bold / 24px regular). */
 const BODY = 4.5;
 const LARGE = 3.0;
+
+/** The bloom over the violet flood. Fixed — see GlowBackground. */
+const ON_ACCENT_PEAK = 0.06;
 
 const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 const toHex = px =>
@@ -53,9 +53,6 @@ const ratio = (a, b) => {
 const composite = (top, over, alpha) =>
   hex(top).map((c, i) => alpha * c + (1 - alpha) * hex(over)[i]);
 
-const glowedInk = toHex(composite(ACCENT, INK, PEAK_ON_INK));
-const glowedAccent = toHex(composite(WHITE, ACCENT_DEEP, PEAK_ON_ACCENT));
-
 let failed = false;
 const check = (what, fg, ground, need) => {
   const r = ratio(hex(fg), hex(ground));
@@ -64,95 +61,101 @@ const check = (what, fg, ground, need) => {
     failed = true;
   }
   console.log(
-    `  ${ok ? 'PASS' : 'FAIL'}  ${what.padEnd(38)} ${r.toFixed(2)}:1  (needs ${need.toFixed(1)})`,
+    `  ${ok ? 'PASS' : 'FAIL'}  ${what.padEnd(36)} ${r.toFixed(2)}:1  (needs ${need.toFixed(1)})`,
   );
 };
 /** For colours declared as rgba() — composited onto the ground first. */
-const checkAlpha = (what, alpha, ground, need) =>
-  check(what, toHex(composite(WHITE, ground, alpha)), ground, need);
+const checkAlpha = (what, fg, alpha, ground, need) =>
+  check(what, toHex(composite(fg, ground, alpha)), ground, need);
 
-console.log('=== Analytic worst case: the glow at full peak ===');
-console.log(`  dark ground   ${INK} -> ${glowedInk}`);
-console.log(`  violet ground ${ACCENT_DEEP} -> ${glowedAccent}\n`);
+/* -------------------------------------------------------------------------- */
+/* Per theme                                                                  */
+/* -------------------------------------------------------------------------- */
 
-console.log('Text on the glowed DARK ground:');
-check('white — headlines 26-46px', WHITE, glowedInk, LARGE);
-check('accentText — eyebrow, + Add', ACCENT_TEXT, glowedInk, BODY);
-check('accent — set numeral, 92px', ACCENT, glowedInk, LARGE);
-check('mutedOnDark — body, help', '#A29BBC', glowedInk, BODY);
-check('faintOnDark — notes, SET label', '#8F88AA', glowedInk, BODY);
-check('danger — End workout', '#FF6B81', glowedInk, BODY);
+for (const [name, c] of Object.entries(palettes)) {
+  // The lightest the ground gets: the glow at full peak over it.
+  const ground = toHex(composite(c.glow, c.ink, c.glowPeak));
 
-console.log('\nText on cards, which the glow never reaches:');
-check('accentText on surface', ACCENT_TEXT, SURFACE, BODY);
-check('accentText on raised', ACCENT_TEXT, RAISED, BODY);
-check('faintOnDark on surface', '#8F88AA', SURFACE, BODY);
-check('mutedOnDark on surface', '#A29BBC', SURFACE, BODY);
+  console.log(`\n=== ${name.toUpperCase()} — ground ${c.ink} -> ${ground} ===`);
 
-console.log('\nText on the glowed VIOLET ground:');
-check('white — Scroll away., clock', WHITE, glowedAccent, LARGE);
-checkAlpha('mutedOnAccent (white @ .88)', 0.88, glowedAccent, BODY);
-checkAlpha('faintOnAccent (white @ .68)', 0.68, glowedAccent, LARGE);
+  console.log('Text on the glowed ground:');
+  check('white — headlines 26-46px', c.white, ground, LARGE);
+  check('white — at body size too', c.white, ground, BODY);
+  check('accentText — eyebrows, links', c.accentText, ground, BODY);
+  check('accent — the 92px set numeral', c.accent, ground, LARGE);
+  check('muted — body, help', c.muted, ground, BODY);
+  check('faint — notes, SET label', c.faint, ground, BODY);
+  check('danger — End workout', c.danger, ground, BODY);
 
-// The complete screen's personal-best banner: ink at 32% over the flooded
-// violet. Must match RECORD_GROUND in src/screens/CompleteScreen.tsx.
-const recordGround = toHex(composite(INK, glowedAccent, 0.32));
+  console.log('Text on cards, which the glow never reaches:');
+  for (const [surface, label] of [[c.surface, 'surface'], [c.raised, 'raised']]) {
+    check(`white on ${label}`, c.white, surface, BODY);
+    check(`accentText on ${label}`, c.accentText, surface, BODY);
+    check(`muted on ${label}`, c.muted, surface, BODY);
+    check(`faint on ${label}`, c.faint, surface, BODY);
+    check(`danger on ${label}`, c.danger, surface, BODY);
+  }
 
-console.log('\nThe personal-best banner, sunk into the violet:');
-check('white — the record line', WHITE, recordGround, BODY);
-checkAlpha('mutedOnAccent — PERSONAL BEST', 0.88, recordGround, BODY);
-check('white on the accent tile', WHITE, ACCENT, LARGE);
+  console.log('Non-text (WCAG 1.4.11 wants 3.0 for UI):');
+  check('accent fill vs the ground', c.accent, ground, LARGE);
+  // The Streaks tab's two progress bars and its streak ring are all this pair.
+  // If the fill can't be told from the track, the bar carries no information.
+  check('progress fill vs its track', c.accent, c.hairline, LARGE);
 
-console.log('\nThe gradient Start button, at both ends of its ramp:');
-// 19px bold is "large text", so 3.0 — see GradientButton.tsx.
-check('white on the gradient, dark end', WHITE, ACCENT_DEEP, LARGE);
-check('white on the gradient, light end', WHITE, ACCENT, LARGE);
+  // The app pills carry somebody else's brand colours, which cannot be moved
+  // to suit a theme — so the check is that they stay *distinguishable* on the
+  // ground they sit on, not that they read as text. AppPill draws the name in
+  // a palette colour for exactly this reason.
+  // Somebody else's colours, so they are darkened rather than replaced — see
+  // `legibleOn`. This checks the value the pill actually draws.
+  console.log('Brand tints on a selected pill (non-text):');
+  for (const app of BLOCKABLE_APPS) {
+    check(`${app.name}`, legibleOn(app.tint, c.raised), c.raised, LARGE);
+  }
+}
 
-// White on accent is 4.22:1: over AA's 3.0 for large text, under the 4.5 for
-// body text. WCAG's line is 18.66px bold, so every label on an accent fill has
-// to be sized past it — and every one now is. `BigButton` is 20px/800; the two
-// account buttons, `GradientButton`, `AuthSheet`'s submit, `ConfirmDialog`'s
-// buttons and both "pill" buttons are 19px/800. If a new accent button lands
-// at `type.body` size, this 3.0 bar stops being the right one for it.
-console.log('\nNon-text contrast (WCAG 1.4.11 wants 3.0 for UI):');
-check('accent fill vs dark ground', ACCENT, glowedInk, LARGE);
-check('white on the accent button', WHITE, ACCENT, LARGE);
-// The Streaks tab's two progress bars and its streak ring are all the same
-// pair: an accent fill against a hairline track. If the fill can't be told from
-// the track, the bar carries no information at all.
-check('progress fill vs its track', ACCENT, HAIRLINE, LARGE);
+/* -------------------------------------------------------------------------- */
+/* The violet flood — the same in both themes, so checked once                */
+/* -------------------------------------------------------------------------- */
 
-// --- Confirm the model against what actually renders ---------------------
+const { dark: c } = palettes;
+const flood = toHex(composite('#FFFFFF', c.accentDeep, ON_ACCENT_PEAK));
+
+console.log(`\n=== THE FLOOD — ${c.accentDeep} -> ${flood} (both themes) ===`);
+check('textOnAccent — Scroll away.', c.textOnAccent, flood, LARGE);
+checkAlpha('mutedOnAccent (white @ .88)', '#FFFFFF', 0.88, flood, BODY);
+checkAlpha('faintOnAccent (white @ .68)', '#FFFFFF', 0.68, flood, LARGE);
+
+// The complete screen's personal-best banner: ink at 32% over the flood.
+const record = toHex(composite(RECORD_SUNK.color, flood, RECORD_SUNK.alpha));
+console.log('The personal-best banner, sunk into the flood:');
+check('textOnAccent — the record line', c.textOnAccent, record, BODY);
+checkAlpha('mutedOnAccent — PERSONAL BEST', '#FFFFFF', 0.88, record, BODY);
+
+// White on accent is 4.23:1 — over AA's 3.0 for large text, under the 4.5 for
+// body. WCAG's line is 18.66px bold, so every label on an accent fill is sized
+// past it: `BigButton` is 20px/800, and `GradientButton`, `AuthSheet`'s submit,
+// `ConfirmDialog`'s buttons, both account buttons, the segmented pills and
+// `ExerciseCard`'s save pill are 19px/800. A new accent button at body size
+// would make this 3.0 bar the wrong one to be checking.
+console.log('Content on an accent fill:');
+check('textOnAccent on the accent tile', c.textOnAccent, c.accent, LARGE);
+check('textOnAccent, gradient dark end', c.textOnAccent, c.accentDeep, LARGE);
+check('textOnAccent, gradient light end', c.textOnAccent, c.accent, LARGE);
+
+/* -------------------------------------------------------------------------- */
+/* Measured in Chromium, in both schemes                                      */
+/* -------------------------------------------------------------------------- */
+
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 420, height: 900 } });
-
-// A fresh browser profile is a first launch, and a first launch is the welcome
-// screen, which would be measured as if it were the exercise list. Seeded as
-// somebody who has been here before, which is the state every ground sampled
-// below actually belongs to. The welcome gets its own pass further down.
-await page.addInitScript(() => {
-  localStorage.setItem(
-    'liftlock.state.v3',
-    JSON.stringify({
-      welcomed: true,
-      exercises: [],
-      defaults: { selectedAppIds: [], soundEnabled: true, customApps: [] },
-    }),
-  );
-});
-
-await page.goto(BASE, { waitUntil: 'commit' });
-await page.waitForTimeout(1800);
-// Strip text so only ground + glow is left in the gutters.
-await page.addStyleTag({ content: '*{color:transparent !important}' });
 
 /**
  * Brightest pixel in the side gutters, which hold nothing but background.
  * Stops above the tab bar — its top hairline runs the full width and would be
  * measured as if it were glow.
  */
-async function gutterPeak(from = page) {
-  const shot = await from.screenshot();
+async function gutterPeak(page) {
+  const shot = await page.screenshot();
   let best = [0, 0, 0];
   let bestL = -1;
   for (const box of [
@@ -174,44 +177,87 @@ async function gutterPeak(from = page) {
   return best;
 }
 
-const measured = (label, px, ceiling) => {
-  const ok = lum(px) <= lum(hex(ceiling)) + 0.002;
+/**
+ * The measured ground has to sit *under* the modelled one, and the direction
+ * of "under" flips with the theme: on dark the risk is the glow making the
+ * page too light, on light it is the glow making it too dark.
+ */
+const measured = (label, px, ceiling, theme) => {
+  const slack = 0.002;
+  const ok =
+    theme === 'dark'
+      ? lum(px) <= lum(hex(ceiling)) + slack
+      : lum(px) >= lum(hex(ceiling)) - slack;
   if (!ok) {
     failed = true;
   }
   console.log(
-    `  ${ok ? 'PASS' : 'FAIL'}  ${label.padEnd(38)} ${toHex(px)} vs ceiling ${ceiling}`,
+    `  ${ok ? 'PASS' : 'FAIL'}  ${label.padEnd(30)} ${toHex(px)} vs limit ${ceiling}`,
   );
 };
 
-console.log('\n=== Measured in Chromium ===');
-measured('exercise list background', await gutterPeak(), glowedInk);
+for (const theme of ['dark', 'light']) {
+  const p = palettes[theme];
+  const ceiling = toHex(composite(p.glow, p.ink, p.glowPeak));
+  const floodCeiling = toHex(composite('#FFFFFF', p.accentDeep, ON_ACCENT_PEAK));
 
-await page.getByLabel('Exercise name').fill('Bench press');
-await page.getByLabel('Save exercise').click();
-await page.waitForTimeout(500);
-await page.getByLabel('Start Bench press').click();
-await page.waitForTimeout(700);
-measured('active set background', await gutterPeak(), glowedInk);
+  const context = await browser.newContext({
+    viewport: { width: 420, height: 900 },
+    colorScheme: theme,
+  });
+  const page = await context.newPage();
 
-await page.getByLabel('Done with set').click();
-await page.waitForTimeout(1400);
-measured('resting background', await gutterPeak(), glowedAccent);
+  // A fresh profile is a first launch, and a first launch is the welcome
+  // screen — which would be measured as if it were the exercise list. Seeded
+  // as somebody who has been here before, which is the state every ground
+  // below belongs to. The welcome gets its own pass at the end.
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'liftlock.state.v3',
+      JSON.stringify({
+        welcomed: true,
+        exercises: [],
+        theme: 'system',
+        defaults: { selectedAppIds: [], soundEnabled: true, customApps: [] },
+      }),
+    );
+  });
 
-/**
- * The welcome screen, on an unseeded profile — a genuine first launch.
- *
- * It carries a second light source nothing else does: the halo behind the logo
- * is its own radial bloom, stacked on top of the root glow. Every colour above
- * is budgeted against the root glow alone, so this measures that the welcome's
- * ground still lands under the same ceiling rather than trusting that a bloom
- * drawn in the middle of the screen stays in the middle of the screen.
- */
-const first = await browser.newPage({ viewport: { width: 420, height: 900 } });
-await first.goto(BASE, { waitUntil: 'commit' });
-await first.waitForTimeout(1800);
-await first.addStyleTag({ content: '*{color:transparent !important}' });
-measured('welcome background', await gutterPeak(first), glowedInk);
+  await page.goto(BASE, { waitUntil: 'commit' });
+  await page.waitForTimeout(1800);
+  // Strip text so only ground + glow is left in the gutters.
+  await page.addStyleTag({ content: '*{color:transparent !important}' });
+
+  console.log(`\n=== MEASURED IN CHROMIUM — ${theme} ===`);
+  measured('exercise list background', await gutterPeak(page), ceiling, theme);
+
+  await page.getByLabel('Exercise name').fill('Bench press');
+  await page.getByLabel('Save exercise').click();
+  await page.waitForTimeout(500);
+  await page.getByLabel('Start Bench press').click();
+  await page.waitForTimeout(700);
+  measured('active set background', await gutterPeak(page), ceiling, theme);
+
+  await page.getByLabel('Done with set').click();
+  await page.waitForTimeout(1400);
+  // The flood is the same violet in both themes, so this one has a fixed
+  // ceiling and is only ever checked the dark way.
+  measured('resting background', await gutterPeak(page), floodCeiling, 'dark');
+
+  // The welcome, on an unseeded profile — a genuine first launch. It carries
+  // a second light source nothing else does: the halo behind the logo is its
+  // own radial bloom stacked on the root glow.
+  const first = await browser.newPage({
+    viewport: { width: 420, height: 900 },
+    colorScheme: theme,
+  });
+  await first.goto(BASE, { waitUntil: 'commit' });
+  await first.waitForTimeout(1800);
+  await first.addStyleTag({ content: '*{color:transparent !important}' });
+  measured('welcome background', await gutterPeak(first), ceiling, theme);
+
+  await context.close();
+}
 
 await browser.close();
 console.log(failed ? '\nSOME CHECKS FAILED' : '\nAll contrast checks pass.');

@@ -175,7 +175,7 @@ function RecordBanner({ days }: { days: number }) {
       accessibilityLabel={`New personal best: ${personalBestLine(days)}`}
     >
       <View style={styles.recordTile}>
-        <Icon name="trophy" color={colors.white} size={18} />
+        <Icon name="trophy" color={colors.textOnAccent} size={18} />
       </View>
       <View style={styles.recordText}>
         <Text style={styles.recordEyebrow}>PERSONAL BEST</Text>
@@ -221,7 +221,7 @@ const useStyles = themed(colors =>
     body: { flex: 1, justifyContent: 'center', gap: spacing.lg },
     hero: { gap: spacing.sm },
     badge: { fontSize: 56 },
-    headline: { ...sized(type.mega, 52), color: colors.white },
+    headline: { ...sized(type.mega, 52), color: colors.textOnAccent },
     subline: {
       ...type.helper,
       fontSize: 16,
@@ -257,7 +257,7 @@ const useStyles = themed(colors =>
     },
     recordText: { flex: 1, gap: 2 },
     recordEyebrow: { ...sized(type.tag, 10), color: colors.mutedOnAccent },
-    recordLine: { ...type.body, fontWeight: '700', color: colors.white },
+    recordLine: { ...type.body, fontWeight: '700', color: colors.textOnAccent },
 
     reclaimed: { gap: spacing.xs },
     reclaimedLabel: {
@@ -276,7 +276,7 @@ const useStyles = themed(colors =>
     reclaimedValue: {
       ...sized(type.display, 38),
       ...tabular,
-      color: colors.white,
+      color: colors.textOnAccent,
     },
 
     card: {

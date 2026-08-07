@@ -27,6 +27,7 @@ import {
   setSoundEnabled as setSoundOutputEnabled,
 } from '../sound';
 import { memoryStorage, type AppStorage } from './storage';
+import type { ThemeChoice } from '../theme';
 import {
   initialState,
   newExerciseId,
@@ -49,6 +50,18 @@ function sameSaved(a: SavedState | null, b: SavedState): boolean {
       (app, i) => app.id === b.defaults.customApps[i]?.id,
     ) &&
     a.welcomed === b.welcomed &&
+    // Every field on SavedState has to appear here. Leaving one out doesn't
+    // break loudly — the write is simply skipped as a no-op, the setting works
+    // perfectly until the app is closed, and the loss only shows up on the
+    // next launch. `theme` was missed exactly once; don't make it twice.
+    //
+    // Compared *normalised*, because one side of this is a payload straight
+    // off disk and the other has been through the reducer. A stored payload
+    // written before the field existed has nothing here, hydrates to 'system',
+    // and would otherwise look like a change on every single launch — which
+    // would quietly undo the "a launch that changes nothing writes nothing"
+    // guarantee for everybody who already has the app.
+    (a.theme ?? 'system') === (b.theme ?? 'system') &&
     a.exercises.length === b.exercises.length &&
     a.exercises.every((exercise, i) => sameExercise(exercise, b.exercises[i]))
   );
@@ -79,6 +92,7 @@ type WorkoutActions = {
   deleteAllExercises: () => void;
   toggleDefaultApp: (appId: string) => void;
   setSoundEnabled: (enabled: boolean) => void;
+  setTheme: (theme: ThemeChoice) => void;
   addCustomApp: (name: string) => void;
   removeCustomApp: (appId: string) => void;
   startWorkout: (id: string) => void;
@@ -277,6 +291,7 @@ export function WorkoutProvider({
       deleteAllExercises: () => dispatch({ type: 'DELETE_ALL_EXERCISES' }),
       toggleDefaultApp: appId =>
         dispatch({ type: 'TOGGLE_DEFAULT_APP', appId }),
+      setTheme: theme => dispatch({ type: 'SET_THEME', theme }),
       setSoundEnabled: enabled =>
         dispatch({ type: 'SET_SOUND_ENABLED', enabled }),
       addCustomApp: name => dispatch({ type: 'ADD_CUSTOM_APP', name }),

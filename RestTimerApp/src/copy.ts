@@ -359,6 +359,23 @@ export const STREAKS = {
 } as const;
 
 /* -------------------------------------------------------------------------- */
+/* Appearance                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The theme picker.
+ *
+ * No opinion offered about which is better. It's a preference, and a line
+ * nudging somebody toward the dark one would be the app being precious about
+ * itself.
+ */
+export const APPEARANCE = {
+  title: 'Appearance',
+  description: 'Light or dark. System follows your phone.',
+  options: { system: 'System', light: 'Light', dark: 'Dark' },
+} as const;
+
+/* -------------------------------------------------------------------------- */
 /* Empty states                                                               */
 /* -------------------------------------------------------------------------- */
 

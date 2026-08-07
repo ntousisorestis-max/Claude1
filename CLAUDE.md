@@ -78,12 +78,38 @@ Bare **React Native 0.86** with TypeScript. Not Expo.
 
 ## Look and voice
 
-**Theme: violet `#8B5CF6` on near-black `#0F0B1A`.** Bold type, rounded cards,
-soft glow. All tokens are in `src/theme.ts` — use them, don't hardcode colours.
+**Violet `#8B5CF6` on near-black `#0F0B1A` — or on near-white `#F6F4FB`.**
+There are two palettes, and a Light / Dark / System toggle in Settings. Bold
+type, rounded cards, soft glow.
+
+**Every colour comes from `src/theme/palettes.ts`. Never write a hex value or
+an `rgba()` anywhere else.** Stylesheets are functions of the palette:
+
+```ts
+const useStyles = themed(colors => StyleSheet.create({ … }));
+const styles = useStyles();          // inside the component
+const colors = useColors();          // only for colours passed as props
+```
+
+A plain `StyleSheet.create` at module scope bakes the colours in at import and
+cannot follow the theme. That is the whole reason `themed` exists.
+
+Three traps, all of which are invisible in dark mode and only break light:
+
+- **`colors.white` is not white.** It means "the strongest text colour on this
+  theme's ground", which on a light page is near-black. Anything sitting on a
+  violet fill — a button label, a filled tile's icon, a selected pill — uses
+  **`colors.textOnAccent`**.
+- **The `…OnAccent` family never changes between themes**, because the violet
+  flood doesn't. `RestingScreen`, `SetTicks` and `LockStatus` are already right.
+- **Adding a field to `SavedState` means adding it to `sameSaved`** in
+  `WorkoutContext.tsx`, or the write is skipped as a no-op and the setting is
+  lost on the next launch. This has happened once.
 
 The one colour rule that carries meaning: **a violet flood means your apps are
-unlocked.** Near-black with violet accents means locked. Don't flood a screen
-violet for decoration.
+unlocked.** The app's own ground — near-black or near-white — means locked.
+Don't flood a screen violet for decoration, and don't lighten the flood to suit
+the light theme; it's the same violet in both, which is what keeps it dramatic.
 
 **Voice: a confident gym buddy. Dry, casual, short.** The benchmark line is
 **"Let's lift."** Never a mascot, never a pun, never an exclamation mark it
@@ -150,8 +176,13 @@ All commands run from `RestTimerApp/`:
 Run all of them before saying a change is finished.
 
 **Contrast is an enforced budget, not a guideline.** `npm run contrast` checks
-every colour analytically *and* measures real pixels in Chromium. If a new
-colour combination lands on screen, add it to `scripts/check-contrast.mjs`.
+**both palettes** analytically *and* measures real pixels in Chromium in both
+colour schemes. It imports `palettes.ts` directly, so it can't drift from what
+ships. If a new colour combination lands on screen, add it to
+`scripts/check-contrast.mjs`.
+
+**Check both themes in the browser.** Playwright's `colorScheme` option drives
+them; a screen can look perfect in dark and be unreadable in light.
 
 Playwright is at `/opt/node22/lib/node_modules/playwright` (CommonJS — import as
 `import pw from '...'; const { chromium } = pw`), Chromium at

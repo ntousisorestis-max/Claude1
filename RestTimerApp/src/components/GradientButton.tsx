@@ -76,7 +76,7 @@ export function GradientButton({
       <Text style={styles.label}>{text ?? label}</Text>
 
       <View style={styles.disc}>
-        <Icon name={icon} color={colors.white} size={18} />
+        <Icon name={icon} color={colors.textOnAccent} size={18} />
       </View>
     </AnimatedPressable>
   );
@@ -105,7 +105,7 @@ const useStyles = themed(colors =>
       ...sized(type.action, 19),
       flex: 1,
       textAlign: 'center',
-      color: colors.white,
+      color: colors.textOnAccent,
     },
     disc: {
       width: 44,

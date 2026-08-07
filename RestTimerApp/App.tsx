@@ -35,7 +35,7 @@ import { WelcomeScreen } from './src/screens/WelcomeScreen';
 import { ExercisesScreen } from './src/screens/ExercisesScreen';
 import { getDeviceStorage } from './src/state/deviceStorage';
 import { useWorkout, WorkoutProvider } from './src/state/WorkoutContext';
-import { themed, useColors } from './src/theme';
+import { themed, ThemeProvider, useColors, useTheme } from './src/theme';
 import type { CloudBackend } from './src/cloud/types';
 import type { AppStorage } from './src/state/storage';
 import type { Phase } from './src/state/types';
@@ -98,6 +98,7 @@ function TabScreen({ tab }: { tab: Tab }) {
 function Ground() {
   const styles = useStyles();
   const colors = useColors();
+  const { name } = useTheme();
   const { state } = useWorkout();
   const reduceMotion = useReduceMotion();
   const { width, height } = useWindowDimensions();
@@ -184,9 +185,10 @@ function Ground() {
         <GlowBackground tone="onAccent" />
       </Animated.View>
 
-      {/* Content is light on both grounds now, so the bar never flips. */}
+      {/* On the violet flood the content is light whatever the theme, because
+          the flood is the same violet in both. Everywhere else it follows. */}
       <StatusBar
-        barStyle="light-content"
+        barStyle={free || name === 'dark' ? 'light-content' : 'dark-content'}
         backgroundColor={free ? colors.accentDeep : colors.ink}
       />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -220,6 +222,29 @@ function FirstRun() {
   return <WelcomeScreen onDone={finishWelcome} />;
 }
 
+/**
+ * Bridges the saved choice into the theme layer.
+ *
+ * Inside `WorkoutProvider` because that is where the choice lives — it is
+ * persisted on the same payload as the exercises, so there is one load on
+ * launch rather than two races against the splash.
+ *
+ * **Until that load lands, follow the phone.** It is the right answer for
+ * everybody who hasn't overridden it, which is most people, and it is the only
+ * guess available. Somebody who picked light on a dark phone sees the splash in
+ * dark for the ~10ms the read takes; guessing the other way would show a light
+ * flash to every single dark-mode user instead.
+ */
+function Themed({ children }: { children: React.ReactNode }) {
+  const { state, hydrated } = useWorkout();
+
+  return (
+    <ThemeProvider choice={hydrated ? state.theme : 'system'}>
+      {children}
+    </ThemeProvider>
+  );
+}
+
 function App({
   /**
    * Where exercises, preferences and the welcome flag are kept.
@@ -250,12 +275,14 @@ function App({
           the dependency runs one way, through <WorkoutSync/> below. */}
       <AccountProvider backend={backend}>
         <WorkoutProvider storage={storage}>
-          <WorkoutSync />
-          <Ground />
-          {/* Both overlaid rather than swapped, so the app underneath is
-              already laid out by the time either of them clears. */}
-          <FirstRun />
-          {splashDone ? null : <SplashScreen onDone={dismissSplash} />}
+          <Themed>
+            <WorkoutSync />
+            <Ground />
+            {/* Both overlaid rather than swapped, so the app underneath is
+                already laid out by the time either of them clears. */}
+            <FirstRun />
+            {splashDone ? null : <SplashScreen onDone={dismissSplash} />}
+          </Themed>
         </WorkoutProvider>
       </AccountProvider>
     </SafeAreaProvider>

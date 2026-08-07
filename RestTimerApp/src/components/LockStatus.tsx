@@ -107,11 +107,18 @@ export function LockStatus({
       >
         <LockGlyph
           locked={locked}
-          color={onAccent ? colors.white : colors.accent}
+          color={onAccent ? colors.textOnAccent : colors.accent}
         />
 
         <View style={styles.words}>
-          <Text style={styles.title}>{title}</Text>
+          <Text
+            style={[
+              styles.title,
+              onAccent ? styles.titleOnAccent : styles.titleOnInk,
+            ]}
+          >
+            {title}
+          </Text>
           <Text
             style={[
               styles.detail,
@@ -215,13 +222,20 @@ const useStyles = themed(colors =>
       borderColor: washOnAccent(0.28),
     },
     words: { flex: 1, gap: 2 },
-    // White on both grounds — the panel behind it changes, the words don't.
+    /**
+     * Split by ground, like `detail` below it.
+     *
+     * It used to be white on both, which was true while both grounds were
+     * dark. On a light theme the panel on the app's own ground is pale and the
+     * one on the violet flood is not, so the words can't be one colour.
+     */
     title: {
       fontSize: 16,
       fontWeight: '800',
       letterSpacing: -0.2,
-      color: colors.white,
     },
+    titleOnInk: { color: colors.white },
+    titleOnAccent: { color: colors.textOnAccent },
     detail: { ...type.helper, fontSize: 13, lineHeight: 18 },
     detailOnInk: { color: colors.muted },
     detailOnAccent: { color: colors.mutedOnAccent },
@@ -264,7 +278,7 @@ const useStyles = themed(colors =>
       borderColor: colors.hairline,
     },
     dot: { width: 10, height: 10, borderRadius: 5 },
-    pillText: { ...type.body, fontWeight: '600', color: colors.white },
+    pillText: { ...type.body, fontWeight: '600', color: colors.textOnAccent },
     shieldFoot: { gap: spacing.md, marginTop: spacing.lg },
     shieldNote: {
       ...type.helper,
@@ -279,6 +293,6 @@ const useStyles = themed(colors =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    backText: { ...type.action, color: colors.white },
+    backText: { ...type.action, color: colors.textOnAccent },
   }),
 );

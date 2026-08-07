@@ -4,7 +4,15 @@ import { BrandIcon } from './BrandIcon';
 import { Icon } from './Icon';
 import { usePressScale } from '../hooks/usePressScale';
 import { useReduceMotion } from '../hooks/useReduceMotion';
-import { HAIRLINE, radius, spacing, themed, type, useColors } from '../theme';
+import {
+  HAIRLINE,
+  legibleOn,
+  radius,
+  spacing,
+  themed,
+  type,
+  useColors,
+} from '../theme';
 import type { BlockableApp } from '../state/types';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -34,6 +42,11 @@ export function AppPill({
 }) {
   const styles = useStyles();
   const colors = useColors();
+  // The brand colours were picked to read on a near-black pill. On a near-white
+  // one TikTok's lands at 1.67:1 — a logo you cannot see. `legibleOn` keeps the
+  // hue and walks the channels down until it clears; on the dark theme nothing
+  // needs moving and it returns the colour untouched.
+  const tint = legibleOn(app.tint, colors.raised);
   const reduceMotion = useReduceMotion();
   const pressScale = usePressScale({ depth: 0.94, haptic: true });
   const pop = useRef(new Animated.Value(1)).current;
@@ -75,7 +88,7 @@ export function AppPill({
           <BrandIcon
             id={app.brand}
             // Full brand colour when it's going to be blocked, drained when not.
-            color={checked ? app.tint : colors.faint}
+            color={checked ? tint : colors.faint}
             hole={checked ? colors.raised : colors.surface}
           />
         ) : (
@@ -83,13 +96,13 @@ export function AppPill({
           <View
             style={[
               styles.monogram,
-              { borderColor: checked ? app.tint : colors.hairline },
+              { borderColor: checked ? tint : colors.hairline },
             ]}
           >
             <Text
               style={[
                 styles.monogramText,
-                { color: checked ? app.tint : colors.faint },
+                { color: checked ? tint : colors.faint },
               ]}
             >
               {app.name.slice(0, 1).toUpperCase()}
@@ -107,7 +120,7 @@ export function AppPill({
           {checked ? (
             <Icon
               name="check"
-              color={colors.white}
+              color={colors.textOnAccent}
               size={11}
               strokeWidth={2.6}
             />

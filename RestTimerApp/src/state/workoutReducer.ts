@@ -9,6 +9,7 @@ import type {
   WorkoutConfig,
   WorkoutState,
 } from './types';
+import type { ThemeChoice } from '../theme';
 
 export const MIN_SETS = 1;
 export const MAX_SETS = 20;
@@ -127,6 +128,8 @@ export const initialState: WorkoutState = {
   // Assumed unseen until a load says otherwise, so a first launch and a launch
   // whose storage failed both show the welcome rather than silently skipping it.
   welcomed: false,
+  /** Follows the phone until somebody says otherwise. */
+  theme: 'system',
 };
 
 const clamp = (n: number, min: number, max: number) =>
@@ -439,6 +442,11 @@ export function workoutReducer(
       };
     }
 
+    case 'SET_THEME':
+      return state.theme === action.theme
+        ? state
+        : { ...state, theme: action.theme };
+
     case 'SET_SOUND_ENABLED':
       return {
         ...state,
@@ -507,6 +515,7 @@ export function workoutReducer(
         exercises: state.exercises,
         defaults: state.defaults,
         welcomed: state.welcomed,
+        theme: state.theme,
         // Survives, deliberately: the stats card counts the whole session, not
         // the last workout in it.
         session: state.session,
@@ -555,6 +564,12 @@ export function workoutReducer(
         defaults,
         exercises,
         welcomed: action.saved.welcomed === true,
+        // Validated rather than trusted: a payload written before this field
+        // existed has `undefined` here, and anything else in there would put
+        // the app into a theme that doesn't exist.
+        theme: isThemeChoice(action.saved.theme)
+          ? action.saved.theme
+          : 'system',
       };
     }
 
@@ -569,5 +584,12 @@ export function toSaved(state: WorkoutState): SavedState {
     defaults: state.defaults,
     exercises: state.exercises,
     welcomed: state.welcomed,
+    theme: state.theme,
   };
+}
+
+const THEME_CHOICES: ThemeChoice[] = ['system', 'light', 'dark'];
+
+function isThemeChoice(value: unknown): value is ThemeChoice {
+  return THEME_CHOICES.includes(value as ThemeChoice);
 }

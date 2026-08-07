@@ -665,6 +665,68 @@ console by hand — **including again after this change**, which added
 `fullWorkouts` to the profile and `plannedSets` to a workout. The API key in
 `firebaseConfig.ts` protects nothing and is meant to be committed.
 
+## Themes
+
+Two palettes and a Light / Dark / System toggle. `useColorScheme` supplies the
+system answer on both native and web, and the choice is persisted on the same
+payload as the exercises.
+
+**The refactor was the job.** 318 colour references sat inside
+`StyleSheet.create(…)` at module scope across 38 files. That code runs once, at
+import, so the colours were resolved to strings before anybody could pick a
+theme, and nothing reaches back into that — not a mutable palette, not re-keying
+the tree, not a Proxy. So a stylesheet is now a function of the palette:
+
+```ts
+const useStyles = themed(colors => StyleSheet.create({ … }));
+const styles = useStyles();
+```
+
+`themed` caches per theme name, so `StyleSheet.create` still runs at most twice
+per file for the life of the process.
+
+**Light is not dark inverted.** The elevation ramp inverts asymmetrically — on
+dark it climbs away from the ground, on light it can't climb past white, so the
+page is off-white and cards are pure white with borders doing the lifting. The
+greys and the small-text violet go the *other* way: `muted`, `faint`,
+`accentText` and `danger` were all lifted to clear AA on a dark ground, and the
+same values land at 2.4:1, 3.1:1, 3.0:1 and 2.5:1 on near-white. `accent` alone
+doesn't move — it is only ever a fill behind white text, and it measures the
+same on any ground.
+
+**The flood doesn't change.** `accentDeep` and everything on it are identical in
+both themes, deliberately: the violet flood has to read as the *dramatic*
+change, and lightening it would make it one more pale screen. The happy
+consequence is that the resting screen is the same in both themes, and
+`RestingScreen`, `SetTicks` and `LockStatus` needed no theme work at all.
+
+**`colors.white` is not white** — it means "the strongest text on this theme's
+ground", which on light is near-black. Anything on a violet fill uses
+`textOnAccent`, which is. Getting this wrong is invisible in dark mode and gives
+you dark text on a violet button in light, which is how the segmented pills and
+the toggle knob were caught.
+
+**The hourglass gets a stage.** The Workout tab's illustration is a render of a
+dark scene, so on a near-white page it can only ever be a smudge — feathering
+decides where a picture stops, not that it's dark. In light mode it sits on a
+tile of `stage`, which is dark mode's ground. In dark mode `stage` is
+transparent and there is no tile.
+
+**The brand tints are derived, not duplicated.** TikTok's tint lands at 1.67:1
+on a light pill. Rather than two tints per app (and a migration for the custom
+ones people have saved), `legibleOn` keeps the hue and walks the channels down
+until the pair clears 3:1. On dark it returns the colour untouched.
+
+**`npm run contrast` covers both palettes**, analytically and measured in
+Chromium in both colour schemes. It imports `palettes.ts` directly rather than
+restating the hex values, so the budget cannot pass while the app looks
+different.
+
+**A launch that changes nothing still writes nothing.** `sameSaved` compares
+`theme` normalised, because one side is a payload off disk and the other has
+been through the reducer — a stored payload written before the field existed
+hydrates to `system` and would otherwise look like a change on every launch.
+
 ## State & persistence
 
 One `useReducer` at the root. Everything below is saved to the device —

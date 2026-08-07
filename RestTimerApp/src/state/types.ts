@@ -1,6 +1,7 @@
 /**
  * Core domain types for the rest-timer workout loop.
  */
+import type { ThemeChoice } from '../theme';
 
 /** Which screen the workout is on. The phase *is* the navigation. */
 export type Phase = 'setup' | 'active' | 'resting' | 'complete';
@@ -137,6 +138,14 @@ export type WorkoutState = {
    */
   welcomed: boolean;
   /**
+   * Light, dark, or whatever the phone is set to.
+   *
+   * Kept beside the exercises rather than in its own store so there is one
+   * load on launch and one thing that can be stale. It is read before the
+   * first paint the user will remember — see ThemeProvider in App.tsx.
+   */
+  theme: ThemeChoice;
+  /**
    * True when the set now under way began by cutting rest meaningfully short.
    *
    * Lives in state rather than being worked out on the active screen because
@@ -153,6 +162,14 @@ export type SavedState = {
   exercises: Exercise[];
   /** Whether the welcome screen has been seen. See WorkoutState.welcomed. */
   welcomed: boolean;
+  /**
+   * Light, dark or system. See WorkoutState.theme.
+   *
+   * Optional on the way *in* only: a payload written before this field existed
+   * has nothing here, and the reducer validates it back to `system`. `toSaved`
+   * always writes it.
+   */
+  theme?: ThemeChoice;
 };
 
 export type WorkoutAction =
@@ -169,6 +186,7 @@ export type WorkoutAction =
   /* --- Settings --------------------------------------------------------- */
   | { type: 'TOGGLE_DEFAULT_APP'; appId: string }
   | { type: 'SET_SOUND_ENABLED'; enabled: boolean }
+  | { type: 'SET_THEME'; theme: ThemeChoice }
   | { type: 'ADD_CUSTOM_APP'; name: string }
   | { type: 'REMOVE_CUSTOM_APP'; appId: string }
   /* --- The workout loop -------------------------------------------------- */

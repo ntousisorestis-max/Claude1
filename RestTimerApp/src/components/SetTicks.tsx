@@ -90,7 +90,7 @@ const useStyles = themed(colors =>
     emptyOnInk: { backgroundColor: colors.hairline },
     emptyOnAccent: { backgroundColor: washOnAccent(0.24) },
     doneOnInk: { backgroundColor: colors.accent },
-    doneOnAccent: { backgroundColor: colors.white },
+    doneOnAccent: { backgroundColor: colors.textOnAccent },
     activeOnInk: { backgroundColor: colors.accentDim },
     activeOnAccent: { backgroundColor: washOnAccent(0.6) },
   }),

@@ -22,15 +22,12 @@ import { themed, useColors } from '../theme';
  */
 
 /**
- * Peak opacity of the main bloom, at its centre.
+ * The bloom over the violet flood.
  *
- * These are the numbers the contrast budget is built on — `npm run contrast`
- * checks every palette colour against exactly these peaks composited over the
- * two grounds. Raising them is not a free visual tweak; re-run that check.
+ * Fixed rather than per-palette, because the flood is fixed: it is the same
+ * violet in light and dark, so what lifts it is the same too.
  */
-const PEAK = { onInk: 0.12, onAccent: 0.06 } as const;
-/** The second bloom is a suggestion, not a light source. */
-const SECOND_PEAK = { onInk: 0.06, onAccent: 0.03 } as const;
+const ON_ACCENT = { peak: 0.06, second: 0.03 } as const;
 
 /**
  * Falloff. A straight line from peak to zero has a visible edge partway out;
@@ -59,9 +56,17 @@ export function GlowBackground({
   const mainId = `glow-main-${uid}`;
   const secondId = `glow-second-${uid}`;
 
-  const color = tone === 'onInk' ? colors.accent : colors.white;
-  const peak = PEAK[tone];
-  const secondPeak = SECOND_PEAK[tone];
+  // Over the app's own ground the bloom is the palette's; over the flood it is
+  // white, and the flood doesn't change between themes.
+  //
+  // Light's peak is less than half of dark's, and that is the whole difference
+  // between a glow and a stain. A violet bloom at dark's strength over
+  // near-white tints the entire page violet — at which point the page is
+  // competing with the one thing violet is supposed to mean.
+  const onInk = tone === 'onInk';
+  const color = onInk ? colors.glow : colors.white;
+  const peak = onInk ? colors.glowPeak : ON_ACCENT.peak;
+  const secondPeak = onInk ? colors.glowSecondPeak : ON_ACCENT.second;
 
   // Big enough that the bloom's outer edge always falls outside the screen.
   // Sized off the full diagonal rather than the width: at anything smaller the

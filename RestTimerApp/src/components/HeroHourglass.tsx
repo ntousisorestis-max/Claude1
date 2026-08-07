@@ -2,7 +2,7 @@ import React, { useEffect, useId, useMemo, useRef } from 'react';
 import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { useReduceMotion } from '../hooks/useReduceMotion';
-import { themed, useColors } from '../theme';
+import { radius, themed, useColors } from '../theme';
 
 /**
  * The header's illustration: a 3D render of the hourglass, lit from within.
@@ -151,7 +151,14 @@ export function HeroHourglass({ size = 150 }: { size?: number }) {
   };
 
   return (
+    // The stage is the whole light-mode answer. The art is a render of a dark
+    // scene, so on a near-white page it can only ever be a smudge — feathering
+    // decides where a picture stops, not that it is dark. So in light mode it
+    // gets a tile of night to stand on, and the feathered edges land on that
+    // instead of on the page. In dark mode `stage` is transparent and the tile
+    // isn't there at all.
     <View style={[styles.box, { width, height }]}>
+      <View style={[styles.stage, { borderRadius: radius.lg }]} />
       <Animated.View
         style={[styles.centre, { width: glow, height: glow }, bloom]}
         pointerEvents="none"
@@ -276,6 +283,14 @@ function Bloom({ size }: { size: number }) {
 const useStyles = themed(colors =>
   StyleSheet.create({
     box: { alignItems: 'center', justifyContent: 'center' },
+    stage: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: colors.stage,
+    },
     centre: {
       position: 'absolute',
       alignItems: 'center',

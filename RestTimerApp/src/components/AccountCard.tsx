@@ -252,9 +252,9 @@ function PrimaryRow({
       onPress={onPress}
       style={[styles.primary, press.style]}
     >
-      <Icon name={icon} color={colors.white} size={19} />
+      <Icon name={icon} color={colors.textOnAccent} size={19} />
       <Text style={styles.primaryText}>{label}</Text>
-      <Icon name="chevron" color={colors.white} size={16} />
+      <Icon name="chevron" color={colors.textOnAccent} size={16} />
     </AnimatedPressable>
   );
 }
@@ -308,7 +308,7 @@ const useStyles = themed(colors =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    initial: { ...sized(type.title, 20), color: colors.white },
+    initial: { ...sized(type.title, 20), color: colors.textOnAccent },
     whoText: { flex: 1, gap: 4 },
     name: { ...sized(type.title, 20), color: colors.white },
     syncRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
@@ -349,7 +349,11 @@ const useStyles = themed(colors =>
      * so the label is sized past it rather than the button being recoloured. The
      * same fix `GradientButton` and the Insights account button carry.
      */
-    primaryText: { ...sized(type.action, 19), color: colors.white, flex: 1 },
+    primaryText: {
+      ...sized(type.action, 19),
+      color: colors.textOnAccent,
+      flex: 1,
+    },
 
     quiet: {
       flexDirection: 'row',

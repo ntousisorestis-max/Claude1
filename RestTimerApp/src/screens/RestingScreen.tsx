@@ -75,7 +75,7 @@ export function RestingScreen() {
           // The last second, so the ring releases into the re-lock instead of
           // being cut off by it.
           finishing={secondsLeft <= 1}
-          color={colors.white}
+          color={colors.textOnAccent}
           trackColor={washOnAccent(0.22)}
         >
           <Animated.Text
@@ -170,14 +170,14 @@ const useStyles = themed(colors =>
     },
     head: { paddingTop: spacing.sm },
     // Smaller than it was: the ring outranks it now.
-    title: { ...sized(type.display, 34), color: colors.white },
+    title: { ...sized(type.display, 34), color: colors.textOnAccent },
     dial: {
       flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
       gap: spacing.lg,
     },
-    clock: { ...sized(type.mega, 84), ...tabular, color: colors.white },
+    clock: { ...sized(type.mega, 84), ...tabular, color: colors.textOnAccent },
     until: { ...type.tag, color: colors.mutedOnAccent, marginTop: spacing.xs },
     line: {
       ...type.body,
@@ -187,6 +187,6 @@ const useStyles = themed(colors =>
       textAlign: 'center',
     },
     foot: { gap: spacing.sm },
-    next: { ...type.body, fontWeight: '700', color: colors.white },
+    next: { ...type.body, fontWeight: '700', color: colors.textOnAccent },
   }),
 );
