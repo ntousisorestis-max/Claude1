@@ -12,8 +12,8 @@ import {
 } from '../theme';
 
 /**
- * One card on the Settings tab: an icon tile, a heading, a line of
- * explanation, and whatever the section actually contains.
+ * One card on the Settings tab: an icon tile, a heading, and whatever the
+ * section actually contains.
  *
  * The tile is the only place in the app that puts an icon in a filled square.
  * It earns it here because these are the top of a hierarchy — four cards, each
@@ -24,7 +24,6 @@ export function SettingsSection({
   icon,
   mark,
   title,
-  description,
   children,
 }: {
   icon: IconName;
@@ -32,7 +31,6 @@ export function SettingsSection({
    * the app's own mark — the line-icon dumbbell reads as a capital H at 20px. */
   mark?: React.ReactNode;
   title: string;
-  description: string;
   children: React.ReactNode;
 }) {
   const styles = useStyles();
@@ -43,10 +41,7 @@ export function SettingsSection({
         <View style={styles.tile}>
           {mark ?? <Icon name={icon} color={colors.accentText} size={20} />}
         </View>
-        <View style={styles.headText}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.description}>{description}</Text>
-        </View>
+        <Text style={styles.title}>{title}</Text>
       </View>
 
       {children}
@@ -66,7 +61,7 @@ const useStyles = themed(colors =>
       padding: spacing.md,
       gap: spacing.md,
     },
-    head: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
+    head: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
     tile: {
       width: TILE,
       height: TILE,
@@ -77,13 +72,6 @@ const useStyles = themed(colors =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    headText: { flex: 1, gap: 3, paddingTop: 2 },
-    title: { ...sized(type.title, 21), color: colors.white },
-    description: {
-      ...type.helper,
-      fontSize: 14,
-      color: colors.muted,
-      lineHeight: 20,
-    },
+    title: { ...sized(type.title, 21), color: colors.white, flex: 1 },
   }),
 );

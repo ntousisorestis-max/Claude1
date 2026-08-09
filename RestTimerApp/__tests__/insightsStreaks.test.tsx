@@ -407,11 +407,8 @@ describe('Insights and Streaks', () => {
     await signIn(root);
 
     press(root, 'Streaks');
-    // Nothing banked: the count is honest and the line is an invitation.
+    // Nothing banked: the count is honest.
     expect(hasLabel(root, 'Finish what you start: 0 of 3 workouts')).toBe(true);
-    expect(
-      hasText(root, 'Finish every set you planned, three times over.'),
-    ).toBe(true);
 
     cloud.push({ workoutsFinished: 9, fullWorkouts: 4 });
 

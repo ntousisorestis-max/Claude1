@@ -343,28 +343,9 @@ export const STREAKS = {
   challenge: {
     label: 'CHALLENGE',
     title: 'Finish what you start',
-    body:
-      'Workouts where you banked every set you planned. Ending one early ' +
-      'costs you nothing — it just doesn’t count toward this.',
-    /** Sits under the bar at zero, where "0 of 3" alone reads as a locked door. */
-    empty: 'Finish every set you planned, three times over.',
-    /**
-     * Past the top rung.
-     *
-     * Its own line because the alternative is a bar reading "140 of 140" — a
-     * tautology under a full bar, which looks like a placeholder rather than
-     * like having finished the thing.
-     */
-    done: (count: number) =>
-      `Every rung of this one is behind you — ${count} workouts, every ` +
-      'planned set banked.',
   },
   shield: {
     title: 'One missed day ends it',
-    body:
-      'A streak breaks when a whole calendar day goes by with no finished ' +
-      'workout. Any workout protects it — one set counts. There’s no freeze, ' +
-      'no rest day and no way to buy it back.',
   },
   footer: 'Nobody’s watching. That’s rather the point.',
 } as const;
@@ -382,7 +363,6 @@ export const STREAKS = {
  */
 export const APPEARANCE = {
   title: 'Appearance',
-  description: 'Light or dark. System follows your phone.',
   options: { system: 'System', light: 'Light', dark: 'Dark' },
 } as const;
 

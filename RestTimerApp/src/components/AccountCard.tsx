@@ -43,15 +43,7 @@ export function AccountCard() {
 
   return (
     <>
-      <SettingsSection
-        icon="user"
-        title="Account"
-        description={
-          status === 'signed-in'
-            ? 'Your focus time is saved to your account.'
-            : 'Save your focus time so it survives closing the app.'
-        }
-      >
+      <SettingsSection icon="user" title="Account">
         {status === 'unconfigured' ? <NotConfigured /> : null}
 
         {status === 'loading' ? (
@@ -108,11 +100,6 @@ export function AccountCard() {
                 label="Finished"
               />
             </View>
-
-            <Text style={styles.note}>
-              All-time, across every device you sign in on. The card on the
-              Workout tab still counts only this session.
-            </Text>
 
             <QuietRow
               icon="signOut"

@@ -122,7 +122,7 @@ export function ExerciseCard({
         />
       </View>
 
-      <View style={styles.rows}>
+      <View>
         <Section divided>
           <SettingRow
             icon="pencil"
@@ -498,12 +498,6 @@ const useStyles = themed(colors =>
     eyebrow: { ...type.tag, color: colors.accentText },
     name: { ...sized(type.title, 28), color: colors.white },
 
-    /** One step darker than the card, so the rows read as sunk into it. */
-    rows: {
-      backgroundColor: colors.ink,
-      borderRadius: radius.md,
-      overflow: 'hidden',
-    },
     /** On the section, not the row: the hairline belongs under the panel too. */
     divided: {
       borderBottomWidth: HAIRLINE,

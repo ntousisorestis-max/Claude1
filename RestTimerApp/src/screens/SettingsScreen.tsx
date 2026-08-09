@@ -119,11 +119,7 @@ export function SettingsScreen() {
               anything you do in this app outlives the app being closed. */}
           <AccountCard />
 
-          <SettingsSection
-            icon="phone"
-            title={APPEARANCE.title}
-            description={APPEARANCE.description}
-          >
+          <SettingsSection icon="phone" title={APPEARANCE.title}>
             <Segmented
               options={THEME_OPTIONS}
               value={theme}
@@ -133,37 +129,24 @@ export function SettingsScreen() {
             />
           </SettingsSection>
 
-          <SettingsSection
-            icon="bell"
-            title="Alerts"
-            description="Get notified when your rest is over."
-          >
-            <View style={styles.rows}>
-              <View style={styles.row}>
-                <RowTile icon="speaker" on={!silent} />
-                <Toggle
-                  label="Sound"
-                  help="Play a sound when rest is over."
-                  value={defaults.soundEnabled}
-                  onChange={setSoundEnabled}
-                />
-              </View>
-
-              {/* The same setting from the other side, not a second one. Two
-                  independent switches over one behaviour can disagree, and
-                  then neither of them is the truth. */}
-              <SilentModeRow
-                on={silent}
-                onPress={() => setSoundEnabled(silent)}
+          <SettingsSection icon="bell" title="Alerts">
+            <View style={styles.row}>
+              <RowTile icon="speaker" on={!silent} />
+              <Toggle
+                label="Sound"
+                help="Play a sound when rest is over."
+                value={defaults.soundEnabled}
+                onChange={setSoundEnabled}
               />
             </View>
+
+            {/* The same setting from the other side, not a second one. Two
+                independent switches over one behaviour can disagree, and
+                then neither of them is the truth. */}
+            <SilentModeRow on={silent} onPress={() => setSoundEnabled(silent)} />
           </SettingsSection>
 
-          <SettingsSection
-            icon="phone"
-            title="Apps to Block"
-            description="These start ticked on a new exercise. Changing them here leaves the exercises you already have alone."
-          >
+          <SettingsSection icon="phone" title="Apps to Block">
             <View style={styles.apps}>
               {apps.map(app => (
                 <AppPill
@@ -238,7 +221,6 @@ export function SettingsScreen() {
               />
             }
             title="Exercises"
-            description="Manage your saved exercises."
           >
             <DangerRow
               label="Delete all exercises"
@@ -266,11 +248,6 @@ export function SettingsScreen() {
               <Text style={styles.aboutSub}>Built to keep you focused.</Text>
             </View>
           </View>
-
-          <Text style={styles.note}>
-            Your exercises and settings are saved on this device. Signing in
-            adds your focus totals and streak on top, across every device.
-          </Text>
         </Animated.View>
 
         <ConfirmDialog
@@ -510,12 +487,6 @@ const useStyles = themed(colors =>
     /** Wide-and-short mark in a square tile, so it's sized for what it paints. */
     tileLogo: { width: 30, height: 30 },
 
-    /** One step darker than the card, so a row reads as sunk into it. */
-    rows: {
-      backgroundColor: colors.ink,
-      borderRadius: radius.md,
-      overflow: 'hidden',
-    },
     row: {
       flexDirection: 'row',
       alignItems: 'center',

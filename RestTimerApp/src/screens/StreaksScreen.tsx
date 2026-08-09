@@ -120,7 +120,6 @@ export function StreaksScreen() {
             </View>
             <View style={styles.shieldText}>
               <Text style={styles.shieldTitle}>{STREAKS.shield.title}</Text>
-              <Text style={styles.shieldBody}>{STREAKS.shield.body}</Text>
             </View>
           </Animated.View>
 
@@ -232,14 +231,6 @@ function ChallengeCard({ rung, done }: { rung: Rung | null; done: number }) {
           delay={320}
         />
       ) : null}
-
-      <Text style={styles.challengeBody}>
-        {rung == null
-          ? STREAKS.challenge.done(done)
-          : done === 0
-          ? STREAKS.challenge.empty
-          : STREAKS.challenge.body}
-      </Text>
     </>
   );
 }
@@ -325,16 +316,10 @@ const useStyles = themed(colors =>
     countOf: { ...type.body, fontWeight: '600', color: colors.faint },
 
     challengeTitle: { ...sized(type.title, 21), color: colors.white },
-    challengeBody: {
-      ...type.helper,
-      fontSize: 14,
-      color: colors.muted,
-      lineHeight: 20,
-    },
 
     shield: {
       flexDirection: 'row',
-      alignItems: 'flex-start',
+      alignItems: 'center',
       gap: spacing.md,
       backgroundColor: colors.surface,
       borderWidth: HAIRLINE,
@@ -350,18 +335,12 @@ const useStyles = themed(colors =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    shieldText: { flex: 1, gap: 4, paddingTop: 1 },
+    shieldText: { flex: 1 },
     shieldTitle: {
       ...type.body,
       fontSize: 17,
       fontWeight: '800',
       color: colors.white,
-    },
-    shieldBody: {
-      ...type.helper,
-      fontSize: 14,
-      color: colors.muted,
-      lineHeight: 20,
     },
 
     footer: {
