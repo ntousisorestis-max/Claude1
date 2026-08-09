@@ -109,12 +109,8 @@ export function InsightsScreen() {
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <Animated.View style={[styles.hero, enterHero]}>
-        <Text style={styles.eyebrow}>YOUR NUMBERS</Text>
         <Text style={styles.masthead}>
           Insights<Text style={styles.stop}>.</Text>
-        </Text>
-        <Text style={styles.heroSub}>
-          Every set and every minute your phone stayed down, added up.
         </Text>
       </Animated.View>
 
@@ -372,20 +368,8 @@ const useStyles = themed(colors =>
     },
 
     hero: { gap: 2 },
-    eyebrow: {
-      ...type.tag,
-      color: colors.accentText,
-      marginBottom: spacing.xs,
-    },
     masthead: { ...sized(type.display, 42), color: colors.white },
     stop: { color: colors.accent },
-    heroSub: {
-      ...type.helper,
-      fontSize: 14,
-      color: colors.muted,
-      lineHeight: 20,
-      marginTop: spacing.sm,
-    },
 
     grid: { gap: spacing.md },
     gridRow: { flexDirection: 'row', gap: spacing.md },

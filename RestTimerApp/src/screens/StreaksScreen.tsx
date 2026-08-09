@@ -86,7 +86,6 @@ export function StreaksScreen() {
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <Animated.View style={[styles.hero, enterHero]}>
-        <Text style={styles.eyebrow}>CONSISTENCY</Text>
         <Text style={styles.masthead}>
           Streaks<Text style={styles.stop}>.</Text>
         </Text>
@@ -263,11 +262,6 @@ const useStyles = themed(colors =>
     },
 
     hero: { gap: 2 },
-    eyebrow: {
-      ...type.tag,
-      color: colors.accentText,
-      marginBottom: spacing.xs,
-    },
     masthead: { ...sized(type.display, 42), color: colors.white },
     stop: { color: colors.accent },
 

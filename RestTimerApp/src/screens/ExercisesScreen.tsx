@@ -92,29 +92,20 @@ export function ExercisesScreen() {
 
           <View style={styles.heroBody}>
             <View style={styles.heroText}>
-              <Text style={styles.eyebrow}>READY TO TRAIN</Text>
-              <Text style={styles.masthead}>
-                Focus up<Text style={styles.stop}>.</Text>
-              </Text>
-              <Text style={[styles.masthead, styles.mastheadAccent]}>
-                Lift more<Text style={styles.stop}>.</Text>
-              </Text>
-              <Text style={styles.heroSub}>
-                Block the noise. Stay in the set. Your phone can wait.
+              <Text style={styles.masthead} numberOfLines={1}>
+                Focus up.{' '}
+                <Text style={styles.mastheadAccent}>Lift more.</Text>
               </Text>
             </View>
 
             {/* Still 132, and it has to stay there. The art carries a
                 transparent margin for its glow, so the hourglass is 86% of the
-                box and 150 was tried to win that back — at which point the
-                headline no longer fits beside it on a 360pt phone and "Focus
-                up." breaks across two lines, turning a two-line masthead into
-                three. The glow buys back the presence instead. */}
+                box and 150 was tried to win that back, which crowded the
+                headline on a 360pt phone. The glow buys back the presence
+                instead. */}
             <HeroHourglass size={132} />
           </View>
         </Animated.View>
-
-        <SessionStats session={session} />
 
         {empty ? (
           <View style={styles.emptyState}>
@@ -147,6 +138,8 @@ export function ExercisesScreen() {
             ))}
           </View>
         )}
+
+        <SessionStats session={session} />
 
         {/* Open by default when there's nothing in the list, since adding one
             is the only thing there is to do. */}
@@ -315,21 +308,9 @@ const useStyles = themed(colors =>
     /** Text and illustration share the row; the text takes what's left. */
     heroBody: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     heroText: { flex: 1, gap: 2 },
-    eyebrow: {
-      ...type.tag,
-      color: colors.accentText,
-      marginBottom: spacing.xs,
-    },
-    /** Two lines, tight, one white and one violet — the header's whole idea. */
-    masthead: { ...sized(type.display, 38), color: colors.white },
+    /** One line, tight, one white and one violet — the header's whole idea. */
+    masthead: { ...sized(type.title, 22), color: colors.white },
     mastheadAccent: { color: colors.accentText },
-    stop: { color: colors.accent },
-    heroSub: {
-      ...type.helper,
-      color: colors.muted,
-      lineHeight: 21,
-      marginTop: spacing.sm,
-    },
 
     list: { gap: spacing.md },
 

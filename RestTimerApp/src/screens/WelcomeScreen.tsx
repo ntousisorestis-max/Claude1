@@ -16,7 +16,6 @@ import { Icon, type IconName } from '../components/Icon';
 import { WELCOME } from '../copy';
 import { useEnter } from '../hooks/useEnter';
 import {
-  HAIRLINE,
   radius,
   sized,
   spacing,
@@ -272,11 +271,6 @@ const useStyles = themed(colors =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.md,
-      padding: spacing.md,
-      borderRadius: radius.md,
-      backgroundColor: colors.surface,
-      borderWidth: HAIRLINE,
-      borderColor: colors.hairline,
     },
     tile: {
       width: 44,

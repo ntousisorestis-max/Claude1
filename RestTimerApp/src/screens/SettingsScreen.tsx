@@ -102,12 +102,8 @@ export function SettingsScreen() {
       >
         <Animated.View style={[styles.hero, enter]}>
           <View style={styles.heroText}>
-            <Text style={styles.eyebrow}>PREFERENCES</Text>
             <Text style={styles.masthead}>
               Settings<Text style={styles.stop}>.</Text>
-            </Text>
-            <Text style={styles.heroSub}>
-              Customise your rest. Stay locked in.
             </Text>
           </View>
 
@@ -468,20 +464,8 @@ const useStyles = themed(colors =>
 
     hero: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     heroText: { flex: 1, gap: 2 },
-    eyebrow: {
-      ...type.tag,
-      color: colors.accentText,
-      marginBottom: spacing.xs,
-    },
     masthead: { ...sized(type.display, 42), color: colors.white },
     stop: { color: colors.accent },
-    heroSub: {
-      ...type.helper,
-      fontSize: 14,
-      color: colors.muted,
-      lineHeight: 20,
-      marginTop: spacing.sm,
-    },
 
     sections: { gap: spacing.lg },
     /** Wide-and-short mark in a square tile, so it's sized for what it paints. */
