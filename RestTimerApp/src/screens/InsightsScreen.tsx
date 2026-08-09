@@ -11,6 +11,7 @@ import { AuthSheet } from '../components/AuthSheet';
 import { FocusChart } from '../components/FocusChart';
 import { Icon, type IconName } from '../components/Icon';
 import { Pop } from '../components/Pop';
+import { TAB_BAR_CLEARANCE } from '../components/TabBar';
 import { useAccount } from '../cloud/AccountContext';
 import { recentDays } from '../cloud/days';
 import {
@@ -365,7 +366,8 @@ const useStyles = themed(colors =>
     content: {
       paddingHorizontal: spacing.lg,
       paddingTop: spacing.md,
-      paddingBottom: spacing.xxl,
+      // Clears the floating tab pill, which this content scrolls under.
+      paddingBottom: TAB_BAR_CLEARANCE,
       gap: SECTION_GAP,
     },
 

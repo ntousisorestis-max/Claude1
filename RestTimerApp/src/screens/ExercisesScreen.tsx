@@ -15,6 +15,7 @@ import { ExerciseCard } from '../components/ExerciseCard';
 import { HeroHourglass } from '../components/HeroHourglass';
 import { SectionLabel } from '../components/SectionLabel';
 import { SessionStats } from '../components/SessionStats';
+import { TAB_BAR_CLEARANCE } from '../components/TabBar';
 import { EMPTY_EXERCISES } from '../copy';
 import { useEnter } from '../hooks/useEnter';
 import { usePressScale } from '../hooks/usePressScale';
@@ -301,7 +302,8 @@ const useStyles = themed(colors =>
     content: {
       paddingHorizontal: spacing.lg,
       paddingTop: spacing.md,
-      paddingBottom: spacing.xxl,
+      // Clears the floating tab pill, which this content scrolls under.
+      paddingBottom: TAB_BAR_CLEARANCE,
       gap: spacing.lg,
     },
 

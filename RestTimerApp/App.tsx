@@ -198,8 +198,16 @@ function Ground() {
             <TabScreen tab={tab} />
           </ScreenFade>
         </View>
-        {tabsVisible ? <TabBar active={tab} onChange={setTab} /> : null}
       </SafeAreaView>
+
+      {/* Outside the safe area, and outside the layout: the pill floats over
+          the content, which scrolls underneath it. Each scrolling screen pads
+          its own content by `TAB_BAR_CLEARANCE` to clear it.
+
+          The SafeAreaView above keeps its bottom edge regardless, because the
+          screens that hide the tabs — resting, complete — rely on it to keep
+          their buttons off the home indicator. */}
+      {tabsVisible ? <TabBar active={tab} onChange={setTab} /> : null}
     </View>
   );
 }

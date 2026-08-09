@@ -19,6 +19,7 @@ import { Icon } from '../components/Icon';
 import { SettingsSection } from '../components/SettingsSection';
 import { Segmented } from '../components/Segmented';
 import { Toggle } from '../components/Toggle';
+import { TAB_BAR_CLEARANCE } from '../components/TabBar';
 import { APPEARANCE } from '../copy';
 import { useEnter } from '../hooks/useEnter';
 import { usePressScale } from '../hooks/usePressScale';
@@ -483,7 +484,8 @@ const useStyles = themed(colors =>
     content: {
       paddingHorizontal: spacing.lg,
       paddingTop: spacing.md,
-      paddingBottom: spacing.xxl,
+      // Clears the floating tab pill, which this content scrolls under.
+      paddingBottom: TAB_BAR_CLEARANCE,
       gap: spacing.lg,
     },
 

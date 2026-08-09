@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { usePressScale } from '../hooks/usePressScale';
 import { useReduceMotion } from '../hooks/useReduceMotion';
@@ -30,12 +31,53 @@ export const TABS: { tab: Tab; label: string }[] = [
   { tab: 'settings', label: 'Settings' },
 ];
 
+/** How tall the pill itself is. */
+const PILL_HEIGHT = 64;
+/** How far it sits in from the sides, and up from the bottom. */
+const SIDE_INSET = 20;
+const BOTTOM_GAP = 12;
 /**
- * Four tabs, hand-rolled.
+ * Air between the pill and the last thing a screen scrolls past it.
+ *
+ * 28 rather than a token, because the tightest case decided it: a Workout tab
+ * with one exercise ends on "+ Add exercise", and at 20 that button stopped
+ * close enough to the pill to read as crowding it rather than clearing it.
+ */
+const BREATHING = 28;
+
+/**
+ * What every scrolling screen must put at the bottom of its content.
+ *
+ * The pill floats over the content rather than sitting under it, so nothing
+ * reserves this space automatically — each screen has to. Exported from here,
+ * beside the numbers it is derived from, because the alternative is four copies
+ * of a magic number that quietly stop matching the pill the first time its
+ * height changes.
+ *
+ * Getting it wrong is not subtle in the worst case: on a Workout tab with no
+ * exercises there is only ~36pt of scroll available, and the last thing on it
+ * is the button that saves your first exercise.
+ */
+export const TAB_BAR_CLEARANCE = BOTTOM_GAP + PILL_HEIGHT + BREATHING;
+
+/**
+ * Four tabs, hand-rolled, in a pill that floats above the content.
  *
  * A navigation library would mean three native dependencies and a router for
  * what is a single piece of state. The workout phase still drives which screen
  * shows inside the Workout tab — this only picks between the four tabs.
+ *
+ * ## Why it floats
+ *
+ * A full-width bar welded to the bottom edge, painted the page's own colour
+ * with a hairline across the top, is the default every framework hands you.
+ * Lifting it off the edge and letting content scroll underneath is most of the
+ * difference between "an app" and "a nice app", and it costs one absolutely
+ * positioned view.
+ *
+ * The dock spanning the full width is `box-none` so taps either side of the
+ * pill fall through to whatever is behind them — without that it would swallow
+ * presses on the bottom corners of every screen.
  */
 export function TabBar({
   active,
@@ -45,17 +87,27 @@ export function TabBar({
   onChange: (tab: Tab) => void;
 }) {
   const styles = useStyles();
+  // The home indicator. The pill sits above it rather than under it, and the
+  // content inside the safe area is measured from the same line, so the two
+  // agree about where the bottom of the screen is.
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={styles.bar}>
-      {TABS.map(({ tab, label }) => (
-        <TabButton
-          key={tab}
-          tab={tab}
-          label={label}
-          active={active === tab}
-          onPress={onChange}
-        />
-      ))}
+    <View
+      pointerEvents="box-none"
+      style={[styles.dock, { paddingBottom: insets.bottom + BOTTOM_GAP }]}
+    >
+      <View style={styles.pillBar}>
+        {TABS.map(({ tab, label }) => (
+          <TabButton
+            key={tab}
+            tab={tab}
+            label={label}
+            active={active === tab}
+            onPress={onChange}
+          />
+        ))}
+      </View>
     </View>
   );
 }
@@ -137,7 +189,7 @@ function TabButton({
             ]}
           />
           <Svg width={24} height={24} viewBox="0 0 24 24">
-            <Glyph tab={tab} tint={tint} />
+            <Glyph tab={tab} tint={tint} hole={colors.surface} />
           </Svg>
         </View>
         <Text style={[styles.label, { color: tint }]}>{label}</Text>
@@ -146,16 +198,25 @@ function TabButton({
   );
 }
 
-function Glyph({ tab, tint }: { tab: Tab; tint: string }) {
+/**
+ * `hole` is the colour showing through a knocked-out shape.
+ *
+ * It used to be the page colour, which was the same thing as the bar's colour
+ * back when the bar was painted in it. The pill is its own surface now, so a
+ * hole punched in the page colour would read as a dark blob inside the flame
+ * and inside both slider knobs. Passed down for the same reason `BrandIcon`
+ * takes one.
+ */
+function Glyph({ tab, tint, hole }: { tab: Tab; tint: string; hole: string }) {
   switch (tab) {
     case 'workout':
       return <DumbbellGlyph tint={tint} />;
     case 'insights':
       return <BarsGlyph tint={tint} />;
     case 'streaks':
-      return <FlameGlyph tint={tint} />;
+      return <FlameGlyph tint={tint} hole={hole} />;
     case 'settings':
-      return <SlidersGlyph tint={tint} />;
+      return <SlidersGlyph tint={tint} hole={hole} />;
   }
 }
 
@@ -195,8 +256,7 @@ function BarsGlyph({ tint }: { tint: string }) {
  * same trick the sliders use for their knobs. A two-stroke outline flame reads
  * as a leaf at this size; mass is what makes it fire.
  */
-function FlameGlyph({ tint }: { tint: string }) {
-  const colors = useColors();
+function FlameGlyph({ tint, hole }: { tint: string; hole: string }) {
   return (
     <>
       <Path
@@ -205,15 +265,14 @@ function FlameGlyph({ tint }: { tint: string }) {
       />
       <Path
         d="M12 12.4c-.45 1.1-1.1 1.8-1.75 2.6-.75.9-1.35 2-1.35 3.3a3.1 3.1 0 0 0 6.2 0c0-1.3-.6-2.4-1.35-3.3-.65-.8-1.3-1.5-1.75-2.6z"
-        fill={colors.ink}
+        fill={hole}
       />
     </>
   );
 }
 
 /** Sliders — clearer at 24px than a gear, whose teeth turn to mush. */
-function SlidersGlyph({ tint }: { tint: string }) {
-  const colors = useColors();
+function SlidersGlyph({ tint, hole }: { tint: string; hole: string }) {
   return (
     <>
       <Path
@@ -222,36 +281,41 @@ function SlidersGlyph({ tint }: { tint: string }) {
         strokeWidth="2"
         strokeLinecap="round"
       />
-      <Circle
-        cx="9.5"
-        cy="7"
-        r="3"
-        fill={colors.ink}
-        stroke={tint}
-        strokeWidth="2"
-      />
-      <Circle
-        cx="15"
-        cy="17"
-        r="3"
-        fill={colors.ink}
-        stroke={tint}
-        strokeWidth="2"
-      />
+      <Circle cx="9.5" cy="7" r="3" fill={hole} stroke={tint} strokeWidth="2" />
+      <Circle cx="15" cy="17" r="3" fill={hole} stroke={tint} strokeWidth="2" />
     </>
   );
 }
 
 const useStyles = themed(colors =>
   StyleSheet.create({
-    bar: {
-      flexDirection: 'row',
-      borderTopWidth: HAIRLINE,
-      borderTopColor: colors.hairline,
-      backgroundColor: colors.ink,
-      paddingTop: spacing.sm,
+    /**
+     * Spans the width so the pill can centre itself, but paints nothing and
+     * catches nothing — see `pointerEvents` on the view itself.
+     */
+    dock: {
+      position: 'absolute',
+      left: SIDE_INSET,
+      right: SIDE_INSET,
+      bottom: 0,
     },
-    tab: { flex: 1, paddingVertical: spacing.sm },
+    pillBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      height: PILL_HEIGHT,
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+      borderWidth: HAIRLINE,
+      borderColor: colors.hairline,
+      // A real shadow rather than the violet `shadow` token, which is a glow —
+      // a nav bar that appears to be radiating is not the effect.
+      shadowColor: colors.dropShadow,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.3,
+      shadowRadius: 16,
+      elevation: 8,
+    },
+    tab: { flex: 1, paddingVertical: spacing.xs },
     tabInner: { alignItems: 'center', justifyContent: 'center', gap: 5 },
     glyph: {
       // Narrower than it was with two tabs. At four, a quarter of a 320pt phone

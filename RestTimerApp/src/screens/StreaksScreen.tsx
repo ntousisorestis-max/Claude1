@@ -4,6 +4,7 @@ import { Icon } from '../components/Icon';
 import { NeedsAccount } from '../components/NeedsAccount';
 import { ProgressBar } from '../components/ProgressBar';
 import { StreakRing } from '../components/StreakRing';
+import { TAB_BAR_CLEARANCE } from '../components/TabBar';
 import { useAccount } from '../cloud/AccountContext';
 import {
   CHALLENGE_RUNGS,
@@ -265,7 +266,8 @@ const useStyles = themed(colors =>
     content: {
       paddingHorizontal: spacing.lg,
       paddingTop: spacing.md,
-      paddingBottom: spacing.xxl,
+      // Clears the floating tab pill, which this content scrolls under.
+      paddingBottom: TAB_BAR_CLEARANCE,
       gap: SECTION_GAP,
     },
 
