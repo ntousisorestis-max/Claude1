@@ -128,8 +128,10 @@ export const initialState: WorkoutState = {
   // Assumed unseen until a load says otherwise, so a first launch and a launch
   // whose storage failed both show the welcome rather than silently skipping it.
   welcomed: false,
-  /** Follows the phone until somebody says otherwise. */
-  theme: 'system',
+  // A placeholder, not a live choice: App.tsx's `Themed` renders with its own
+  // 'system' before hydration finishes, ignoring this value entirely, so what
+  // it's set to here never actually reaches the screen.
+  theme: 'dark',
 };
 
 const clamp = (n: number, min: number, max: number) =>
@@ -565,11 +567,16 @@ export function workoutReducer(
         exercises,
         welcomed: action.saved.welcomed === true,
         // Validated rather than trusted: a payload written before this field
-        // existed has `undefined` here, and anything else in there would put
-        // the app into a theme that doesn't exist.
+        // existed has `undefined` here, and there used to be a third choice,
+        // 'system', that no longer exists — anyone still holding it is
+        // resolved to whatever their phone is set to right now, once (passed
+        // in as `action.deviceTheme`, read at the call site — see HYDRATE on
+        // WorkoutAction). It becomes a fixed choice from here on, same as
+        // anyone who picked Light or Dark directly; it won't keep following
+        // the phone.
         theme: isThemeChoice(action.saved.theme)
           ? action.saved.theme
-          : 'system',
+          : action.deviceTheme,
       };
     }
 
@@ -588,7 +595,7 @@ export function toSaved(state: WorkoutState): SavedState {
   };
 }
 
-const THEME_CHOICES: ThemeChoice[] = ['system', 'light', 'dark'];
+const THEME_CHOICES: ThemeChoice[] = ['light', 'dark'];
 
 function isThemeChoice(value: unknown): value is ThemeChoice {
   return THEME_CHOICES.includes(value as ThemeChoice);

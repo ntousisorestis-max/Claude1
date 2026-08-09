@@ -27,7 +27,7 @@ import {
   setSoundEnabled as setSoundOutputEnabled,
 } from '../sound';
 import { memoryStorage, type AppStorage } from './storage';
-import type { ThemeChoice } from '../theme';
+import { resolveDeviceTheme, type ThemeChoice } from '../theme';
 import {
   initialState,
   newExerciseId,
@@ -57,11 +57,12 @@ function sameSaved(a: SavedState | null, b: SavedState): boolean {
     //
     // Compared *normalised*, because one side of this is a payload straight
     // off disk and the other has been through the reducer. A stored payload
-    // written before the field existed has nothing here, hydrates to 'system',
-    // and would otherwise look like a change on every single launch — which
-    // would quietly undo the "a launch that changes nothing writes nothing"
-    // guarantee for everybody who already has the app.
-    (a.theme ?? 'system') === (b.theme ?? 'system') &&
+    // written before the field existed has nothing here, and hydrates to
+    // whatever the phone is set to right now — matching that here too, so it
+    // doesn't look like a change on every single launch, which would quietly
+    // undo the "a launch that changes nothing writes nothing" guarantee for
+    // everybody who already has the app.
+    (a.theme ?? resolveDeviceTheme()) === (b.theme ?? resolveDeviceTheme()) &&
     a.exercises.length === b.exercises.length &&
     a.exercises.every((exercise, i) => sameExercise(exercise, b.exercises[i]))
   );
@@ -142,9 +143,18 @@ export function WorkoutProvider({
     storage
       .load()
       .then(saved => {
-        if (alive && saved) {
+        if (!alive) {
+          return;
+        }
+        if (saved) {
           lastPersisted.current = saved;
-          dispatch({ type: 'HYDRATE', saved });
+          dispatch({ type: 'HYDRATE', saved, deviceTheme: resolveDeviceTheme() });
+        } else {
+          // Nothing to restore — a first-ever launch. There's still no more
+          // 'system' choice to fall back on, so resolve against the phone's
+          // current setting once, same as any other install that reaches
+          // HYDRATE with no theme on record.
+          dispatch({ type: 'SET_THEME', theme: resolveDeviceTheme() });
         }
       })
       .catch(err => console.warn('[liftlock] could not load', err))

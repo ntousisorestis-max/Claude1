@@ -49,8 +49,8 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
  * global: how the rest-over alert behaves, the pool of blockable apps and
  * which of them a new exercise starts with, and the one destructive action.
  */
-/** The three, in the order a picker like this is always ordered. */
-const THEME_OPTIONS = ['system', 'light', 'dark'] as const;
+/** The two, in the order a picker like this is always ordered. */
+const THEME_OPTIONS = ['light', 'dark'] as const;
 
 export function SettingsScreen() {
   const styles = useStyles();

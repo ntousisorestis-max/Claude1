@@ -4,7 +4,7 @@ import React, {
   useMemo,
   type ReactNode,
 } from 'react';
-import { useColorScheme } from 'react-native';
+import { Appearance, useColorScheme } from 'react-native';
 import { palettes, type Palette, type ThemeName } from './palettes';
 
 /**
@@ -23,8 +23,20 @@ import { palettes, type Palette, type ThemeName } from './palettes';
  * change to.
  */
 
-/** What the user picked. `system` follows the OS. */
-export type ThemeChoice = 'system' | 'light' | 'dark';
+/** What the user picked. There is no `system` option any more — see
+ * `ProviderChoice` for the one place a value that follows the OS still
+ * exists. */
+export type ThemeChoice = 'light' | 'dark';
+
+/**
+ * `ThemeProvider`'s own prop type, not the user's saved choice.
+ *
+ * `'system'` survives here for exactly one caller: `App.tsx` passes it for
+ * the ~10ms before the saved choice has loaded from disk, so the very first
+ * paint follows the phone rather than guessing. Nobody can pick it — the
+ * Settings screen only ever offers `ThemeChoice`.
+ */
+type ProviderChoice = ThemeChoice | 'system';
 
 type ThemeValue = {
   /** The palette actually in force, after `system` has been resolved. */
@@ -47,7 +59,7 @@ export function ThemeProvider({
   choice,
   children,
 }: {
-  choice: ThemeChoice;
+  choice: ProviderChoice;
   children: ReactNode;
 }) {
   // Follows the OS live: flipping the system setting while the app is open
@@ -63,6 +75,19 @@ export function ThemeProvider({
   return (
     <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
+}
+
+/**
+ * A one-off read of what the phone is set to right now.
+ *
+ * For resolving a *stored* choice at load time — a legacy `'system'` value,
+ * or no saved value at all — into a concrete one, once. Not for rendering:
+ * `ThemeProvider` above uses the live `useColorScheme` hook for that, so an
+ * in-app OS change is picked up immediately rather than waiting for the next
+ * launch.
+ */
+export function resolveDeviceTheme(): ThemeChoice {
+  return Appearance.getColorScheme() === 'light' ? 'light' : 'dark';
 }
 
 /** The palette and its name. Most components want `useColors` instead. */

@@ -203,5 +203,9 @@ export type WorkoutAction =
    *
    * Deliberately narrower than the whole state: restoring a saved *workout*
    * would resume a session from days ago, with a `restEndsAt` long past.
+   *
+   * `deviceTheme` is read at the call site rather than inside the reducer —
+   * the reducer has no runtime dependency on React Native, which is what lets
+   * the contrast-budget script import it directly under plain Node.
    */
-  | { type: 'HYDRATE'; saved: SavedState };
+  | { type: 'HYDRATE'; saved: SavedState; deviceTheme: ThemeChoice };

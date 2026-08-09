@@ -13,6 +13,7 @@ import {
   initialState,
   workoutReducer,
 } from '../src/state/workoutReducer';
+import { resolveDeviceTheme } from '../src/theme';
 import type { AppStorage } from '../src/state/storage';
 import type { Exercise, SavedState } from '../src/state/types';
 
@@ -136,15 +137,15 @@ describe('persistence seam', () => {
     app.unmount();
 
     // A payload from before the field existed, and one with nonsense in it,
-    // both land on `system` rather than putting the app into a theme that
-    // doesn't exist.
+    // both land on whatever the device is set to right now, rather than
+    // putting the app into a theme that doesn't exist.
     const old = createMemoryStorage({
       defaults: FACTORY_DEFAULTS,
       welcomed: true,
       exercises: [],
     });
     const oldApp = await mount(old);
-    expect(oldApp.state.theme).toBe('system');
+    expect(oldApp.state.theme).toBe(resolveDeviceTheme());
     oldApp.unmount();
 
     const junk = createMemoryStorage({
@@ -154,7 +155,7 @@ describe('persistence seam', () => {
       theme: 'sepia' as never,
     });
     const junkApp = await mount(junk);
-    expect(junkApp.state.theme).toBe('system');
+    expect(junkApp.state.theme).toBe(resolveDeviceTheme());
     junkApp.unmount();
   });
 
@@ -196,7 +197,11 @@ describe('persistence seam', () => {
 
 describe('HYDRATE', () => {
   const hydrate = (saved: SavedState) =>
-    workoutReducer(initialState, { type: 'HYDRATE', saved });
+    workoutReducer(initialState, {
+      type: 'HYDRATE',
+      saved,
+      deviceTheme: resolveDeviceTheme(),
+    });
 
   it('clamps stored exercise values that are out of range', () => {
     const s = hydrate({

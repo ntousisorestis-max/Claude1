@@ -363,7 +363,7 @@ export const STREAKS = {
  */
 export const APPEARANCE = {
   title: 'Appearance',
-  options: { system: 'System', light: 'Light', dark: 'Dark' },
+  options: { light: 'Light', dark: 'Dark' },
 } as const;
 
 /* -------------------------------------------------------------------------- */
