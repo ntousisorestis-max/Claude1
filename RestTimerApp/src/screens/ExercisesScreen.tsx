@@ -139,8 +139,6 @@ export function ExercisesScreen() {
           </View>
         )}
 
-        <SessionStats session={session} />
-
         {/* Open by default when there's nothing in the list, since adding one
             is the only thing there is to do. */}
         {adding || empty ? (
@@ -162,6 +160,8 @@ export function ExercisesScreen() {
             another.
           </Text>
         ) : null}
+
+        <SessionStats session={session} />
       </ScrollView>
     </KeyboardAvoidingView>
   );
