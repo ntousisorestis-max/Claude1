@@ -50,6 +50,12 @@ export type Palette = {
   surface: string;
   /** Interactive surfaces sitting on a card. */
   raised: string;
+  /**
+   * A translucent card — `surface` at reduced opacity, so whatever is behind
+   * it shows through instead of being covered. See `GlassCard`; nothing else
+   * uses this.
+   */
+  glass: string;
   /** Borders and empty tick marks. */
   hairline: string;
 
@@ -165,6 +171,8 @@ export const dark: Palette = {
   ink: '#0F0B1A',
   surface: '#17122A',
   raised: '#201A38',
+  /** `surface`'s own rgb, at 0.65 — see `npm run contrast` for why not lower. */
+  glass: 'rgba(23, 18, 42, 0.65)',
   hairline: '#2E2647',
 
   accent: '#8B5CF6',
@@ -203,6 +211,8 @@ export const light: Palette = {
   ink: '#F6F4FB',
   surface: '#FFFFFF',
   raised: '#F0EDF8',
+  /** `surface`'s own rgb, at 0.65 — see `npm run contrast` for why not lower. */
+  glass: 'rgba(255, 255, 255, 0.65)',
   /** Darker than dark's hairline in relative terms — a pale border vanishes. */
   hairline: '#DDD6EC',
 

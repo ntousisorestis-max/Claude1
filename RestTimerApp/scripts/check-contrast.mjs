@@ -37,6 +37,9 @@ const LARGE = 3.0;
 /** The bloom over the violet flood. Fixed — see GlowBackground. */
 const ON_ACCENT_PEAK = 0.06;
 
+/** `colors.glass`'s alpha in both themes — see src/theme/palettes.ts. */
+const GLASS_ALPHA = 0.65;
+
 const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 const toHex = px =>
   '#' + px.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
@@ -95,6 +98,16 @@ for (const [name, c] of Object.entries(palettes)) {
     check(`faint on ${label}`, c.faint, surface, BODY);
     check(`danger on ${label}`, c.danger, surface, BODY);
   }
+
+  // A translucent card, unlike an opaque one, doesn't fully cover whatever
+  // is behind it — so its *effective* colour is the glass tint composited
+  // over the worst the page behind it gets, not the tint alone. `SessionStats`
+  // is the one card that uses this so far.
+  console.log('Text on the glass card, over the glowed ground behind it:');
+  const glassCard = toHex(composite(c.surface, ground, GLASS_ALPHA));
+  check('white — the stat value', c.white, glassCard, LARGE);
+  check('accentText — THIS SESSION', c.accentText, glassCard, BODY);
+  check('muted — the stat label', c.muted, glassCard, BODY);
 
   console.log('Non-text (WCAG 1.4.11 wants 3.0 for UI):');
   check('accent fill vs the ground', c.accent, ground, LARGE);

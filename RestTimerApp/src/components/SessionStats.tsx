@@ -1,17 +1,9 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { GlassCard } from './GlassCard';
 import { Icon, type IconName } from './Icon';
 import { Pop } from './Pop';
-import {
-  describeDuration,
-  HAIRLINE,
-  radius,
-  sized,
-  spacing,
-  themed,
-  type,
-  useColors,
-} from '../theme';
+import { describeDuration, sized, spacing, themed, type, useColors } from '../theme';
 import type { SessionTotals } from '../state/types';
 
 /**
@@ -27,7 +19,7 @@ export function SessionStats({ session }: { session: SessionTotals }) {
   const focus = describeDuration(session.lockedSeconds);
 
   return (
-    <View style={styles.card}>
+    <GlassCard style={styles.card}>
       <Text style={styles.title}>THIS SESSION</Text>
 
       <View style={styles.row}>
@@ -48,7 +40,7 @@ export function SessionStats({ session }: { session: SessionTotals }) {
           label="Workouts done"
         />
       </View>
-    </View>
+    </GlassCard>
   );
 }
 
@@ -82,10 +74,6 @@ function Stat({
 const useStyles = themed(colors =>
   StyleSheet.create({
     card: {
-      backgroundColor: colors.surface,
-      borderWidth: HAIRLINE,
-      borderColor: colors.hairline,
-      borderRadius: radius.lg,
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.lg,
       gap: spacing.lg,
