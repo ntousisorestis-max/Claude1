@@ -78,7 +78,7 @@ Bare **React Native 0.86** with TypeScript. Not Expo.
 
 ## Look and voice
 
-**Violet `#8B5CF6` on near-black `#0F0B1A` — or on near-white `#F6F4FB`.**
+**Violet `#6563E5` on near-black `#0F0B1A` — or on near-white `#F6F4FB`.**
 There are two palettes, and a Light / Dark / System toggle in Settings. Bold
 type, rounded cards, soft glow.
 

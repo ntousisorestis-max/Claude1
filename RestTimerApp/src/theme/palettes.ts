@@ -153,10 +153,10 @@ export type Palette = {
  * page the plate is sitting on.
  */
 const ON_ACCENT = {
-  accentDeep: '#6D42D9',
+  accentDeep: '#4A47C4',
   textOnAccent: '#FFFFFF',
   /** The lit edge of a violet object, where the light lands first. */
-  accentLit: '#C4A5FF',
+  accentLit: '#B5B3F5',
   /** A specular highlight. Always white; the opacity does the work. */
   specular: '#FFFFFF',
   mutedOnAccent: 'rgba(255, 255, 255, 0.88)',
@@ -175,10 +175,10 @@ export const dark: Palette = {
   glass: 'rgba(23, 18, 42, 0.65)',
   hairline: '#2E2647',
 
-  accent: '#8B5CF6',
-  accentText: '#9E76F7',
-  accentDim: '#7048E8',
-  accentWash: 'rgba(139, 92, 246, 0.12)',
+  accent: '#6563E5',
+  accentText: '#8987EE',
+  accentDim: '#524FCB',
+  accentWash: 'rgba(101, 99, 229, 0.12)',
 
   white: '#FFFFFF',
   /** Purple-leaning greys — a neutral grey next to violet reads as dirty. */
@@ -189,13 +189,13 @@ export const dark: Palette = {
   dangerWash: 'rgba(255, 107, 129, 0.09)',
 
   /** Violet, so it prints as a glow rather than a shadow. */
-  shadow: '#8B5CF6',
+  shadow: '#6563E5',
   shadowOpacity: 0.5,
   dropShadow: '#000000',
   /** The ground already is the stage. */
   stage: 'transparent',
 
-  glow: '#8B5CF6',
+  glow: '#6563E5',
   glowPeak: 0.12,
   glowSecondPeak: 0.06,
 };
@@ -216,15 +216,15 @@ export const light: Palette = {
   /** Darker than dark's hairline in relative terms — a pale border vanishes. */
   hairline: '#DDD6EC',
 
-  accent: '#8B5CF6',
+  accent: '#6563E5',
   /**
-   * Darker than the accent, not lighter. #9E76F7 — dark mode's small-text
-   * violet — measures 3.01:1 here, which fails AA outright.
+   * Darker than the accent, not lighter. #8987EE — dark mode's small-text
+   * indigo — fails AA outright on a light ground.
    */
-  accentText: '#6438C4',
-  accentDim: '#7048E8',
+  accentText: '#4A47B8',
+  accentDim: '#524FCB',
   /** Heavier than dark's 0.12, which is all but invisible on white. */
-  accentWash: 'rgba(139, 92, 246, 0.14)',
+  accentWash: 'rgba(101, 99, 229, 0.14)',
 
   /** "White" means the strongest text colour, which on a light ground is ink. */
   white: '#160F27',
@@ -241,7 +241,7 @@ export const light: Palette = {
   /** The tile the hourglass keeps its night on. Dark mode's ground exactly. */
   stage: '#0F0B1A',
 
-  glow: '#8B5CF6',
+  glow: '#6563E5',
   /**
    * Far weaker than dark's 0.12. A violet bloom over near-white tints the whole
    * page violet, and a page that reads as faintly violet is a page competing
