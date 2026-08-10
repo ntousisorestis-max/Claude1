@@ -1,5 +1,6 @@
 import React from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pop } from './Pop';
 import { usePressScale } from '../hooks/usePressScale';
 import { radius, tabular, TAP_TARGET, themed, type } from '../theme';
 
@@ -33,7 +34,9 @@ export function Stepper({
         disabled={value <= min}
       />
       <View style={styles.value}>
-        <Text style={styles.number}>{value}</Text>
+        <Pop value={value} depth={1.12}>
+          <Text style={styles.number}>{value}</Text>
+        </Pop>
         {unit ? <Text style={styles.unit}>{unit}</Text> : null}
       </View>
       <Key

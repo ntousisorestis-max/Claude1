@@ -2,6 +2,7 @@ import React from 'react';
 import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '../components/Icon';
 import { NeedsAccount } from '../components/NeedsAccount';
+import { Pop } from '../components/Pop';
 import { ProgressBar } from '../components/ProgressBar';
 import { StreakRing } from '../components/StreakRing';
 import { TAB_BAR_CLEARANCE } from '../components/TabBar';
@@ -173,7 +174,9 @@ function MilestoneCard({ rung, best }: { rung: Rung | null; best: number }) {
       </View>
 
       <View style={styles.target}>
-        <Text style={styles.targetValue}>{rung.target}</Text>
+        <Pop value={rung.target} depth={1.08}>
+          <Text style={styles.targetValue}>{rung.target}</Text>
+        </Pop>
         <Text style={styles.targetUnit}>days</Text>
       </View>
 
@@ -211,10 +214,14 @@ function ChallengeCard({ rung, done }: { rung: Rung | null; done: number }) {
     <>
       <View style={styles.cardHead}>
         <Text style={styles.cardTitle}>{STREAKS.challenge.label}</Text>
-        <Text style={styles.count}>
-          <Text style={styles.countNow}>{done}</Text>
-          {rung ? <Text style={styles.countOf}> of {rung.target}</Text> : null}
-        </Text>
+        <Pop value={done} depth={1.1}>
+          <Text style={styles.count}>
+            <Text style={styles.countNow}>{done}</Text>
+            {rung ? (
+              <Text style={styles.countOf}> of {rung.target}</Text>
+            ) : null}
+          </Text>
+        </Pop>
       </View>
 
       <Text style={styles.challengeTitle}>{STREAKS.challenge.title}</Text>

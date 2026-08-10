@@ -10,6 +10,7 @@ import {
 import { AuthSheet } from './AuthSheet';
 import { ConfirmDialog } from './ConfirmDialog';
 import { Icon, type IconName } from './Icon';
+import { Pop } from './Pop';
 import { SettingsSection } from './SettingsSection';
 import { usePressScale } from '../hooks/usePressScale';
 import { useAccount } from '../cloud/AccountContext';
@@ -210,7 +211,9 @@ function Total({
   const styles = useStyles();
   return (
     <View style={styles.total}>
-      <Text style={styles.totalValue}>{value}</Text>
+      <Pop value={value} depth={1.1} style={styles.totalPop}>
+        <Text style={styles.totalValue}>{value}</Text>
+      </Pop>
       <Text style={styles.totalUnit}>{unit}</Text>
       <Text style={styles.totalLabel}>{label.toUpperCase()}</Text>
     </View>
@@ -310,6 +313,7 @@ const useStyles = themed(colors =>
       paddingVertical: spacing.md,
     },
     total: { flex: 1, alignItems: 'center', gap: 1 },
+    totalPop: { alignSelf: 'center' },
     totalValue: { ...sized(type.display, 26), color: colors.white },
     totalUnit: { ...type.helper, fontSize: 12, color: colors.muted },
     totalLabel: { ...sized(type.tag, 9), color: colors.faint, marginTop: 4 },
