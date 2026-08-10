@@ -12,6 +12,7 @@ import { Pop } from './Pop';
 import { ProgressRing } from './ProgressRing';
 import { tap } from '../haptics';
 import { useReduceMotion } from '../hooks/useReduceMotion';
+import { usePressScale } from '../hooks/usePressScale';
 import { sized, tabular, themed, type, useColors } from '../theme';
 
 const SIZE = 216;
@@ -54,6 +55,10 @@ export function StreakRing({
   const colors = useColors();
   const reduceMotion = useReduceMotion();
   const breath = useRef(new Animated.Value(0)).current;
+  // No haptic here — `onPress={tap}` already fires one on release. This is
+  // only for the visual acknowledgment that was missing: on the web build
+  // this app is tested on, a haptic-only response is no response at all.
+  const press = usePressScale({ depth: 0.97 });
 
   useEffect(() => {
     if (reduceMotion) {
@@ -104,26 +109,29 @@ export function StreakRing({
         }`}
         accessibilityHint={line}
         onPress={tap}
+        {...press.handlers}
         style={styles.ring}
       >
         <Animated.View style={[styles.glow, glowStyle]} pointerEvents="none">
           <Bloom />
         </Animated.View>
 
-        <ProgressRing
-          progress={trainedToday ? 1 : 0}
-          size={SIZE}
-          strokeWidth={STROKE}
-          color={colors.accent}
-          trackColor={colors.hairline}
-        >
-          <View style={styles.centre}>
-            <Pop value={streak} depth={1.1}>
-              <Text style={styles.value}>{streak}</Text>
-            </Pop>
-            <Text style={styles.unit}>DAY STREAK</Text>
-          </View>
-        </ProgressRing>
+        <Animated.View style={press.style}>
+          <ProgressRing
+            progress={trainedToday ? 1 : 0}
+            size={SIZE}
+            strokeWidth={STROKE}
+            color={colors.accent}
+            trackColor={colors.hairline}
+          >
+            <View style={styles.centre}>
+              <Pop value={streak} depth={1.1}>
+                <Text style={styles.value}>{streak}</Text>
+              </Pop>
+              <Text style={styles.unit}>DAY STREAK</Text>
+            </View>
+          </ProgressRing>
+        </Animated.View>
       </Pressable>
 
       <Text style={styles.line}>{line}</Text>

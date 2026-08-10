@@ -95,6 +95,8 @@ export function AuthSheet({
   };
 
   const presence = usePresence(visible);
+  const swapPress = usePressScale({ depth: 0.97, haptic: true });
+  const closePress = usePressScale({ depth: 0.97, haptic: true });
 
   return (
     <Modal
@@ -194,7 +196,8 @@ export function AuthSheet({
                 onPress={submit}
               />
 
-              <Pressable
+              <AnimatedPressable
+                {...swapPress.handlers}
                 accessibilityRole="button"
                 accessibilityLabel={
                   signingUp
@@ -202,23 +205,24 @@ export function AuthSheet({
                     : 'Create a new account'
                 }
                 onPress={swap}
-                style={styles.swap}
+                style={[styles.swap, swapPress.style]}
               >
                 <Text style={styles.swapText}>
                   {signingUp
                     ? 'Already have an account? Sign in'
                     : 'New here? Create an account'}
                 </Text>
-              </Pressable>
+              </AnimatedPressable>
 
-              <Pressable
+              <AnimatedPressable
+                {...closePress.handlers}
                 accessibilityRole="button"
                 accessibilityLabel="Close"
                 onPress={onClose}
-                style={styles.close}
+                style={[styles.close, closePress.style]}
               >
                 <Text style={styles.closeText}>Not now</Text>
-              </Pressable>
+              </AnimatedPressable>
             </ScrollView>
           </AnimatedPressable>
         </AnimatedPressable>
