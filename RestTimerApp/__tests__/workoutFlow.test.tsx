@@ -286,6 +286,10 @@ describe('full workout loop', () => {
     expect(MockBlocker.isLocked()).toBe(true);
 
     press(root, 'Keep going');
+    // The dialog fades out rather than vanishing instantly — see usePresence.
+    await ReactTestRenderer.act(async () => {
+      jest.advanceTimersByTime(200);
+    });
     expect(hasText(root, 'End this workout?')).toBe(false);
     expect(MockBlocker.isLocked()).toBe(true);
 
@@ -319,6 +323,10 @@ describe('full workout loop', () => {
     press(root, 'Delete Rows');
     press(root, 'Keep it');
 
+    // The dialog fades out rather than vanishing instantly — see usePresence.
+    await ReactTestRenderer.act(async () => {
+      jest.advanceTimersByTime(200);
+    });
     expect(hasText(root, 'Delete Rows?')).toBe(false);
     expect(hasText(root, 'Rows')).toBe(true);
   });

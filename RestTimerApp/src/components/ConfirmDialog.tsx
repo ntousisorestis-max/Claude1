@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { usePresence } from '../hooks/usePresence';
 import { usePressScale } from '../hooks/usePressScale';
 import {
   HAIRLINE,
@@ -56,12 +57,15 @@ export function ConfirmDialog({
   const styles = useStyles();
   const confirmPress = usePressScale({ haptic: true });
   const cancelPress = usePressScale({ haptic: true });
+  const presence = usePresence(visible);
 
   return (
     <Modal
-      visible={visible}
+      visible={presence.mounted}
       transparent
-      animationType="fade"
+      // Its own materialising animation runs below — see usePresence. Left as
+      // "fade" here too would double it up.
+      animationType="none"
       // Android's hardware back must dismiss it, not fall through to the screen.
       onRequestClose={onCancel}
     >
@@ -69,12 +73,16 @@ export function ConfirmDialog({
           Deliberately not in the accessibility tree: it would announce as a
           second button with the same name as Cancel, which is worse than not
           having it. Anyone navigating by label uses the real button below. */}
-      <Pressable accessible={false} onPress={onCancel} style={styles.backdrop}>
+      <AnimatedPressable
+        accessible={false}
+        onPress={onCancel}
+        style={[styles.backdrop, { opacity: presence.opacity }]}
+      >
         {/* Swallows taps so a press on the card itself doesn't dismiss it. */}
-        <Pressable
+        <AnimatedPressable
           accessibilityViewIsModal
           onPress={() => {}}
-          style={styles.card}
+          style={[styles.card, presence.style]}
         >
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
@@ -100,8 +108,8 @@ export function ConfirmDialog({
               <Text style={styles.cancelText}>{cancelLabel}</Text>
             </AnimatedPressable>
           </View>
-        </Pressable>
-      </Pressable>
+        </AnimatedPressable>
+      </AnimatedPressable>
     </Modal>
   );
 }

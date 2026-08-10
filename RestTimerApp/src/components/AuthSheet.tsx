@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { Icon } from './Icon';
+import { usePresence } from '../hooks/usePresence';
 import { usePressScale } from '../hooks/usePressScale';
 import { useAccount } from '../cloud/AccountContext';
 import {
@@ -93,11 +94,15 @@ export function AuthSheet({
     clearError();
   };
 
+  const presence = usePresence(visible);
+
   return (
     <Modal
-      visible={visible}
+      visible={presence.mounted}
       transparent
-      animationType="fade"
+      // Its own materialising animation runs below — see usePresence. Left as
+      // "fade" here too would double it up.
+      animationType="none"
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
@@ -106,11 +111,15 @@ export function AuthSheet({
       >
         {/* Not in the accessibility tree — it would announce as a second
             button named the same as Close. See ConfirmDialog. */}
-        <Pressable accessible={false} onPress={onClose} style={styles.backdrop}>
-          <Pressable
+        <AnimatedPressable
+          accessible={false}
+          onPress={onClose}
+          style={[styles.backdrop, { opacity: presence.opacity }]}
+        >
+          <AnimatedPressable
             accessibilityViewIsModal
             onPress={() => {}}
-            style={styles.card}
+            style={[styles.card, presence.style]}
           >
             <ScrollView
               keyboardShouldPersistTaps="handled"
@@ -211,8 +220,8 @@ export function AuthSheet({
                 <Text style={styles.closeText}>Not now</Text>
               </Pressable>
             </ScrollView>
-          </Pressable>
-        </Pressable>
+          </AnimatedPressable>
+        </AnimatedPressable>
       </KeyboardAvoidingView>
     </Modal>
   );
