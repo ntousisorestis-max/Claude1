@@ -17,7 +17,7 @@ import {
 import { EMPTY_STREAKS, STREAKS } from '../copy';
 import { useEnter } from '../hooks/useEnter';
 import {
-  radius,
+  HAIRLINE,
   sized,
   spacing,
   tabular,
@@ -47,13 +47,15 @@ const CARD_PAD = 16;
  * showing up, and one you can lose by having a short session punishes exactly
  * the day somebody most needed a reason to go.
  *
- * ## Two ladders, doing different jobs
+ * ## Two ladders, one card
  *
- * The milestone card measures the streak against the calendar; the challenge
+ * The milestone measures the streak against the calendar; the challenge
  * measures workouts against themselves. Both draw a bar, which is the risk —
  * two stacked bars can read as the same thing twice — so they are pointedly
  * different shapes: the milestone is a thin line under a countdown, the
- * challenge is a fat bar that is the card's main event.
+ * challenge is a fat bar that is its half's main event. They share one card
+ * rather than sitting in two identical ones, so the screen reads as a single
+ * "where you stand" moment instead of a stack of near-twin stat cards.
  *
  * ## What a challenge here can and cannot see
  *
@@ -71,9 +73,8 @@ export function StreaksScreen() {
   const enterHero = useEnter();
   const enterRing = useEnter(80);
   const enterMilestone = useEnter(160);
-  const enterChallenge = useEnter(220);
-  const enterShield = useEnter(280);
-  const enterFoot = useEnter(340);
+  const enterShield = useEnter(220);
+  const enterFoot = useEnter(280);
 
   const signedIn = status === 'signed-in';
 
@@ -103,33 +104,24 @@ export function StreaksScreen() {
             />
           </Animated.View>
 
-          {/* 2 — how far to the next rung */}
+          {/* 2 — where you stand, both ways: the calendar and the count */}
           <Animated.View style={enterMilestone}>
             <Card style={styles.card}>
               <MilestoneCard rung={milestone} best={streak.bestStreak} />
-            </Card>
-          </Animated.View>
-
-          {/* 3 — the one active challenge */}
-          <Animated.View style={enterChallenge}>
-            <Card style={styles.card}>
+              <View style={styles.divider} />
               <ChallengeCard rung={challenge} done={totals.fullWorkouts} />
             </Card>
           </Animated.View>
 
-          {/* 4 — the rule, stated rather than implied */}
-          <Animated.View style={enterShield}>
-            <Card style={styles.shield}>
-              <View style={styles.shieldTile}>
-                <Icon name="shield" color={colors.textOnAccent} size={20} />
-              </View>
-              <View style={styles.shieldText}>
-                <Text style={styles.shieldTitle}>{STREAKS.shield.title}</Text>
-              </View>
-            </Card>
+          {/* 3 — the rule, stated rather than implied. Quiet on purpose: it
+              sits closer in weight to the footer line than to the card above,
+              since it's a fact about the app rather than a number about you. */}
+          <Animated.View style={[styles.rule, enterShield]}>
+            <Icon name="shield" color={colors.faint} size={14} />
+            <Text style={styles.ruleText}>{STREAKS.shield.title}</Text>
           </Animated.View>
 
-          {/* 5 */}
+          {/* 4 */}
           <Animated.View style={enterFoot}>
             <Text style={styles.footer}>{STREAKS.footer}</Text>
           </Animated.View>
@@ -317,27 +309,18 @@ const useStyles = themed(colors =>
 
     challengeTitle: { ...sized(type.title, 21), color: colors.white },
 
-    shield: {
+    /** Between the two halves of the merged card. */
+    divider: { height: HAIRLINE, backgroundColor: colors.hairline },
+
+    /** Quiet by design — closer in weight to the footer than to the card
+     * above it, since it's a fact about the app rather than a number. */
+    rule: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: spacing.md,
-      padding: CARD_PAD,
-    },
-    shieldTile: {
-      width: 44,
-      height: 44,
-      borderRadius: radius.sm + 2,
-      backgroundColor: colors.accent,
-      alignItems: 'center',
       justifyContent: 'center',
+      gap: 7,
     },
-    shieldText: { flex: 1 },
-    shieldTitle: {
-      ...type.body,
-      fontSize: 17,
-      fontWeight: '800',
-      color: colors.white,
-    },
+    ruleText: { ...type.helper, fontSize: 13, color: colors.faint },
 
     footer: {
       ...type.helper,

@@ -1,10 +1,20 @@
 import React, {
   createContext,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
+  useState,
   type ReactNode,
 } from 'react';
-import { Appearance, useColorScheme } from 'react-native';
+import {
+  Animated,
+  Appearance,
+  Easing,
+  StyleSheet,
+  useColorScheme,
+} from 'react-native';
+import { useReduceMotion } from '../hooks/useReduceMotion';
 import { palettes, type Palette, type ThemeName } from './palettes';
 
 /**
@@ -65,15 +75,61 @@ export function ThemeProvider({
   // Follows the OS live: flipping the system setting while the app is open
   // re-renders straight into the other palette, no relaunch.
   const system = useColorScheme();
+  const reduceMotion = useReduceMotion();
 
-  const value = useMemo<ThemeValue>(() => {
-    const name: ThemeName =
-      choice === 'system' ? (system === 'light' ? 'light' : 'dark') : choice;
-    return { name, colors: palettes[name] };
-  }, [choice, system]);
+  const resolved: ThemeName =
+    choice === 'system' ? (system === 'light' ? 'light' : 'dark') : choice;
+
+  // What's actually rendered. Lags one step behind `resolved` while the veil
+  // below is covering the screen, so the instant colour swap happens while
+  // nobody can see it rather than in the open.
+  const [shown, setShown] = useState(resolved);
+  const veil = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (resolved === shown) {
+      return;
+    }
+    if (reduceMotion) {
+      setShown(resolved);
+      return;
+    }
+    // Fade to a solid cover in the *old* ground, swap the palette underneath
+    // while nothing is visible, then fade the cover back out over the new
+    // one. A straight colour swap on every pixel at once is the "instant
+    // jump" this replaces — this is a light switch with a dimmer on it.
+    Animated.timing(veil, {
+      toValue: 1,
+      duration: 140,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start(() => {
+      setShown(resolved);
+      Animated.timing(veil, {
+        toValue: 0,
+        duration: 260,
+        easing: Easing.in(Easing.quad),
+        useNativeDriver: true,
+      }).start();
+    });
+  }, [resolved, shown, reduceMotion, veil]);
+
+  const value = useMemo<ThemeValue>(
+    () => ({ name: shown, colors: palettes[shown] }),
+    [shown],
+  );
 
   return (
-    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>
+      {children}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: palettes[shown].ink, opacity: veil },
+        ]}
+      />
+    </ThemeContext.Provider>
   );
 }
 

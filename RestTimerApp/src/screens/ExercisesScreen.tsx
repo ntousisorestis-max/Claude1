@@ -11,8 +11,10 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { Card } from '../components/Card';
 import { ExerciseCard } from '../components/ExerciseCard';
 import { HeroHourglass } from '../components/HeroHourglass';
+import { Icon } from '../components/Icon';
 import { SectionLabel } from '../components/SectionLabel';
 import { SessionStats } from '../components/SessionStats';
 import { TAB_BAR_CLEARANCE } from '../components/TabBar';
@@ -108,50 +110,58 @@ export function ExercisesScreen() {
         </Animated.View>
 
         {empty ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>{EMPTY_EXERCISES.title}</Text>
-            <Text style={styles.emptyBody}>{EMPTY_EXERCISES.body}</Text>
-          </View>
-        ) : (
-          <View style={styles.list}>
-            {exercises.map(exercise => (
-              <ExerciseCard
-                key={exercise.id}
-                exercise={exercise}
-                apps={apps}
-                onStart={() => startWorkout(exercise.id)}
-                onRename={name => renameExercise(exercise.id, name)}
-                // Compared against every *other* exercise, so re-saving a name
-                // unchanged is not reported as a clash with itself.
-                nameTaken={name =>
-                  exercises.some(
-                    other =>
-                      other.id !== exercise.id &&
-                      other.name.toLowerCase() === name.toLowerCase(),
-                  )
-                }
-                onSets={sets => setExerciseSets(exercise.id, sets)}
-                onRest={seconds => setExerciseRest(exercise.id, seconds)}
-                onToggleApp={appId => toggleExerciseApp(exercise.id, appId)}
-                onDelete={() => removeExercise(exercise.id)}
-              />
-            ))}
-          </View>
-        )}
-
-        {/* Open by default when there's nothing in the list, since adding one
-            is the only thing there is to do. */}
-        {adding || empty ? (
+          // The first-run message and the way to act on it, folded into one
+          // card instead of a block of text sitting above a separate form —
+          // there's only one thing to do here, so it reads as one moment.
           <AddExercise
-            existingNames={exercises.map(e => e.name)}
-            onCancel={empty ? null : () => setAdding(false)}
+            existingNames={[]}
+            onCancel={null}
             onAdd={name => {
               addExercise(name);
               setAdding(false);
             }}
+            intro={EMPTY_EXERCISES}
           />
         ) : (
-          <AddButton disabled={full} onPress={() => setAdding(true)} />
+          <>
+            <View style={styles.list}>
+              {exercises.map(exercise => (
+                <ExerciseCard
+                  key={exercise.id}
+                  exercise={exercise}
+                  apps={apps}
+                  onStart={() => startWorkout(exercise.id)}
+                  onRename={name => renameExercise(exercise.id, name)}
+                  // Compared against every *other* exercise, so re-saving a
+                  // name unchanged is not reported as a clash with itself.
+                  nameTaken={name =>
+                    exercises.some(
+                      other =>
+                        other.id !== exercise.id &&
+                        other.name.toLowerCase() === name.toLowerCase(),
+                    )
+                  }
+                  onSets={sets => setExerciseSets(exercise.id, sets)}
+                  onRest={seconds => setExerciseRest(exercise.id, seconds)}
+                  onToggleApp={appId => toggleExerciseApp(exercise.id, appId)}
+                  onDelete={() => removeExercise(exercise.id)}
+                />
+              ))}
+            </View>
+
+            {adding ? (
+              <AddExercise
+                existingNames={exercises.map(e => e.name)}
+                onCancel={() => setAdding(false)}
+                onAdd={name => {
+                  addExercise(name);
+                  setAdding(false);
+                }}
+              />
+            ) : (
+              <AddButton disabled={full} onPress={() => setAdding(true)} />
+            )}
+          </>
         )}
 
         {full ? (
@@ -178,11 +188,16 @@ function AddExercise({
   existingNames,
   onAdd,
   onCancel,
+  intro,
 }: {
   existingNames: string[];
   onAdd: (name: string) => void;
   /** Null while the list is empty: there's nothing to go back to. */
   onCancel: (() => void) | null;
+  /** Shown above the field only for the empty-list case — the "here's what
+   * to do" message folded into the same card as the way to do it, instead of
+   * sitting above it as a separate, disconnected block. */
+  intro?: { title: string; body: string };
 }) {
   const styles = useStyles();
   const colors = useColors();
@@ -207,57 +222,71 @@ function AddExercise({
   };
 
   return (
-    <Animated.View style={[styles.composer, enter]}>
-      <SectionLabel icon="dumbbell">NEW EXERCISE</SectionLabel>
-      <TextInput
-        value={draft}
-        onChangeText={setDraft}
-        onSubmitEditing={submit}
-        placeholder="Bench press"
-        placeholderTextColor={colors.faint}
-        style={styles.input}
-        maxLength={MAX_EXERCISE_NAME_LENGTH}
-        returnKeyType="done"
-        autoCapitalize="words"
-        accessibilityLabel="Exercise name"
-      />
+    <Animated.View style={enter}>
+      <Card style={styles.composer}>
+        {intro ? (
+          <View style={styles.intro}>
+            <View style={styles.introTile}>
+              {/* Not the "dumbbell" glyph — it reads as a capital H at this
+                  size (see HeroDumbbell / SettingsSection's own note). */}
+              <Icon name="plus" color={colors.accentText} size={20} />
+            </View>
+            <Text style={styles.emptyTitle}>{intro.title}</Text>
+            <Text style={styles.emptyBody}>{intro.body}</Text>
+          </View>
+        ) : (
+          <SectionLabel icon="dumbbell">NEW EXERCISE</SectionLabel>
+        )}
+        <TextInput
+          value={draft}
+          onChangeText={setDraft}
+          onSubmitEditing={submit}
+          placeholder="Bench press"
+          placeholderTextColor={colors.faint}
+          style={styles.input}
+          maxLength={MAX_EXERCISE_NAME_LENGTH}
+          returnKeyType="done"
+          autoCapitalize="words"
+          accessibilityLabel="Exercise name"
+        />
 
-      {duplicate ? (
-        <Text style={styles.warn}>You already have a {trimmed}.</Text>
-      ) : null}
-
-      <View style={styles.composerRow}>
-        <AnimatedPressable
-          {...savePress.handlers}
-          accessibilityRole="button"
-          accessibilityLabel="Save exercise"
-          accessibilityState={{ disabled: !canSave }}
-          onPress={submit}
-          disabled={!canSave}
-          style={[styles.save, !canSave && styles.saveOff, savePress.style]}
-        >
-          <Text style={[styles.saveText, !canSave && styles.saveTextOff]}>
-            Save exercise
-          </Text>
-        </AnimatedPressable>
-
-        {onCancel ? (
-          <AnimatedPressable
-            {...cancelPress.handlers}
-            accessibilityRole="button"
-            accessibilityLabel="Cancel"
-            onPress={onCancel}
-            style={[styles.cancel, cancelPress.style]}
-          >
-            <Text style={styles.cancelText}>Cancel</Text>
-          </AnimatedPressable>
+        {duplicate ? (
+          <Text style={styles.warn}>You already have a {trimmed}.</Text>
         ) : null}
-      </View>
 
-      <Text style={styles.note}>
-        Starts from your Settings apps. Sets and rest are yours to set per
-        exercise.
-      </Text>
+        <View style={styles.composerRow}>
+          <AnimatedPressable
+            {...savePress.handlers}
+            accessibilityRole="button"
+            accessibilityLabel="Save exercise"
+            accessibilityState={{ disabled: !canSave }}
+            onPress={submit}
+            disabled={!canSave}
+            style={[styles.save, !canSave && styles.saveOff, savePress.style]}
+          >
+            <Text style={[styles.saveText, !canSave && styles.saveTextOff]}>
+              Save exercise
+            </Text>
+          </AnimatedPressable>
+
+          {onCancel ? (
+            <AnimatedPressable
+              {...cancelPress.handlers}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel"
+              onPress={onCancel}
+              style={[styles.cancel, cancelPress.style]}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </AnimatedPressable>
+          ) : null}
+        </View>
+
+        <Text style={styles.note}>
+          Starts from your Settings apps. Sets and rest are yours to set per
+          exercise.
+        </Text>
+      </Card>
     </Animated.View>
   );
 }
@@ -314,18 +343,25 @@ const useStyles = themed(colors =>
 
     list: { gap: spacing.md },
 
-    emptyState: {
-      gap: spacing.sm,
-      paddingVertical: spacing.lg,
+    /** The first-run message, folded into the top of the composer card
+     * instead of standing alone above it. */
+    intro: { gap: spacing.xs, marginBottom: spacing.xs },
+    introTile: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.md,
+      backgroundColor: colors.accentWash,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: spacing.xs,
     },
     emptyTitle: { ...sized(type.title, 24), color: colors.white },
     emptyBody: { ...type.helper, color: colors.muted, lineHeight: 22 },
 
+    /** Tinted rather than bordered — the accent wash is what used to mark
+     * this card as "active"; the floating shadow now carries the rest. */
     composer: {
-      backgroundColor: colors.surface,
-      borderWidth: HAIRLINE,
-      borderColor: colors.accent,
-      borderRadius: radius.md,
+      backgroundColor: colors.accentWash,
       padding: spacing.md,
       gap: spacing.md,
     },

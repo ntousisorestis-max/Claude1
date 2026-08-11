@@ -29,6 +29,7 @@ import {
   radius,
   sized,
   spacing,
+  tabular,
   themed,
   type,
   useColors,
@@ -50,14 +51,15 @@ const ALL_CLOSED: Record<Section, boolean> = {
 /**
  * One saved lift.
  *
- * Collapsed it's a name, its three settings as labelled rows, and one gradient
- * action — the state you want when you're standing at the rack.
+ * Collapsed it's a name, three stat chips (sets, rest, blocked apps), and one
+ * gradient action — glanceable rather than a form to read. Each chip reveals
+ * its own editor beneath the strip when tapped.
  *
- * **Each row opens on its own.** The three sections are independent booleans,
- * not one card-wide flag, so opening Rest time leaves Sets exactly as you left
- * it. They also don't reach across cards: one card's rows can't close another's.
- * Anything else makes a tap on one arrow move controls the user wasn't looking
- * at.
+ * **Each chip opens on its own.** The three sections are independent
+ * booleans, not one card-wide flag, so opening Rest leaves Sets exactly as
+ * you left it. They also don't reach across cards: one card's chips can't
+ * close another's. Anything else makes a tap on one control move controls the
+ * user wasn't looking at.
  */
 export function ExerciseCard({
   exercise,
@@ -109,9 +111,16 @@ export function ExerciseCard({
             <Icon name="dumbbell" color={colors.accentText} size={15} />
             <Text style={styles.eyebrow}>EXERCISE</Text>
           </View>
-          <Text style={styles.name} numberOfLines={2}>
-            {exercise.name}
-          </Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.name} numberOfLines={2}>
+              {exercise.name}
+            </Text>
+            <RenameButton
+              name={exercise.name}
+              open={open.name}
+              onPress={() => toggle('name')}
+            />
+          </View>
         </View>
 
         {/* Top-right, and reachable without opening anything. Deleting used to
@@ -123,110 +132,107 @@ export function ExerciseCard({
         />
       </View>
 
-      <View>
-        <Section divided>
-          <SettingRow
-            icon="pencil"
-            label="Name"
-            exercise={exercise.name}
-            announceAs={`Rename ${exercise.name}`}
-            value={exercise.name}
-            open={open.name}
-            onPress={() => toggle('name')}
-          />
-          <Collapsible open={open.name}>
-            <Panel>
-              <NameEditor
-                name={exercise.name}
-                open={open.name}
-                nameTaken={nameTaken}
-                onRename={onRename}
-                onDone={() => toggle('name')}
-              />
-            </Panel>
-          </Collapsible>
-        </Section>
+      {/* One ungapped block: a flex `gap` on the card would hold space open
+          for every closed Collapsible, since `gap` doesn't know a hidden
+          sibling measures zero. Spacing between an open panel and its
+          neighbours lives inside `Panel` instead, so it collapses with it. */}
+      <View style={styles.body}>
+        <Collapsible open={open.name}>
+          <Panel label="RENAME">
+            <NameEditor
+              name={exercise.name}
+              open={open.name}
+              nameTaken={nameTaken}
+              onRename={onRename}
+              onDone={() => toggle('name')}
+            />
+          </Panel>
+        </Collapsible>
 
-        <Section divided>
-          <SettingRow
+        {/* Glanceable rather than a form to read: three stats side by side
+            instead of three stacked list rows. Each still opens its own
+            editor beneath the strip, independently of the other two. */}
+        <View style={styles.chipRow}>
+          <StatChip
             icon="reps"
-            label="Sets"
-            exercise={exercise.name}
+            tag="SETS"
             value={String(exercise.totalSets)}
+            accessibilityLabel={`Sets for ${exercise.name}, ${
+              exercise.totalSets
+            }. ${open.sets ? 'Close' : 'Edit'}`}
             open={open.sets}
             onPress={() => toggle('sets')}
           />
-          <Collapsible open={open.sets}>
-            <Panel>
-              <Stepper
-                label={`sets for ${exercise.name}`}
-                value={exercise.totalSets}
-                onChange={onSets}
-                min={MIN_SETS}
-                max={MAX_SETS}
-              />
-            </Panel>
-          </Collapsible>
-        </Section>
-
-        <Section divided>
-          <SettingRow
+          <StatChip
             icon="timer"
-            label="Rest time"
-            exercise={exercise.name}
+            tag="REST"
             value={`${exercise.restSeconds}s`}
+            accessibilityLabel={`Rest time for ${exercise.name}, ${
+              exercise.restSeconds
+            }s. ${open.rest ? 'Close' : 'Edit'}`}
             open={open.rest}
             onPress={() => toggle('rest')}
           />
-          <Collapsible open={open.rest}>
-            <Panel>
-              <Stepper
-                label={`rest for ${exercise.name}`}
-                value={exercise.restSeconds}
-                onChange={onRest}
-                step={5}
-                min={MIN_REST_SECONDS}
-                max={MAX_REST_SECONDS}
-                unit="SECONDS"
-              />
-              <Segmented
-                label={`rest for ${exercise.name}`}
-                options={REST_PRESETS}
-                value={exercise.restSeconds}
-                onChange={onRest}
-                format={n => `${n}s`}
-              />
-            </Panel>
-          </Collapsible>
-        </Section>
-
-        <Section>
-          <SettingRow
+          <StatChip
             icon="lock"
-            label="Blocked apps"
-            exercise={exercise.name}
-            value={
+            tag="APPS"
+            value={String(blocked.length)}
+            accessibilityLabel={`Blocked apps for ${exercise.name}, ${
               blocked.length ? blocked.map(app => app.name).join(', ') : 'None'
-            }
+            }. ${open.apps ? 'Close' : 'Edit'}`}
             open={open.apps}
             onPress={() => toggle('apps')}
           />
-          <Collapsible open={open.apps}>
-            <Panel>
-              <View style={styles.apps}>
-                {apps.map(app => (
-                  <AppPill
-                    key={app.id}
-                    app={app}
-                    checked={exercise.selectedAppIds.includes(app.id)}
-                    label={`${app.name} during ${exercise.name}`}
-                    onPress={() => onToggleApp(app.id)}
-                  />
-                ))}
-              </View>
-            </Panel>
-          </Collapsible>
-        </Section>
+        </View>
+
+        <Collapsible open={open.sets}>
+          <Panel label="SETS">
+            <Stepper
+              label={`sets for ${exercise.name}`}
+              value={exercise.totalSets}
+              onChange={onSets}
+              min={MIN_SETS}
+              max={MAX_SETS}
+            />
+          </Panel>
+        </Collapsible>
+
+        <Collapsible open={open.rest}>
+          <Panel label="REST TIME">
+            <Stepper
+              label={`rest for ${exercise.name}`}
+              value={exercise.restSeconds}
+              onChange={onRest}
+              step={5}
+              min={MIN_REST_SECONDS}
+              max={MAX_REST_SECONDS}
+              unit="SECONDS"
+            />
+            <Segmented
+              label={`rest for ${exercise.name}`}
+              options={REST_PRESETS}
+              value={exercise.restSeconds}
+              onChange={onRest}
+              format={n => `${n}s`}
+            />
+          </Panel>
+        </Collapsible>
+
+        <Collapsible open={open.apps}>
+          <Panel label="BLOCKED APPS">
+            <View style={styles.apps}>
+              {apps.map(app => (
+                <AppPill
+                  key={app.id}
+                  app={app}
+                  checked={exercise.selectedAppIds.includes(app.id)}
+                  label={`${app.name} during ${exercise.name}`}
+                  onPress={() => onToggleApp(app.id)}
+                />
+              ))}
+            </View>
+          </Panel>
+        </Collapsible>
       </View>
 
       {/* Just the estimate now. Delete moved to the card header, where it does
@@ -262,79 +268,104 @@ export function ExerciseCard({
   );
 }
 
-/** A row and whatever it opens, hairlined off from the next one. */
-function Section({
-  divided = false,
-  children,
-}: {
-  divided?: boolean;
-  children: React.ReactNode;
-}) {
-  const styles = useStyles();
-  return <View style={divided ? styles.divided : undefined}>{children}</View>;
-}
-
 /**
- * The controls one row reveals, tucked under it.
+ * The controls one chip reveals, tucked under the strip.
  *
  * No entry animation of its own any more: `Collapsible` fades the whole reveal
  * in as it grows, and two fades stacked on one gesture read as a stutter rather
- * than as one movement.
+ * than as one movement. The label says which chip this belongs to, since more
+ * than one panel can be open under the same strip at once.
  */
-function Panel({ children }: { children: React.ReactNode }) {
+function Panel({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   const styles = useStyles();
-  return <View style={styles.panel}>{children}</View>;
+  return (
+    <View style={styles.panel}>
+      <Text style={styles.panelLabel}>{label}</Text>
+      {children}
+    </View>
+  );
 }
 
-/** One labelled value, and the way in to changing it. */
-function SettingRow({
+/**
+ * One stat, glanceable: an icon, the value, and what it is. Tapping it opens
+ * its own editor beneath the strip — the same independent-open behaviour the
+ * old settings rows had, just laid out side by side instead of stacked.
+ */
+function StatChip({
   icon,
-  label,
-  exercise,
-  announceAs,
+  tag,
   value,
+  accessibilityLabel,
   open,
   onPress,
 }: {
   icon: IconName;
-  label: string;
-  /** Named in the announcement: a list of cards otherwise reads as three
-   * identical "Sets, 3. Edit" buttons. */
-  exercise: string;
-  /**
-   * Replaces the "<label> for <exercise>, <value>" announcement.
-   *
-   * The Name row needs it: its label and its value are the same word, so the
-   * default reads "Name for Squat, Squat".
-   */
-  announceAs?: string;
+  tag: string;
   value: string;
+  accessibilityLabel: string;
   open: boolean;
   onPress: () => void;
 }) {
   const styles = useStyles();
   const colors = useColors();
-  const press = usePressScale({ depth: 0.99, haptic: true });
+  const press = usePressScale({ depth: 0.97, haptic: true });
 
   return (
     <AnimatedPressable
       {...press.handlers}
       accessibilityRole="button"
-      accessibilityLabel={`${
-        announceAs ?? `${label} for ${exercise}, ${value}`
-      }. ${open ? 'Close' : 'Edit'}`}
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ expanded: open }}
       onPress={onPress}
-      style={[styles.row, press.style]}
+      style={[styles.chip, open && styles.chipOpen, press.style]}
     >
-      <Icon name={icon} color={colors.accentText} size={17} />
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue} numberOfLines={1}>
+      <Icon
+        name={icon}
+        color={open ? colors.accentText : colors.muted}
+        size={16}
+      />
+      <Text style={styles.chipValue} numberOfLines={1}>
         {value}
       </Text>
-      <View style={open ? styles.chevronOpen : undefined}>
-        <Icon name="chevron" color={colors.faint} size={16} />
-      </View>
+      <Text style={styles.chipTag}>{tag}</Text>
+    </AnimatedPressable>
+  );
+}
+
+/**
+ * The pencil beside the name — renaming's own trigger, separated from the
+ * stat strip because it's the exercise's identity, not one of its numbers.
+ */
+function RenameButton({
+  name,
+  open,
+  onPress,
+}: {
+  name: string;
+  open: boolean;
+  onPress: () => void;
+}) {
+  const styles = useStyles();
+  const colors = useColors();
+  const press = usePressScale({ depth: 0.9, haptic: true });
+
+  return (
+    <AnimatedPressable
+      {...press.handlers}
+      accessibilityRole="button"
+      accessibilityLabel={`Rename ${name}. ${open ? 'Close' : 'Edit'}`}
+      accessibilityState={{ expanded: open }}
+      onPress={onPress}
+      hitSlop={10}
+      style={[styles.renameBtn, press.style]}
+    >
+      <Icon name="pencil" color={colors.faint} size={15} />
     </AnimatedPressable>
   );
 }
@@ -495,38 +526,49 @@ const useStyles = themed(colors =>
     },
 
     head: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
+    /** No gap of its own — see the comment above this block in the JSX. */
+    body: {},
     headText: { flex: 1, gap: spacing.xs },
     eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     eyebrow: { ...type.tag, color: colors.accentText },
-    name: { ...sized(type.title, 28), color: colors.white },
-
-    /** On the section, not the row: the hairline belongs under the panel too. */
-    divided: {
-      borderBottomWidth: HAIRLINE,
-      borderBottomColor: colors.hairline,
-    },
-    row: {
-      flexDirection: 'row',
+    titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xs },
+    name: { ...sized(type.title, 28), color: colors.white, flex: 1 },
+    renameBtn: {
+      width: 30,
+      height: 30,
+      marginTop: 4,
+      borderRadius: radius.sm,
       alignItems: 'center',
-      gap: spacing.md,
-      paddingHorizontal: spacing.md,
-      paddingVertical: 15,
+      justifyContent: 'center',
     },
-    rowLabel: { ...type.helper, color: colors.muted },
-    rowValue: {
-      ...type.body,
-      fontWeight: '700',
-      color: colors.white,
-      flex: 1,
-      textAlign: 'right',
-    },
-    chevronOpen: { transform: [{ rotate: '90deg' }] },
 
+    /** Recessed rather than bordered — the same nested-panel technique
+     * `AccountCard` uses for its own sub-tiles inside a floating card. */
+    chipRow: { flexDirection: 'row', gap: spacing.sm },
+    chip: {
+      flex: 1,
+      alignItems: 'center',
+      gap: 3,
+      paddingVertical: spacing.sm,
+      borderRadius: radius.md,
+      backgroundColor: colors.ink,
+    },
+    chipOpen: { backgroundColor: colors.accentWash },
+    chipValue: { ...sized(type.title, 19), ...tabular, color: colors.white },
+    chipTag: { ...sized(type.tag, 9), color: colors.muted },
+
+    /**
+     * Top and bottom padding live here rather than on `body`'s gap, so a
+     * closed panel's Collapsible (height 0) doesn't hold space open around
+     * itself — the padding is part of the content being measured to zero.
+     */
     panel: {
       gap: spacing.md,
-      paddingHorizontal: spacing.md,
+      paddingHorizontal: spacing.xs,
+      paddingTop: spacing.sm,
       paddingBottom: spacing.md,
     },
+    panelLabel: { ...sized(type.tag, 10), color: colors.accentText },
     apps: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
 
     footer: {
