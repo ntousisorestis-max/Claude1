@@ -78,37 +78,37 @@ export function ConfirmDialog({
         onPress={onCancel}
         style={[styles.backdrop, { opacity: presence.opacity }]}
       >
-        {/* Swallows taps so a press on the card itself doesn't dismiss it. */}
-        <AnimatedPressable
-          accessibilityViewIsModal
-          onPress={() => {}}
-          style={[styles.card, presence.style]}
-        >
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.message}>{message}</Text>
+        {/* Swallows taps so a press on the card itself doesn't dismiss it.
+            Animated.View rather than Card since presence.style carries the
+            entrance transform and Card would fight it for the style array. */}
+        <Animated.View style={[styles.card, presence.style]}>
+          <Pressable accessibilityViewIsModal onPress={() => {}}>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.message}>{message}</Text>
 
-          <View style={styles.actions}>
-            <AnimatedPressable
-              {...confirmPress.handlers}
-              accessibilityRole="button"
-              accessibilityLabel={confirmLabel}
-              onPress={onConfirm}
-              style={[styles.confirm, confirmPress.style]}
-            >
-              <Text style={styles.confirmText}>{confirmLabel}</Text>
-            </AnimatedPressable>
+            <View style={styles.actions}>
+              <AnimatedPressable
+                {...confirmPress.handlers}
+                accessibilityRole="button"
+                accessibilityLabel={confirmLabel}
+                onPress={onConfirm}
+                style={[styles.confirm, confirmPress.style]}
+              >
+                <Text style={styles.confirmText}>{confirmLabel}</Text>
+              </AnimatedPressable>
 
-            <AnimatedPressable
-              {...cancelPress.handlers}
-              accessibilityRole="button"
-              accessibilityLabel={cancelLabel}
-              onPress={onCancel}
-              style={[styles.cancel, cancelPress.style]}
-            >
-              <Text style={styles.cancelText}>{cancelLabel}</Text>
-            </AnimatedPressable>
-          </View>
-        </AnimatedPressable>
+              <AnimatedPressable
+                {...cancelPress.handlers}
+                accessibilityRole="button"
+                accessibilityLabel={cancelLabel}
+                onPress={onCancel}
+                style={[styles.cancel, cancelPress.style]}
+              >
+                <Text style={styles.cancelText}>{cancelLabel}</Text>
+              </AnimatedPressable>
+            </View>
+          </Pressable>
+        </Animated.View>
       </AnimatedPressable>
     </Modal>
   );
@@ -127,11 +127,14 @@ const useStyles = themed(colors =>
       width: '100%',
       maxWidth: 400,
       backgroundColor: colors.surface,
-      borderWidth: HAIRLINE,
-      borderColor: colors.hairline,
       borderRadius: radius.lg,
       padding: spacing.lg,
       gap: spacing.sm,
+      shadowColor: colors.dropShadow,
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.28,
+      shadowRadius: 24,
+      elevation: 8,
     },
     title: { ...sized(type.title, 26), color: colors.white },
     message: {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { Card } from './Card';
 import { Icon, type IconName } from './Icon';
 import { Pop } from './Pop';
 import {
@@ -41,7 +42,7 @@ export function StatCard({
   const styles = useStyles();
   const colors = useColors();
   return (
-    <View
+    <Card
       style={styles.card}
       accessibilityRole="text"
       accessibilityLabel={`${label}: ${value}${
@@ -62,7 +63,7 @@ export function StatCard({
         </Pop>
         <Text style={styles.caption}>{caption}</Text>
       </View>
-    </View>
+    </Card>
   );
 }
 
@@ -72,10 +73,6 @@ const useStyles = themed(colors =>
       flexDirection: 'row',
       alignItems: 'flex-start',
       gap: spacing.md,
-      backgroundColor: colors.surface,
-      borderWidth: HAIRLINE,
-      borderColor: colors.hairline,
-      borderRadius: radius.lg,
       padding: spacing.md,
     },
     tile: {

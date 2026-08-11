@@ -1,6 +1,6 @@
-import React, { useEffect, useId, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
-import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
+import { Bloom } from './Bloom';
 import { useReduceMotion } from '../hooks/useReduceMotion';
 import { radius, themed, useColors } from '../theme';
 
@@ -67,6 +67,7 @@ const PARTICLES = [
 
 export function HeroHourglass({ size = 150 }: { size?: number }) {
   const styles = useStyles();
+  const colors = useColors();
   const reduceMotion = useReduceMotion();
 
   const float = useRef(new Animated.Value(0)).current;
@@ -163,7 +164,7 @@ export function HeroHourglass({ size = 150 }: { size?: number }) {
         style={[styles.centre, { width: glow, height: glow }, bloom]}
         pointerEvents="none"
       >
-        <Bloom size={glow} />
+        <Bloom size={glow} color={colors.accent} peak={0.22} mid={0.1} />
       </Animated.View>
 
       <Animated.View style={art}>
@@ -257,26 +258,6 @@ function Particle({
         style,
       ]}
     />
-  );
-}
-
-/** The soft violet ground the object floats on. */
-function Bloom({ size }: { size: number }) {
-  const colors = useColors();
-  // SVG gradient ids share one global namespace on the web. See GlowBackground.
-  const id = `hourglass-glow-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
-
-  return (
-    <Svg width={size} height={size}>
-      <Defs>
-        <RadialGradient id={id} cx="50%" cy="50%" r="50%">
-          <Stop offset="0" stopColor={colors.accent} stopOpacity={0.22} />
-          <Stop offset="0.5" stopColor={colors.accent} stopOpacity={0.1} />
-          <Stop offset="1" stopColor={colors.accent} stopOpacity={0} />
-        </RadialGradient>
-      </Defs>
-      <Circle cx={size / 2} cy={size / 2} r={size / 2} fill={`url(#${id})`} />
-    </Svg>
   );
 }
 

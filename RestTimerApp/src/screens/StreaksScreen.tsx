@@ -1,5 +1,6 @@
 import React from 'react';
 import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Card } from '../components/Card';
 import { Icon } from '../components/Icon';
 import { NeedsAccount } from '../components/NeedsAccount';
 import { Pop } from '../components/Pop';
@@ -16,7 +17,6 @@ import {
 import { EMPTY_STREAKS, STREAKS } from '../copy';
 import { useEnter } from '../hooks/useEnter';
 import {
-  HAIRLINE,
   radius,
   sized,
   spacing,
@@ -104,23 +104,29 @@ export function StreaksScreen() {
           </Animated.View>
 
           {/* 2 — how far to the next rung */}
-          <Animated.View style={[styles.card, enterMilestone]}>
-            <MilestoneCard rung={milestone} best={streak.bestStreak} />
+          <Animated.View style={enterMilestone}>
+            <Card style={styles.card}>
+              <MilestoneCard rung={milestone} best={streak.bestStreak} />
+            </Card>
           </Animated.View>
 
           {/* 3 — the one active challenge */}
-          <Animated.View style={[styles.card, enterChallenge]}>
-            <ChallengeCard rung={challenge} done={totals.fullWorkouts} />
+          <Animated.View style={enterChallenge}>
+            <Card style={styles.card}>
+              <ChallengeCard rung={challenge} done={totals.fullWorkouts} />
+            </Card>
           </Animated.View>
 
           {/* 4 — the rule, stated rather than implied */}
-          <Animated.View style={[styles.shield, enterShield]}>
-            <View style={styles.shieldTile}>
-              <Icon name="shield" color={colors.textOnAccent} size={20} />
-            </View>
-            <View style={styles.shieldText}>
-              <Text style={styles.shieldTitle}>{STREAKS.shield.title}</Text>
-            </View>
+          <Animated.View style={enterShield}>
+            <Card style={styles.shield}>
+              <View style={styles.shieldTile}>
+                <Icon name="shield" color={colors.textOnAccent} size={20} />
+              </View>
+              <View style={styles.shieldText}>
+                <Text style={styles.shieldTitle}>{STREAKS.shield.title}</Text>
+              </View>
+            </Card>
           </Animated.View>
 
           {/* 5 */}
@@ -272,14 +278,7 @@ const useStyles = themed(colors =>
     masthead: { ...sized(type.display, 42), color: colors.white },
     stop: { color: colors.accent },
 
-    card: {
-      backgroundColor: colors.surface,
-      borderWidth: HAIRLINE,
-      borderColor: colors.hairline,
-      borderRadius: radius.lg,
-      padding: CARD_PAD,
-      gap: spacing.md,
-    },
+    card: { padding: CARD_PAD, gap: spacing.md },
     cardHead: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -322,10 +321,6 @@ const useStyles = themed(colors =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.md,
-      backgroundColor: colors.surface,
-      borderWidth: HAIRLINE,
-      borderColor: colors.hairline,
-      borderRadius: radius.lg,
       padding: CARD_PAD,
     },
     shieldTile: {

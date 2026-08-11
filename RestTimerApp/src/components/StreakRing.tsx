@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Animated,
   Easing,
@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
+import { Bloom } from './Bloom';
 import { Pop } from './Pop';
 import { ProgressRing } from './ProgressRing';
 import { tap } from '../haptics';
@@ -113,7 +113,7 @@ export function StreakRing({
         style={styles.ring}
       >
         <Animated.View style={[styles.glow, glowStyle]} pointerEvents="none">
-          <Bloom />
+          <Bloom size={GLOW} color={colors.accent} peak={0.3} mid={0.14} />
         </Animated.View>
 
         <Animated.View style={press.style}>
@@ -136,26 +136,6 @@ export function StreakRing({
 
       <Text style={styles.line}>{line}</Text>
     </View>
-  );
-}
-
-/** The soft violet ground the ring floats on. */
-function Bloom() {
-  const colors = useColors();
-  // SVG gradient ids share one global namespace on the web. See GlowBackground.
-  const id = `streak-glow-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
-
-  return (
-    <Svg width={GLOW} height={GLOW}>
-      <Defs>
-        <RadialGradient id={id} cx="50%" cy="50%" r="50%">
-          <Stop offset="0" stopColor={colors.accent} stopOpacity={0.3} />
-          <Stop offset="0.55" stopColor={colors.accent} stopOpacity={0.14} />
-          <Stop offset="1" stopColor={colors.accent} stopOpacity={0} />
-        </RadialGradient>
-      </Defs>
-      <Circle cx={GLOW / 2} cy={GLOW / 2} r={GLOW / 2} fill={`url(#${id})`} />
-    </Svg>
   );
 }
 

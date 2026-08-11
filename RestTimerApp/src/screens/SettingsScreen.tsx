@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { AccountCard } from '../components/AccountCard';
 import { AppPill } from '../components/AppPill';
+import { Card } from '../components/Card';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { HeroDumbbell } from '../components/HeroDumbbell';
 import { Icon } from '../components/Icon';
@@ -230,7 +231,7 @@ export function SettingsScreen() {
             </Text>
           </SettingsSection>
 
-          <View style={styles.about}>
+          <Card style={styles.about}>
             <View style={styles.aboutTile}>
               <Icon name="lock" color={colors.accentText} size={20} />
             </View>
@@ -243,7 +244,7 @@ export function SettingsScreen() {
               </View>
               <Text style={styles.aboutSub}>Built to keep you focused.</Text>
             </View>
-          </View>
+          </Card>
         </Animated.View>
 
         <ConfirmDialog
@@ -588,10 +589,6 @@ const useStyles = themed(colors =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: spacing.md,
-      backgroundColor: colors.surface,
-      borderWidth: HAIRLINE,
-      borderColor: colors.hairline,
-      borderRadius: radius.lg,
       padding: spacing.md,
     },
     aboutTile: {

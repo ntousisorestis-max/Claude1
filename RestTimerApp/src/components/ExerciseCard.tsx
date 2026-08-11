@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { AppPill } from './AppPill';
+import { Card } from './Card';
 import { Collapsible } from './Collapsible';
 import { ConfirmDialog } from './ConfirmDialog';
 import { GradientButton } from './GradientButton';
@@ -101,7 +102,7 @@ export function ExerciseCard({
   const anyOpen = open.name || open.sets || open.rest || open.apps;
 
   return (
-    <View style={[styles.card, anyOpen && styles.cardOpen]}>
+    <Card style={[styles.card, anyOpen && styles.cardOpen]}>
       <View style={styles.head}>
         <View style={styles.headText}>
           <View style={styles.eyebrowRow}>
@@ -257,7 +258,7 @@ export function ExerciseCard({
         }}
         onCancel={() => setConfirming(false)}
       />
-    </View>
+    </Card>
   );
 }
 
@@ -483,14 +484,15 @@ function SavePill({
 const useStyles = themed(colors =>
   StyleSheet.create({
     card: {
-      backgroundColor: colors.surface,
-      borderWidth: HAIRLINE,
-      borderColor: colors.hairline,
-      borderRadius: radius.lg,
       padding: spacing.md,
       gap: spacing.md,
     },
-    cardOpen: { borderColor: colors.accent },
+    /** A thin accent ring while open, laid on top of the shadow-elevated
+     * card rather than swapping its border — the card has none to swap. */
+    cardOpen: {
+      borderWidth: HAIRLINE * 1.5,
+      borderColor: colors.accent,
+    },
 
     head: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
     headText: { flex: 1, gap: spacing.xs },

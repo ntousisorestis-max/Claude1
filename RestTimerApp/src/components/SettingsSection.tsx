@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { Card } from './Card';
 import { Icon, type IconName } from './Icon';
 import {
   HAIRLINE,
@@ -36,7 +37,7 @@ export function SettingsSection({
   const styles = useStyles();
   const colors = useColors();
   return (
-    <View style={styles.card}>
+    <Card style={styles.card}>
       <View style={styles.head}>
         <View style={styles.tile}>
           {mark ?? <Icon name={icon} color={colors.accentText} size={20} />}
@@ -45,7 +46,7 @@ export function SettingsSection({
       </View>
 
       {children}
-    </View>
+    </Card>
   );
 }
 
@@ -54,10 +55,6 @@ const TILE = 44;
 const useStyles = themed(colors =>
   StyleSheet.create({
     card: {
-      backgroundColor: colors.surface,
-      borderWidth: HAIRLINE,
-      borderColor: colors.hairline,
-      borderRadius: radius.lg,
       padding: spacing.md,
       gap: spacing.md,
     },

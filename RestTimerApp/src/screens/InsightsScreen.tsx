@@ -8,6 +8,8 @@ import {
   View,
 } from 'react-native';
 import { AuthSheet } from '../components/AuthSheet';
+import { Bloom } from '../components/Bloom';
+import { Card } from '../components/Card';
 import { FocusChart } from '../components/FocusChart';
 import { Icon, type IconName } from '../components/Icon';
 import { Pop } from '../components/Pop';
@@ -114,46 +116,45 @@ export function InsightsScreen() {
         </Text>
       </Animated.View>
 
-      {/* 1 — the four headline numbers */}
-      <Animated.View style={[styles.grid, enterGrid]}>
-        <View style={styles.gridRow}>
-          <Tile
-            icon="flame"
-            label="Time saved"
-            value={signedIn ? focus.value : null}
-            unit={focus.unit}
-          />
-          <Tile
+      {/* 1 — the one number this whole app exists for */}
+      <Animated.View style={enterGrid}>
+        <HeroStat value={signedIn ? focus.value : null} unit={focus.unit} />
+      </Animated.View>
+
+      {/* The rest of the count, quiet by comparison — one card, not three. */}
+      <Animated.View style={enterGrid}>
+        <Card style={styles.statList}>
+          <StatRow
             icon="check"
             label="Sets finished"
             value={signedIn ? String(totals.setsCompleted) : null}
             unit={totals.setsCompleted === 1 ? 'set' : 'sets'}
           />
-        </View>
-        <View style={styles.gridRow}>
-          <Tile
+          <StatRow
             icon="trophy"
             label="Workouts"
             value={signedIn ? String(totals.workoutsFinished) : null}
-            unit={totals.workoutsFinished === 1 ? 'done' : 'done'}
+            unit="done"
           />
           {/* Was the current streak, until the Streaks tab grew a hero ring
               around that same number. An average is this screen's character
               anyway — Insights is arithmetic, Streaks is the calendar — and it
               needs no field the account doesn't already have. */}
-          <Tile
+          <StatRow
             icon="timer"
             label="Avg. per workout"
             value={
               signedIn && totals.workoutsFinished > 0 ? perWorkout.value : null
             }
             unit={perWorkout.unit}
+            last
           />
-        </View>
+        </Card>
       </Animated.View>
 
       {/* 2 — the week */}
-      <Animated.View style={[styles.card, enterChart]}>
+      <Animated.View style={enterChart}>
+        <Card style={styles.card}>
         <View style={styles.cardHead}>
           <Text style={styles.cardTitle}>THIS WEEK</Text>
           {signedIn && weekFocusSeconds > 0 ? (
@@ -178,6 +179,7 @@ export function InsightsScreen() {
         ) : signedIn && weekFocusSeconds > 0 ? null : (
           <Text style={styles.note}>{EMPTY_CHART}</Text>
         )}
+        </Card>
       </Animated.View>
 
       {/* 3 — what the time is worth, priced in the user's own sets */}
@@ -197,27 +199,29 @@ export function InsightsScreen() {
       ) : null}
 
       {/* 4 — the best single workout, ever */}
-      <Animated.View style={[styles.card, enterRecords]}>
-        <Text style={styles.cardTitle}>PERSONAL RECORDS</Text>
+      <Animated.View style={enterRecords}>
+        <Card style={styles.card}>
+          <Text style={styles.cardTitle}>PERSONAL RECORDS</Text>
 
-        {signedIn && records.longestFocusSeconds > 0 ? (
-          <View style={styles.records}>
-            <RecordRow
-              icon="clock"
-              label="Longest focused workout"
-              value={`${longest.value}${
-                longest.unit ? ` ${longest.unit}` : ''
-              }`}
-            />
-            <RecordRow
-              icon="reps"
-              label="Most sets in one workout"
-              value={String(records.mostSetsInWorkout)}
-            />
-          </View>
-        ) : (
-          <Text style={styles.note}>{EMPTY_RECORDS}</Text>
-        )}
+          {signedIn && records.longestFocusSeconds > 0 ? (
+            <View style={styles.records}>
+              <RecordRow
+                icon="clock"
+                label="Longest focused workout"
+                value={`${longest.value}${
+                  longest.unit ? ` ${longest.unit}` : ''
+                }`}
+              />
+              <RecordRow
+                icon="reps"
+                label="Most sets in one workout"
+                value={String(records.mostSetsInWorkout)}
+              />
+            </View>
+          ) : (
+            <Text style={styles.note}>{EMPTY_RECORDS}</Text>
+          )}
+        </Card>
       </Animated.View>
 
       {/* 5 — the account, which is what makes any of the above survive */}
@@ -236,22 +240,63 @@ export function InsightsScreen() {
 }
 
 /**
- * One cell of the 2×2 grid.
+ * The one number the screen leads with: lifetime time saved.
  *
- * A null value is the empty state, and it draws an em-dash rather than a zero.
- * "0 sets finished" reads as a judgement; "—" reads as a number that hasn't
- * arrived yet, which is what it is.
+ * Everything else on Insights is arithmetic on top of what a workout already
+ * measured — this is the number the app exists to grow, so it gets the
+ * screen's one visual anchor rather than sitting as a quarter of an even
+ * grid. The glow behind it is the same technique `StreakRing` uses for its
+ * hero number, just static rather than breathing: this figure isn't waiting
+ * on anything today the way the streak ring is.
  */
-function Tile({
+function HeroStat({ value, unit }: { value: string | null; unit: string }) {
+  const styles = useStyles();
+  const colors = useColors();
+  const shown = value ?? '—';
+
+  return (
+    <View
+      style={styles.heroStat}
+      accessibilityRole="text"
+      accessibilityLabel={
+        value ? `Time saved: ${value} ${unit}` : 'Time saved: nothing yet'
+      }
+    >
+      <View style={styles.heroGlow} pointerEvents="none">
+        <Bloom size={260} color={colors.accent} peak={0.32} mid={0.15} />
+      </View>
+
+      <Text style={styles.heroLabel}>TIME SAVED</Text>
+      <Pop value={shown} depth={1.06} style={styles.heroPop}>
+        <View style={styles.heroFigure}>
+          <Text style={[styles.heroValue, !value && styles.heroValueEmpty]}>
+            {shown}
+          </Text>
+          {value ? <Text style={styles.heroUnit}>{unit}</Text> : null}
+        </View>
+      </Pop>
+    </View>
+  );
+}
+
+/**
+ * One line in the quiet list under the hero — what used to be its own boxed
+ * tile. Three of these share one card and a hairline between them rather
+ * than three cards competing with the number above for attention.
+ */
+function StatRow({
   icon,
   label,
   value,
   unit,
+  last = false,
 }: {
   icon: IconName;
   label: string;
   value: string | null;
   unit: string;
+  /** Drops the divider under the final row in the list. */
+  last?: boolean;
 }) {
   const styles = useStyles();
   const colors = useColors();
@@ -259,23 +304,20 @@ function Tile({
 
   return (
     <View
-      style={styles.tile}
+      style={[styles.statRow, !last && styles.statRowDivided]}
       accessibilityRole="text"
       accessibilityLabel={
         value ? `${label}: ${value} ${unit}` : `${label}: nothing yet`
       }
     >
-      <View style={styles.tileTop}>
-        <Icon name={icon} color={colors.accentText} size={17} />
-        <Text style={styles.tileLabel}>{label.toUpperCase()}</Text>
-      </View>
-
-      <Pop value={shown} depth={1.09} style={styles.tilePop}>
-        <View style={styles.tileFigure}>
-          <Text style={[styles.tileValue, !value && styles.tileValueEmpty]}>
+      <Icon name={icon} color={colors.accentText} size={16} />
+      <Text style={styles.statLabel}>{label}</Text>
+      <Pop value={shown} depth={1.08} style={styles.statPop}>
+        <View style={styles.statFigure}>
+          <Text style={[styles.statValue, !value && styles.statValueEmpty]}>
             {shown}
           </Text>
-          {value ? <Text style={styles.tileUnit}>{unit}</Text> : null}
+          {value ? <Text style={styles.statUnit}>{unit}</Text> : null}
         </View>
       </Pop>
     </View>
@@ -329,7 +371,7 @@ function SaveProgress({
   const press = usePressScale({ depth: 0.98, haptic: true });
 
   return (
-    <View style={styles.account}>
+    <Card style={styles.account}>
       <View style={styles.accountHead}>
         <View style={styles.accountTile}>
           <Icon name="user" color={colors.accentText} size={20} />
@@ -353,7 +395,7 @@ function SaveProgress({
       ) : (
         <Text style={styles.note}>{SAVE_PROGRESS.setup}</Text>
       )}
-    </View>
+    </Card>
   );
 }
 
@@ -371,38 +413,45 @@ const useStyles = themed(colors =>
     masthead: { ...sized(type.display, 42), color: colors.white },
     stop: { color: colors.accent },
 
-    grid: { gap: spacing.md },
-    gridRow: { flexDirection: 'row', gap: spacing.md },
-    tile: {
-      flex: 1,
-      backgroundColor: colors.surface,
-      borderWidth: HAIRLINE,
-      borderColor: colors.hairline,
-      borderRadius: radius.lg,
-      padding: CARD_PAD,
-      gap: spacing.md,
+    /** The hero number's own wrapper — enough room for the glow to bleed
+     * past the text without clipping against the next section. */
+    heroStat: {
+      alignItems: 'flex-start',
+      paddingVertical: spacing.sm,
     },
-    tileTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-    tileLabel: {
-      ...sized(type.tag, 9),
-      color: colors.accentText,
-      flexShrink: 1,
+    heroGlow: { position: 'absolute', top: -60, left: -50 },
+    heroLabel: { ...sized(type.tag, 11), color: colors.accentText },
+    heroPop: { alignSelf: 'flex-start' },
+    heroFigure: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      gap: 8,
+      marginTop: 4,
     },
-    tilePop: { alignSelf: 'flex-start' },
-    tileFigure: { flexDirection: 'row', alignItems: 'baseline', gap: 5 },
-    tileValue: { ...sized(type.display, 30), ...tabular, color: colors.white },
-    /** The em-dash is a placeholder, so it sits at the muted tier, not white. */
-    tileValueEmpty: { color: colors.faint },
-    tileUnit: { ...type.helper, fontSize: 12, color: colors.muted },
+    heroValue: { ...sized(type.mega, 64), ...tabular, color: colors.white },
+    heroValueEmpty: { color: colors.faint },
+    heroUnit: { ...sized(type.title, 22), color: colors.muted },
 
-    card: {
-      backgroundColor: colors.surface,
-      borderWidth: HAIRLINE,
-      borderColor: colors.hairline,
-      borderRadius: radius.lg,
-      padding: CARD_PAD,
-      gap: spacing.md,
+    statList: { paddingHorizontal: CARD_PAD },
+    statRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      paddingVertical: spacing.md,
     },
+    statRowDivided: {
+      borderBottomWidth: HAIRLINE,
+      borderBottomColor: colors.hairline,
+    },
+    statLabel: { ...type.body, color: colors.muted, flex: 1 },
+    statPop: { alignSelf: 'flex-start' },
+    statFigure: { flexDirection: 'row', alignItems: 'baseline', gap: 5 },
+    statValue: { ...sized(type.title, 20), ...tabular, color: colors.white },
+    /** The em-dash is a placeholder, so it sits at the muted tier, not white. */
+    statValueEmpty: { color: colors.faint },
+    statUnit: { ...type.helper, fontSize: 12, color: colors.muted },
+
+    card: { padding: CARD_PAD, gap: spacing.md },
     cardHead: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -467,14 +516,7 @@ const useStyles = themed(colors =>
     recordLabel: { ...type.helper, fontSize: 14, color: colors.muted, flex: 1 },
     recordValue: { ...sized(type.title, 19), ...tabular, color: colors.white },
 
-    account: {
-      backgroundColor: colors.surface,
-      borderWidth: HAIRLINE,
-      borderColor: colors.hairline,
-      borderRadius: radius.lg,
-      padding: CARD_PAD,
-      gap: spacing.md,
-    },
+    account: { padding: CARD_PAD, gap: spacing.md },
     accountHead: {
       flexDirection: 'row',
       alignItems: 'center',

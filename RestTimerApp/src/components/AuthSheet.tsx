@@ -118,15 +118,18 @@ export function AuthSheet({
           onPress={onClose}
           style={[styles.backdrop, { opacity: presence.opacity }]}
         >
-          <AnimatedPressable
-            accessibilityViewIsModal
-            onPress={() => {}}
-            style={[styles.card, presence.style]}
-          >
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={styles.body}
+          <Animated.View style={[styles.card, presence.style]}>
+            {/* Swallows taps so a press anywhere on the sheet — not just its
+                controls — doesn't fall through to the backdrop and dismiss it. */}
+            <Pressable
+              accessibilityViewIsModal
+              onPress={() => {}}
+              style={styles.cardTouchable}
             >
+              <ScrollView
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={styles.body}
+              >
               <View style={styles.head}>
                 <View style={styles.tile}>
                   <Icon name="user" color={colors.accentText} size={20} />
@@ -223,8 +226,9 @@ export function AuthSheet({
               >
                 <Text style={styles.closeText}>Not now</Text>
               </AnimatedPressable>
-            </ScrollView>
-          </AnimatedPressable>
+              </ScrollView>
+            </Pressable>
+          </Animated.View>
         </AnimatedPressable>
       </KeyboardAvoidingView>
     </Modal>
@@ -306,10 +310,14 @@ const useStyles = themed(colors =>
       maxWidth: 420,
       maxHeight: '92%',
       backgroundColor: colors.surface,
-      borderWidth: HAIRLINE,
-      borderColor: colors.hairline,
       borderRadius: radius.lg,
+      shadowColor: colors.dropShadow,
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.28,
+      shadowRadius: 24,
+      elevation: 8,
     },
+    cardTouchable: { flex: 1 },
     body: { padding: spacing.lg, gap: spacing.md },
 
     head: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
