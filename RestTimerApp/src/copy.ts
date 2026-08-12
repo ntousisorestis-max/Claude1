@@ -309,45 +309,39 @@ export function extraSetsLine(sets: number): string {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Streaks                                                                    */
+/* Leaderboard                                                                */
 /* -------------------------------------------------------------------------- */
 
 /**
- * The consistency tab.
+ * The leaderboard tab: ranked by current streak, Global or Friends.
  *
- * The rule this whole screen is written against: **never make a missed day into
- * a telling-off.** Somebody looking at a broken streak already knows. Every line
- * below that could have been a jab is a door back in instead, and the shield
- * card states the rule flatly rather than dressing a loss up as a lesson.
- *
- * The other rule is the app's usual one — nothing here promises a mechanic that
- * doesn't exist. There is no freeze, no rest day, no pass, so the card says so
- * in as many words rather than leaving a gap somebody fills in hopefully.
+ * The same rule the old Streaks tab was written against still applies here,
+ * just aimed at a harder case — this screen shows *other people's* numbers
+ * too. Nothing here treats a low rank as a verdict: no jab at the bottom of
+ * the list, no fake stakes about what a rank means. It's a mirror, not a
+ * scoreboard with an opinion.
  */
-export const STREAKS = {
-  /** Under the ring. Four states of the same integer, and they're not alike. */
-  ring: {
-    none: 'Nothing running yet. Finish a workout today and that’s day one.',
-    open: 'Still alive. One workout today and it stays that way.',
-    firstDay: 'Day one, done. The hard part is tomorrow.',
-    banked: 'Today’s in the bank. Nothing left to prove.',
+export const LEADERBOARD = {
+  scope: { global: 'Global', friends: 'Friends' },
+  you: 'YOU',
+  /** Singular/plural of the one number every row shows. */
+  streak: (days: number) => (days === 1 ? '1 day' : `${days} days`),
+  emptyGlobal: 'Nobody’s posted a streak yet. Be the first.',
+  unreachable: 'Can’t reach the leaderboard right now. Try again in a moment.',
+  emptyFriends:
+    'Share your code, or enter theirs, and you’ll show up here together.',
+  addFriend: {
+    label: 'ADD A FRIEND',
+    placeholder: 'Enter their code',
+    action: 'Add',
+    notFound: 'No account uses that code.',
+    isSelf: 'That’s your own code.',
+    alreadyAdded: 'Already on your list.',
   },
-  milestone: {
-    label: 'NEXT MILESTONE',
-    bestLabel: 'BEST EVER',
-    /** Before there is a best to show. Not "0 days". */
-    noBest: 'No best yet',
-    /** Past the top rung. Rare, and it should feel like it. */
-    done: 'You’re past every milestone there is. Genuinely — that’s the lot.',
+  myCode: {
+    label: 'YOUR CODE',
+    hint: 'Share it so a friend can add you.',
   },
-  challenge: {
-    label: 'CHALLENGE',
-    title: 'Finish what you start',
-  },
-  shield: {
-    title: 'One missed day ends it',
-  },
-  footer: 'Nobody’s watching. That’s rather the point.',
 } as const;
 
 /* -------------------------------------------------------------------------- */
@@ -378,16 +372,16 @@ export const EMPTY_EXERCISES = {
 } as const;
 
 /**
- * Streaks, with nothing to show until there's an account.
+ * The leaderboard, with nothing to rank until there's an account.
  *
  * Written out rather than built from a template with the subject slotted in.
  * The template read "Your all-time totals **is** saved to your account" — a
  * noun phrase substituted into a sentence that had already committed to being
  * singular. Insights has its own card now; this is the last one left.
  */
-export const EMPTY_STREAKS = {
-  title: 'No streak yet',
+export const EMPTY_LEADERBOARD = {
+  title: 'No rank yet',
   body:
-    'Your streak lives on your account. Make one in Settings and today can be ' +
-    'day one.',
+    'The leaderboard lives on your account. Make one in Settings and you’ll ' +
+    'show up next time you train.',
 } as const;

@@ -27,9 +27,9 @@ import { useReduceMotion } from './src/hooks/useReduceMotion';
 import { ActiveSetScreen } from './src/screens/ActiveSetScreen';
 import { CompleteScreen } from './src/screens/CompleteScreen';
 import { InsightsScreen } from './src/screens/InsightsScreen';
+import { LeaderboardScreen } from './src/screens/LeaderboardScreen';
 import { RestingScreen } from './src/screens/RestingScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
-import { StreaksScreen } from './src/screens/StreaksScreen';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { WelcomeScreen } from './src/screens/WelcomeScreen';
 import { ExercisesScreen } from './src/screens/ExercisesScreen';
@@ -77,8 +77,8 @@ function TabScreen({ tab }: { tab: Tab }) {
       return <WorkoutTab />;
     case 'insights':
       return <InsightsScreen />;
-    case 'streaks':
-      return <StreaksScreen />;
+    case 'leaderboard':
+      return <LeaderboardScreen />;
     case 'settings':
       return <SettingsScreen />;
   }

@@ -26,6 +26,7 @@ import {
   type CloudBackend,
   type DayTotals,
   type FocusTotals,
+  type LeaderboardEntry,
   type PersonalRecords,
   type SyncStatus,
   type WorkoutRecord,
@@ -95,6 +96,19 @@ type Account = {
   signOut: () => Promise<void>;
   clearError: () => void;
   recordWorkout: (record: WorkoutRecord) => void;
+
+  /** Top accounts by streak, for the Leaderboard tab's Global view. */
+  getGlobalLeaderboard: (limit: number) => Promise<LeaderboardEntry[]>;
+  /** The signed-in user plus everyone they've added. Empty when signed out. */
+  getFriendsLeaderboard: () => Promise<LeaderboardEntry[]>;
+  /** Resolves a shared code to the account it belongs to, or null. */
+  findByFriendCode: (
+    code: string,
+  ) => Promise<{ uid: string; displayName: string } | null>;
+  /** Adds someone to the signed-in user's friends list. */
+  addFriend: (friendUid: string) => Promise<void>;
+  /** The signed-in user's own shareable code. */
+  myFriendCode: () => Promise<string>;
 };
 
 const AccountContext = createContext<Account | null>(null);
@@ -400,6 +414,48 @@ export function AccountProvider({
   const clearError = useCallback(() => setError(null), []);
   const clearRecord = useCallback(() => setJustSetRecord(null), []);
 
+  /* --- The leaderboard ---------------------------------------------------- */
+
+  const getGlobalLeaderboard = useCallback(
+    (limit: number) => cloud.getGlobalLeaderboard?.(limit) ?? Promise.resolve([]),
+    [cloud],
+  );
+
+  const getFriendsLeaderboard = useCallback(() => {
+    if (!user) {
+      return Promise.resolve([]);
+    }
+    return cloud.getFriendsLeaderboard?.(user.uid) ?? Promise.resolve([]);
+  }, [cloud, user]);
+
+  const findByFriendCode = useCallback(
+    (code: string) => cloud.findByFriendCode?.(code) ?? Promise.resolve(null),
+    [cloud],
+  );
+
+  const addFriend = useCallback(
+    (friendUid: string) => {
+      if (!user) {
+        return Promise.reject(new Error('Not signed in'));
+      }
+      return (
+        cloud.addFriend?.(user.uid, friendUid) ??
+        Promise.reject(new Error('Adding friends needs a Firebase project'))
+      );
+    },
+    [cloud, user],
+  );
+
+  const myFriendCode = useCallback(() => {
+    if (!user) {
+      return Promise.reject(new Error('Not signed in'));
+    }
+    return (
+      cloud.getOrCreateFriendCode?.(user.uid) ??
+      Promise.reject(new Error('The leaderboard needs a Firebase project'))
+    );
+  }, [cloud, user]);
+
   const status: AccountStatus = !configured
     ? 'unconfigured'
     : !ready
@@ -431,6 +487,11 @@ export function AccountProvider({
       signOut,
       clearError,
       recordWorkout,
+      getGlobalLeaderboard,
+      getFriendsLeaderboard,
+      findByFriendCode,
+      addFriend,
+      myFriendCode,
     }),
     [
       status,
@@ -452,6 +513,11 @@ export function AccountProvider({
       signOut,
       clearError,
       recordWorkout,
+      getGlobalLeaderboard,
+      getFriendsLeaderboard,
+      findByFriendCode,
+      addFriend,
+      myFriendCode,
     ],
   );
 

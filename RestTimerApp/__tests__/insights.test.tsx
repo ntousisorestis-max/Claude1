@@ -1,9 +1,9 @@
 /**
- * The Insights and Streaks tabs, driven through the real app with a fake cloud
- * and a frozen clock.
+ * The Insights tab, driven through the real app with a fake cloud and a
+ * frozen clock. The leaderboard has its own file — see leaderboard.test.tsx.
  *
- * The clock matters more than usual here: every number on these two screens is
- * a function of what day it is, so the tests pin the date and then move it.
+ * The clock matters more than usual here: every number on this screen is a
+ * function of what day it is, so the tests pin the date and then move it.
  */
 import React from 'react';
 import ReactTestRenderer, { type ReactTestInstance } from 'react-test-renderer';
@@ -192,7 +192,7 @@ const labels = (root: ReactTestInstance): string[] =>
 const hasLabel = (root: ReactTestInstance, needle: string) =>
   labels(root).some(l => l.includes(needle));
 
-describe('Insights and Streaks', () => {
+describe('Insights', () => {
   const trees: ReactTestRenderer.ReactTestRenderer[] = [];
   let cloud: ReturnType<typeof createFakeCloud>;
 
@@ -230,7 +230,7 @@ describe('Insights and Streaks', () => {
 
   it('offers all four tabs', async () => {
     const root = await launch();
-    for (const tab of ['Workout', 'Insights', 'Streaks', 'Settings']) {
+    for (const tab of ['Workout', 'Insights', 'Ranks', 'Settings']) {
       expect(labels(root)).toContain(tab);
     }
   });
@@ -357,107 +357,6 @@ describe('Insights and Streaks', () => {
     expect(hasText(root, EMPTY_RECORDS)).toBe(false);
   });
 
-  it('shows the streak, the best ever, and ticks the days trained', async () => {
-    const root = await launch();
-    await signIn(root);
-
-    cloud.push(NO_TOTALS, {
-      currentStreak: 3,
-      bestStreak: 11,
-      lastActiveDay: '2026-08-03',
-    });
-    cloud.pushDays([day('2026-08-03'), day('2026-08-02'), day('2026-08-01')]);
-
-    press(root, 'Streaks');
-
-    // The ring announces the number and today's state together — the two Texts
-    // inside it would otherwise read as "3" and "DAY STREAK".
-    expect(hasLabel(root, '3 days, trained today')).toBe(true);
-    expect(hasText(root, 'Today’s in the bank. Nothing left to prove.')).toBe(
-      true,
-    );
-
-    // Best ever 11 puts the next milestone at 14, three days out.
-    expect(hasText(root, '11 days')).toBe(true);
-    expect(hasText(root, '14')).toBe(true);
-    expect(hasText(root, '3 more days in a row and it’s yours.')).toBe(true);
-  });
-
-  it('measures the milestone against the best streak, not the current one', async () => {
-    // A milestone cleared in March must not come back as a target in April.
-    const root = await launch();
-    await signIn(root);
-
-    cloud.push(NO_TOTALS, {
-      currentStreak: 1,
-      bestStreak: 30,
-      lastActiveDay: '2026-08-03',
-    });
-
-    press(root, 'Streaks');
-
-    // 30 is cleared, so the target is 60 — not 3, which is where a ladder read
-    // off the current streak of 1 would have started again.
-    expect(hasText(root, '60')).toBe(true);
-    expect(hasText(root, '30 more days in a row and it’s yours.')).toBe(true);
-  });
-
-  it('counts only the workouts that finished every planned set', async () => {
-    const root = await launch();
-    await signIn(root);
-
-    press(root, 'Streaks');
-    // Nothing banked: the count is honest.
-    expect(hasLabel(root, 'Finish what you start: 0 of 3 workouts')).toBe(true);
-
-    cloud.push({ workoutsFinished: 9, fullWorkouts: 4 });
-
-    // Four clears the first rung, so the target moves up to five.
-    expect(hasLabel(root, 'Finish what you start: 4 of 5 workouts')).toBe(true);
-  });
-
-  it('keeps yesterday’s streak alive before today’s workout', async () => {
-    // The rule that stops everyone's streak reading zero over breakfast.
-    const root = await launch();
-    await signIn(root);
-
-    cloud.push(NO_TOTALS, {
-      currentStreak: 6,
-      bestStreak: 6,
-      lastActiveDay: '2026-08-02',
-    });
-
-    press(root, 'Streaks');
-    expect(hasLabel(root, '6 days, not trained today yet')).toBe(true);
-    expect(
-      hasText(root, 'Still alive. One workout today and it stays that way.'),
-    ).toBe(true);
-  });
-
-  it('shows a broken streak as zero without touching the best ever', async () => {
-    const root = await launch();
-    await signIn(root);
-
-    cloud.push(NO_TOTALS, {
-      currentStreak: 9,
-      bestStreak: 9,
-      lastActiveDay: '2026-07-30',
-    });
-
-    press(root, 'Streaks');
-    expect(hasLabel(root, '0 days, not trained today yet')).toBe(true);
-    expect(
-      hasText(
-        root,
-        'Nothing running yet. Finish a workout today and that’s day one.',
-      ),
-    ).toBe(true);
-    // The record survives the streak that set it, and still drives the ladder:
-    // best 9 puts the next milestone at 14.
-    expect(hasText(root, '9 days')).toBe(true);
-    expect(hasText(root, '14')).toBe(true);
-  });
-
   it('stamps a finished workout with the local day it happened on', async () => {
     const root = await launch();
     await signIn(root);
@@ -497,7 +396,7 @@ describe('Insights and Streaks', () => {
     expect(cloud.recorded[0].day).toBe('2026-08-03');
   });
 
-  it('keeps the tab bar on Insights and Streaks while a workout is running', async () => {
+  it('keeps the tab bar on Insights and the leaderboard while a workout is running', async () => {
     // The bar is hidden on the Workout tab mid-session on purpose. That must
     // not leak into the other tabs, which would strand the user with no way
     // back — the old rule named the Settings tab explicitly.
@@ -516,8 +415,8 @@ describe('Insights and Streaks', () => {
     press(root, 'End it now');
     press(root, 'New workout');
 
-    press(root, 'Streaks');
+    press(root, 'Ranks');
     expect(labels(root)).toContain('Workout');
-    expect(hasText(root, 'Streaks')).toBe(true);
+    expect(hasText(root, 'Leaderboard')).toBe(true);
   });
 });

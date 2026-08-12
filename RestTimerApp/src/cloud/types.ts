@@ -121,6 +121,21 @@ export type AccountData = {
 };
 
 /**
+ * One row of the leaderboard: enough to rank someone and greet them by name.
+ *
+ * `streak` is the *stored* value, not decayed for today — every reader of a
+ * list of these has to run it through `streakToday` themselves, the same way
+ * `AccountContext` does for the signed-in user's own streak. There is no way
+ * to decay it once, centrally, because "today" depends on whoever's phone is
+ * looking at the list.
+ */
+export type LeaderboardEntry = {
+  uid: string;
+  displayName: string;
+  streak: StreakState;
+};
+
+/**
  * A live listener has stopped.
  *
  * Reported rather than logged, because a listener that has fallen over and a
@@ -183,4 +198,26 @@ export type CloudBackend = {
   signOut(): Promise<void>;
   /** Writes one workout and folds it into the user's totals. Idempotent. */
   recordWorkout(uid: string, record: WorkoutRecord): Promise<void>;
+
+  /**
+   * The leaderboard, and the ability to build a friends list for it.
+   *
+   * Optional, and called nowhere unless a user is actually signed in and
+   * looking at the Leaderboard tab — `localOnlyBackend` and every existing
+   * test's own fake `CloudBackend` are still complete implementations
+   * without them.
+   */
+  /** Top accounts by stored streak, most recently trained first among ties. */
+  getGlobalLeaderboard?(limit: number): Promise<LeaderboardEntry[]>;
+  /** The signed-in user plus everyone they've added. */
+  getFriendsLeaderboard?(uid: string): Promise<LeaderboardEntry[]>;
+  /** Resolves a shared code to the account it belongs to, or null. */
+  findByFriendCode?(
+    code: string,
+  ): Promise<{ uid: string; displayName: string } | null>;
+  /** Adds `friendUid` to `uid`'s one-directional friends list. */
+  addFriend?(uid: string, friendUid: string): Promise<void>;
+  /** This account's own shareable code, generating one the first time it's
+   * asked for — covers accounts created before this existed. */
+  getOrCreateFriendCode?(uid: string): Promise<string>;
 };

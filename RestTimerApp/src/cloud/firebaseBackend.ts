@@ -12,10 +12,16 @@ import {
   collection,
   doc,
   documentId,
+  getDoc,
+  getDocs,
   increment,
   initializeFirestore,
+  limit as fsLimit,
   onSnapshot,
+  orderBy,
   query,
+  setDoc,
+  updateDoc,
   where,
   runTransaction,
   serverTimestamp,
@@ -23,12 +29,14 @@ import {
 } from 'firebase/firestore';
 import { afterTrainingOn, isDayKey, NO_STREAK, type StreakState } from './days';
 import { FIREBASE_CONFIG } from './firebaseConfig';
+import { isValidFriendCode, randomFriendCode } from './friendCode';
 import {
   NO_RECORDS,
   NO_TOTALS,
   type AuthUser,
   type CloudBackend,
   type FocusTotals,
+  type LeaderboardEntry,
   type PersonalRecords,
   type WorkoutRecord,
 } from './types';
@@ -150,6 +158,30 @@ function streakFrom(data: Record<string, unknown> | undefined): StreakState {
     // come back as NaN days apart, which reads as "streak broken" forever.
     lastActiveDay: isDayKey(last) ? last : null,
   };
+}
+
+/** One leaderboard row, off whichever profile doc it was fetched from. */
+function entryFrom(
+  uid: string,
+  data: Record<string, unknown> | undefined,
+): LeaderboardEntry {
+  return {
+    uid,
+    displayName:
+      typeof data?.displayName === 'string' && data.displayName
+        ? data.displayName
+        : 'Athlete',
+    streak: streakFrom(data),
+  };
+}
+
+/** Firestore's `in` operator caps at 30 values a query. */
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    out.push(items.slice(i, i + size));
+  }
+  return out;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -393,6 +425,78 @@ export const firebaseBackend: CloudBackend = {
         { merge: true },
       );
     });
+  },
+
+  async getGlobalLeaderboard(limit) {
+    const { db } = firebase();
+    const top = query(
+      collection(db, 'users'),
+      orderBy('currentStreak', 'desc'),
+      fsLimit(limit),
+    );
+    const snap = await getDocs(top);
+    return snap.docs.map(row => entryFrom(row.id, row.data()));
+  },
+
+  async getFriendsLeaderboard(uid) {
+    const { db } = firebase();
+    const friendsSnap = await getDocs(collection(db, 'users', uid, 'friends'));
+    // Always includes the signed-in user themselves, so they can see how they
+    // stack up against the people they added — a friends board with only your
+    // friends on it and not you is a leaderboard you can't find yourself on.
+    const uids = [uid, ...friendsSnap.docs.map(row => row.id)];
+
+    const entries: LeaderboardEntry[] = [];
+    for (const batch of chunk(uids, 30)) {
+      const rows = await getDocs(
+        query(collection(db, 'users'), where(documentId(), 'in', batch)),
+      );
+      entries.push(...rows.docs.map(row => entryFrom(row.id, row.data())));
+    }
+    return entries;
+  },
+
+  async findByFriendCode(code) {
+    if (!isValidFriendCode(code)) {
+      return null;
+    }
+    const { db } = firebase();
+    const match = await getDocs(
+      query(collection(db, 'users'), where('friendCode', '==', code)),
+    );
+    const row = match.docs[0];
+    return row ? { uid: row.id, displayName: entryFrom(row.id, row.data()).displayName } : null;
+  },
+
+  async addFriend(uid, friendUid) {
+    const { db } = firebase();
+    await setDoc(doc(db, 'users', uid, 'friends', friendUid), {
+      uid: friendUid,
+      addedAt: serverTimestamp(),
+    });
+  },
+
+  async getOrCreateFriendCode(uid) {
+    const { db } = firebase();
+    const ref = doc(db, 'users', uid);
+    const existing = (await getDoc(ref)).data()?.friendCode;
+    if (typeof existing === 'string' && isValidFriendCode(existing)) {
+      return existing;
+    }
+
+    // Collision odds for a 6-character code over this alphabet are astronomical
+    // — this loop is a safety net, not an expected path.
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const code = randomFriendCode();
+      const clash = await getDocs(
+        query(collection(db, 'users'), where('friendCode', '==', code)),
+      );
+      if (clash.empty) {
+        await updateDoc(ref, { friendCode: code });
+        return code;
+      }
+    }
+    throw new Error('Could not generate a unique code — try again');
   },
 };
 

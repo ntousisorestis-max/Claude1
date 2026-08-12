@@ -21,13 +21,13 @@ import {
   useColors,
 } from '../theme';
 
-export type Tab = 'workout' | 'insights' | 'streaks' | 'settings';
+export type Tab = 'workout' | 'insights' | 'leaderboard' | 'settings';
 
 /** In bar order. One list, so a new tab can't be added to half the app. */
 export const TABS: { tab: Tab; label: string }[] = [
   { tab: 'workout', label: 'Workout' },
   { tab: 'insights', label: 'Insights' },
-  { tab: 'streaks', label: 'Streaks' },
+  { tab: 'leaderboard', label: 'Ranks' },
   { tab: 'settings', label: 'Settings' },
 ];
 
@@ -213,8 +213,8 @@ function Glyph({ tab, tint, hole }: { tab: Tab; tint: string; hole: string }) {
       return <DumbbellGlyph tint={tint} />;
     case 'insights':
       return <BarsGlyph tint={tint} />;
-    case 'streaks':
-      return <FlameGlyph tint={tint} hole={hole} />;
+    case 'leaderboard':
+      return <PodiumGlyph tint={tint} />;
     case 'settings':
       return <SlidersGlyph tint={tint} hole={hole} />;
   }
@@ -250,23 +250,19 @@ function BarsGlyph({ tint }: { tint: string }) {
 }
 
 /**
- * A flame for Streaks.
+ * A podium for the leaderboard: three blocks, the middle one tallest.
  *
- * Solid, with the inner flame knocked back out in the bar's own colour — the
- * same trick the sliders use for their knobs. A two-stroke outline flame reads
- * as a leaf at this size; mass is what makes it fire.
+ * Filled, in the same style as the dumbbell and the insights bars — a
+ * stroked outline turns to mush at 24px. Same geometry as `BarsGlyph`, just
+ * arranged 2nd/1st/3rd instead of rising left to right, so the two read as
+ * clearly different ideas rather than the same shape reused.
  */
-function FlameGlyph({ tint, hole }: { tint: string; hole: string }) {
+function PodiumGlyph({ tint }: { tint: string }) {
   return (
     <>
-      <Path
-        d="M12 1.8c-.8 2.5-2.2 4-3.5 5.6C6.8 9.3 5 12 5 15.4a7 7 0 0 0 14 0c0-3.4-1.8-6.1-3.5-8-1.3-1.6-2.7-3.1-3.5-5.6z"
-        fill={tint}
-      />
-      <Path
-        d="M12 12.4c-.45 1.1-1.1 1.8-1.75 2.6-.75.9-1.35 2-1.35 3.3a3.1 3.1 0 0 0 6.2 0c0-1.3-.6-2.4-1.35-3.3-.65-.8-1.3-1.5-1.75-2.6z"
-        fill={hole}
-      />
+      <Rect x="3.5" y="11" width="4.2" height="9.5" rx="1.6" fill={tint} />
+      <Rect x="9.9" y="5.5" width="4.2" height="15" rx="1.6" fill={tint} />
+      <Rect x="16.3" y="8.5" width="4.2" height="12" rx="1.6" fill={tint} />
     </>
   );
 }

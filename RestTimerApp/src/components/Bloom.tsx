@@ -6,15 +6,16 @@ import { useColors } from '../theme';
 /**
  * A soft radial glow — the app's one recurring "anchor" technique.
  *
- * Sits behind the one thing a screen wants looked at first: the streak ring,
- * an Insights hero number, the workout hourglass. Same soft falloff
- * everywhere, so "this is the thing that matters here" reads the same way
- * from screen to screen without a caption having to say so — color used as a
- * single spotlight rather than spread thin across a dozen small accents.
+ * Sits behind the one thing a screen wants looked at first: an Insights hero
+ * number, the workout hourglass. Same soft falloff everywhere, so "this is
+ * the thing that matters here" reads the same way from screen to screen
+ * without a caption having to say so — color used as a single spotlight
+ * rather than spread thin across a dozen small accents.
  *
- * Static by default. `StreakRing` wraps its own instance in a breathing
- * animation because that ring measures something still in progress; most
- * anchors don't, and shouldn't borrow the motion just because it's there.
+ * Static by default. A caller wanting a breathing version can wrap its own
+ * instance in an animated opacity/scale, the way a "measures something still
+ * in progress" anchor would — most anchors don't, and shouldn't borrow the
+ * motion just because it's there.
  */
 export function Bloom({
   size,
