@@ -61,9 +61,17 @@ export function ActiveSetScreen() {
         />
       </Animated.View>
 
-      <Animated.View style={[styles.slabWrap, enterSlab]}>
-        <BigButton label="Done with set" onPress={finishSet} slab />
-      </Animated.View>
+      {/* The slab is the one control you hit without looking, so it stays
+          big — but capped and centred in whatever room is left, rather than
+          stretching to fill it. Unbounded, it grew to swallow the whole
+          screen on anything taller than a small phone, which read as an
+          empty violet slab with a lot of dead air around "End workout"
+          rather than a screen with a clear centre of gravity. */}
+      <View style={styles.slabArea}>
+        <Animated.View style={[styles.slabWrap, enterSlab]}>
+          <BigButton label="Done with set" onPress={finishSet} slab />
+        </Animated.View>
+      </View>
 
       <BigButton
         label="End workout"
@@ -97,7 +105,8 @@ const useStyles = themed(colors =>
       gap: spacing.lg,
     },
     head: { gap: spacing.md, paddingTop: spacing.lg },
-    slabWrap: { flex: 1 },
+    slabArea: { flex: 1, justifyContent: 'center' },
+    slabWrap: { flex: 1, maxHeight: 420, alignSelf: 'stretch' },
     exercise: { ...type.display, color: colors.white },
     setLabel: { ...type.tag, color: colors.faint, marginBottom: -spacing.xs },
     popped: { alignSelf: 'flex-start' },

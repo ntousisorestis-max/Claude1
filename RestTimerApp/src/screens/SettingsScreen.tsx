@@ -15,8 +15,10 @@ import { AccountCard } from '../components/AccountCard';
 import { AppPill } from '../components/AppPill';
 import { Card } from '../components/Card';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { DashedAddButton } from '../components/DashedAddButton';
 import { HeroDumbbell } from '../components/HeroDumbbell';
 import { Icon } from '../components/Icon';
+import { PillAction } from '../components/PillAction';
 import { SettingsSection } from '../components/SettingsSection';
 import { Segmented } from '../components/Segmented';
 import { Toggle } from '../components/Toggle';
@@ -179,23 +181,26 @@ export function SettingsScreen() {
                   </Text>
                 ) : null}
                 <View style={styles.composerRow}>
-                  <PillButton
+                  <PillAction
                     label="Add app"
                     disabled={!canAdd}
                     onPress={submitApp}
-                    solid
+                    style={styles.composerPill}
                   />
-                  <PillButton
+                  <PillAction
                     label="Cancel"
+                    variant="outline"
                     onPress={() => {
                       setDraft('');
                       setAdding(false);
                     }}
+                    style={styles.composerPill}
                   />
                 </View>
               </View>
             ) : (
-              <AddAnotherApp
+              <DashedAddButton
+                label="Add another app"
                 disabled={atAppLimit}
                 onPress={() => setAdding(true)}
               />
@@ -336,81 +341,6 @@ function RowTile({ icon, on }: { icon: 'speaker' | 'bellOff'; on: boolean }) {
   );
 }
 
-function AddAnotherApp({
-  disabled,
-  onPress,
-}: {
-  disabled: boolean;
-  onPress: () => void;
-}) {
-  const styles = useStyles();
-  const colors = useColors();
-  const press = usePressScale({ depth: 0.98, haptic: !disabled });
-
-  return (
-    <AnimatedPressable
-      {...press.handlers}
-      accessibilityRole="button"
-      accessibilityLabel="Add another app"
-      accessibilityState={{ disabled }}
-      onPress={onPress}
-      disabled={disabled}
-      style={[styles.add, disabled && styles.addOff, press.style]}
-    >
-      <Icon
-        name="plus"
-        color={disabled ? colors.faint : colors.accentText}
-        size={18}
-      />
-      <Text style={[styles.addText, disabled && styles.addTextOff]}>
-        Add another app
-      </Text>
-    </AnimatedPressable>
-  );
-}
-
-function PillButton({
-  label,
-  disabled = false,
-  solid = false,
-  onPress,
-}: {
-  label: string;
-  disabled?: boolean;
-  solid?: boolean;
-  onPress: () => void;
-}) {
-  const styles = useStyles();
-  const press = usePressScale({ depth: 0.95, haptic: !disabled });
-
-  return (
-    <AnimatedPressable
-      {...press.handlers}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled }}
-      onPress={onPress}
-      disabled={disabled}
-      style={[
-        styles.pill,
-        solid && styles.pillSolid,
-        disabled && styles.pillOff,
-        press.style,
-      ]}
-    >
-      <Text
-        style={[
-          styles.pillText,
-          solid && styles.pillTextSolid,
-          disabled && styles.pillTextOff,
-        ]}
-      >
-        {label}
-      </Text>
-    </AnimatedPressable>
-  );
-}
-
 /** The one destructive action, styled so it can't be mistaken for a setting. */
 function DangerRow({
   label,
@@ -516,21 +446,6 @@ const useStyles = themed(colors =>
 
     apps: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
 
-    add: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: spacing.sm,
-      minHeight: 52,
-      borderRadius: radius.md,
-      borderWidth: 1.5,
-      borderStyle: 'dashed',
-      borderColor: colors.hairline,
-    },
-    addOff: { opacity: 0.45 },
-    addText: { ...type.body, fontWeight: '600', color: colors.accentText },
-    addTextOff: { color: colors.faint },
-
     composer: { gap: spacing.sm },
     input: {
       ...type.body,
@@ -543,26 +458,7 @@ const useStyles = themed(colors =>
       paddingVertical: spacing.md,
     },
     composerRow: { flexDirection: 'row', gap: spacing.sm },
-    pill: {
-      flex: 1,
-      minHeight: 48,
-      borderRadius: radius.pill,
-      borderWidth: HAIRLINE,
-      borderColor: colors.hairline,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    pillSolid: { backgroundColor: colors.accent, borderColor: colors.accent },
-    pillOff: { backgroundColor: colors.ink, borderColor: colors.hairline },
-    /**
-     * 19px bold on the base, so "Add app" and "Cancel" stay the same size.
-     * Only the solid one needed it — white on `accent` is 4.22:1, which clears
-     * AA at large-text size and misses it at body size. The outlined one is
-     * `mutedOnDark` on ink and passes either way.
-     */
-    pillText: { ...sized(type.action, 19), color: colors.muted },
-    pillTextSolid: { color: colors.white },
-    pillTextOff: { color: colors.faint },
+    composerPill: { flex: 1 },
     warn: { ...type.helper, fontSize: 13, color: colors.danger },
 
     danger: {

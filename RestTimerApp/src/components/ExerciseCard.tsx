@@ -13,6 +13,7 @@ import { Collapsible } from './Collapsible';
 import { ConfirmDialog } from './ConfirmDialog';
 import { GradientButton } from './GradientButton';
 import { Icon, type IconName } from './Icon';
+import { PillAction } from './PillAction';
 import { Segmented } from './Segmented';
 import { Stepper } from './Stepper';
 import { usePressScale } from '../hooks/usePressScale';
@@ -480,35 +481,8 @@ function NameEditor({
           You already have an exercise called {trimmed}.
         </Text>
       ) : null}
-      <SavePill disabled={!canSave} onPress={save} />
+      <PillAction label="Save name" disabled={!canSave} onPress={save} />
     </View>
-  );
-}
-
-function SavePill({
-  disabled,
-  onPress,
-}: {
-  disabled: boolean;
-  onPress: () => void;
-}) {
-  const styles = useStyles();
-  const press = usePressScale({ depth: 0.95, haptic: !disabled });
-
-  return (
-    <AnimatedPressable
-      {...press.handlers}
-      accessibilityRole="button"
-      accessibilityLabel="Save name"
-      accessibilityState={{ disabled }}
-      onPress={onPress}
-      disabled={disabled}
-      style={[styles.savePill, disabled && styles.savePillOff, press.style]}
-    >
-      <Text style={[styles.savePillText, disabled && styles.savePillTextOff]}>
-        Save name
-      </Text>
-    </AnimatedPressable>
   );
 }
 
@@ -606,19 +580,5 @@ const useStyles = themed(colors =>
       minHeight: 52,
     },
     renameWarn: { ...type.helper, fontSize: 13, color: colors.danger },
-    savePill: {
-      minHeight: 48,
-      borderRadius: radius.pill,
-      backgroundColor: colors.accent,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    savePillOff: { backgroundColor: colors.raised },
-    /**
-     * 19px bold. White on `accent` is 4.22:1 — over AA's 3.0 for large text,
-     * under the 4.5 for body text — and WCAG's line is 18.66px bold.
-     */
-    savePillText: { ...sized(type.action, 19), color: colors.textOnAccent },
-    savePillTextOff: { color: colors.faint },
   }),
 );

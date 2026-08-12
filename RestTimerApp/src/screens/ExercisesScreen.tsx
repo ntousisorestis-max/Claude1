@@ -4,7 +4,6 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,15 +11,16 @@ import {
   View,
 } from 'react-native';
 import { Card } from '../components/Card';
+import { DashedAddButton } from '../components/DashedAddButton';
 import { ExerciseCard } from '../components/ExerciseCard';
 import { HeroHourglass } from '../components/HeroHourglass';
 import { Icon } from '../components/Icon';
+import { PillAction } from '../components/PillAction';
 import { SectionLabel } from '../components/SectionLabel';
 import { SessionStats } from '../components/SessionStats';
 import { TAB_BAR_CLEARANCE } from '../components/TabBar';
 import { EMPTY_EXERCISES } from '../copy';
 import { useEnter } from '../hooks/useEnter';
-import { usePressScale } from '../hooks/usePressScale';
 import { useWorkout } from '../state/WorkoutContext';
 import {
   allBlockableApps,
@@ -29,7 +29,6 @@ import {
 } from '../state/workoutReducer';
 import { APP_NAME } from '../appInfo';
 import {
-  HAIRLINE,
   radius,
   sized,
   spacing,
@@ -37,8 +36,6 @@ import {
   type,
   useColors,
 } from '../theme';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
  * The Workout tab: everything you've saved, ready to run.
@@ -159,7 +156,11 @@ export function ExercisesScreen() {
                 }}
               />
             ) : (
-              <AddButton disabled={full} onPress={() => setAdding(true)} />
+              <DashedAddButton
+                label="Add exercise"
+                disabled={full}
+                onPress={() => setAdding(true)}
+              />
             )}
           </>
         )}
@@ -203,8 +204,6 @@ function AddExercise({
   const colors = useColors();
   const [draft, setDraft] = useState('');
   const enter = useEnter();
-  const savePress = usePressScale({ depth: 0.94 });
-  const cancelPress = usePressScale({ depth: 0.94, haptic: true });
 
   const trimmed = draft.trim();
   const duplicate = existingNames.some(
@@ -255,30 +254,15 @@ function AddExercise({
         ) : null}
 
         <View style={styles.composerRow}>
-          <AnimatedPressable
-            {...savePress.handlers}
-            accessibilityRole="button"
-            accessibilityLabel="Save exercise"
-            accessibilityState={{ disabled: !canSave }}
-            onPress={submit}
+          <PillAction
+            label="Save exercise"
             disabled={!canSave}
-            style={[styles.save, !canSave && styles.saveOff, savePress.style]}
-          >
-            <Text style={[styles.saveText, !canSave && styles.saveTextOff]}>
-              Save exercise
-            </Text>
-          </AnimatedPressable>
+            onPress={submit}
+            style={styles.composerPill}
+          />
 
           {onCancel ? (
-            <AnimatedPressable
-              {...cancelPress.handlers}
-              accessibilityRole="button"
-              accessibilityLabel="Cancel"
-              onPress={onCancel}
-              style={[styles.cancel, cancelPress.style]}
-            >
-              <Text style={styles.cancelText}>Cancel</Text>
-            </AnimatedPressable>
+            <PillAction label="Cancel" variant="outline" onPress={onCancel} />
           ) : null}
         </View>
 
@@ -288,33 +272,6 @@ function AddExercise({
         </Text>
       </Card>
     </Animated.View>
-  );
-}
-
-function AddButton({
-  disabled,
-  onPress,
-}: {
-  disabled: boolean;
-  onPress: () => void;
-}) {
-  const styles = useStyles();
-  const press = usePressScale({ depth: 0.97, haptic: !disabled });
-
-  return (
-    <AnimatedPressable
-      {...press.handlers}
-      accessibilityRole="button"
-      accessibilityLabel="Add exercise"
-      accessibilityState={{ disabled }}
-      onPress={onPress}
-      disabled={disabled}
-      style={[styles.add, disabled && styles.addOff, press.style]}
-    >
-      <Text style={[styles.addText, disabled && styles.addTextOff]}>
-        + Add exercise
-      </Text>
-    </AnimatedPressable>
   );
 }
 
@@ -381,42 +338,7 @@ const useStyles = themed(colors =>
       alignItems: 'center',
       gap: spacing.sm,
     },
-    save: {
-      flex: 1,
-      minHeight: 52,
-      borderRadius: radius.pill,
-      backgroundColor: colors.accent,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    saveOff: {
-      backgroundColor: colors.ink,
-      borderWidth: HAIRLINE,
-      borderColor: colors.hairline,
-    },
-    saveText: { ...sized(type.action, 17), color: colors.white },
-    saveTextOff: { color: colors.faint },
-    cancel: {
-      minHeight: 52,
-      paddingHorizontal: spacing.lg,
-      borderRadius: radius.pill,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    cancelText: { ...type.tag, color: colors.muted },
-
-    add: {
-      minHeight: 60,
-      borderRadius: radius.md,
-      borderWidth: 2,
-      borderStyle: 'dashed',
-      borderColor: colors.hairline,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    addOff: { opacity: 0.4 },
-    addText: { ...sized(type.action, 17), color: colors.accentText },
-    addTextOff: { color: colors.faint },
+    composerPill: { flex: 1 },
 
     note: { ...type.helper, fontSize: 13, color: colors.faint, lineHeight: 18 },
   }),
