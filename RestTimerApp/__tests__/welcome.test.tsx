@@ -100,7 +100,7 @@ describe('the welcome screen', () => {
 
     expect(hasText(root, WELCOME.eyebrow)).toBe(false);
     // And the app underneath is the one they left.
-    expect(hasText(root, 'Lift more')).toBe(true);
+    expect(hasText(root, 'Let’s lift')).toBe(true);
   });
 
   it('does not guess before the saved state has loaded', async () => {

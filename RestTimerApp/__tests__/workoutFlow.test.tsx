@@ -188,7 +188,7 @@ describe('full workout loop', () => {
 
     // --- And back to the list, exercise intact -------------------------
     press(root, 'New workout');
-    expect(hasText(root, 'Lift more')).toBe(true);
+    expect(hasText(root, 'Let’s lift')).toBe(true);
     expect(hasText(root, 'Squat')).toBe(true);
     expect(labelStartingWith(root, 'Sets for Squat')).toContain(', 2.');
   });

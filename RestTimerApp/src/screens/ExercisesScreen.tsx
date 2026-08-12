@@ -13,13 +13,15 @@ import {
 import { Card } from '../components/Card';
 import { DashedAddButton } from '../components/DashedAddButton';
 import { ExerciseCard } from '../components/ExerciseCard';
+import { GradientButton } from '../components/GradientButton';
 import { HeroHourglass } from '../components/HeroHourglass';
 import { Icon } from '../components/Icon';
 import { PillAction } from '../components/PillAction';
 import { SectionLabel } from '../components/SectionLabel';
 import { SessionStats } from '../components/SessionStats';
 import { TAB_BAR_CLEARANCE } from '../components/TabBar';
-import { EMPTY_EXERCISES } from '../copy';
+import { EMPTY_EXERCISES, workoutGreeting } from '../copy';
+import { useCardEnter } from '../hooks/useCardEnter';
 import { useEnter } from '../hooks/useEnter';
 import { useWorkout } from '../state/WorkoutContext';
 import {
@@ -28,14 +30,7 @@ import {
   MAX_EXERCISES,
 } from '../state/workoutReducer';
 import { APP_NAME } from '../appInfo';
-import {
-  radius,
-  sized,
-  spacing,
-  themed,
-  type,
-  useColors,
-} from '../theme';
+import { radius, sized, spacing, themed, type, useColors } from '../theme';
 
 /**
  * The Workout tab: everything you've saved, ready to run.
@@ -60,10 +55,14 @@ export function ExercisesScreen() {
 
   const [adding, setAdding] = useState(false);
   const enter = useEnter();
+  const greeting = workoutGreeting(new Date().getHours());
 
   const apps = allBlockableApps(defaults.customApps);
   const full = exercises.length >= MAX_EXERCISES;
   const empty = exercises.length === 0;
+  // Only earns its keep once there's a second card to save a scroll past —
+  // with one exercise the card below already carries the same button.
+  const quickStart = exercises.length > 1 ? exercises[0] : null;
 
   return (
     <KeyboardAvoidingView
@@ -92,8 +91,8 @@ export function ExercisesScreen() {
           <View style={styles.heroBody}>
             <View style={styles.heroText}>
               <Text style={styles.masthead} numberOfLines={1}>
-                Focus up.{' '}
-                <Text style={styles.mastheadAccent}>Lift more.</Text>
+                {greeting.lead}{' '}
+                <Text style={styles.mastheadAccent}>{greeting.accent}</Text>
               </Text>
             </View>
 
@@ -104,6 +103,18 @@ export function ExercisesScreen() {
                 instead. */}
             <HeroHourglass size={132} />
           </View>
+
+          {/* A shortcut into the top card, worth its place only once there's
+              a second one to save a scroll past. Same button as the one on
+              every card — same job, so it should look and feel like it. */}
+          {quickStart ? (
+            <GradientButton
+              label={`Quick start ${quickStart.name}`}
+              text="Quick start"
+              icon="play"
+              onPress={() => startWorkout(quickStart.id)}
+            />
+          ) : null}
         </Animated.View>
 
         {empty ? (
@@ -122,27 +133,28 @@ export function ExercisesScreen() {
         ) : (
           <>
             <View style={styles.list}>
-              {exercises.map(exercise => (
-                <ExerciseCard
-                  key={exercise.id}
-                  exercise={exercise}
-                  apps={apps}
-                  onStart={() => startWorkout(exercise.id)}
-                  onRename={name => renameExercise(exercise.id, name)}
-                  // Compared against every *other* exercise, so re-saving a
-                  // name unchanged is not reported as a clash with itself.
-                  nameTaken={name =>
-                    exercises.some(
-                      other =>
-                        other.id !== exercise.id &&
-                        other.name.toLowerCase() === name.toLowerCase(),
-                    )
-                  }
-                  onSets={sets => setExerciseSets(exercise.id, sets)}
-                  onRest={seconds => setExerciseRest(exercise.id, seconds)}
-                  onToggleApp={appId => toggleExerciseApp(exercise.id, appId)}
-                  onDelete={() => removeExercise(exercise.id)}
-                />
+              {exercises.map((exercise, index) => (
+                <AnimatedListItem key={exercise.id} index={index}>
+                  <ExerciseCard
+                    exercise={exercise}
+                    apps={apps}
+                    onStart={() => startWorkout(exercise.id)}
+                    onRename={name => renameExercise(exercise.id, name)}
+                    // Compared against every *other* exercise, so re-saving a
+                    // name unchanged is not reported as a clash with itself.
+                    nameTaken={name =>
+                      exercises.some(
+                        other =>
+                          other.id !== exercise.id &&
+                          other.name.toLowerCase() === name.toLowerCase(),
+                      )
+                    }
+                    onSets={sets => setExerciseSets(exercise.id, sets)}
+                    onRest={seconds => setExerciseRest(exercise.id, seconds)}
+                    onToggleApp={appId => toggleExerciseApp(exercise.id, appId)}
+                    onDelete={() => removeExercise(exercise.id)}
+                  />
+                </AnimatedListItem>
               ))}
             </View>
 
@@ -176,6 +188,24 @@ export function ExercisesScreen() {
       </ScrollView>
     </KeyboardAvoidingView>
   );
+}
+
+/**
+ * One card's entrance, staggered by its position in the list.
+ *
+ * A wrapper rather than calling `useCardEnter` inside the `.map` above: a
+ * hook has to belong to a component that mounts once per item, not to a
+ * callback that runs once per render of the parent.
+ */
+function AnimatedListItem({
+  index,
+  children,
+}: {
+  index: number;
+  children: React.ReactNode;
+}) {
+  const enter = useCardEnter(index);
+  return <Animated.View style={enter}>{children}</Animated.View>;
 }
 
 /**

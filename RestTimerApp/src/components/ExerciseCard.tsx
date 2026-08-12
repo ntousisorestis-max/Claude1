@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  PanResponder,
   Pressable,
   StyleSheet,
   Text,
@@ -16,6 +17,7 @@ import { Icon, type IconName } from './Icon';
 import { PillAction } from './PillAction';
 import { Segmented } from './Segmented';
 import { Stepper } from './Stepper';
+import { useReduceMotion } from '../hooks/useReduceMotion';
 import { usePressScale } from '../hooks/usePressScale';
 import {
   MAX_EXERCISE_NAME_LENGTH,
@@ -48,6 +50,9 @@ const ALL_CLOSED: Record<Section, boolean> = {
   rest: false,
   apps: false,
 };
+
+/** How far a swipe reveals the delete backdrop behind the card. */
+const REVEAL_WIDTH = 88;
 
 /**
  * One saved lift.
@@ -96,6 +101,7 @@ export function ExerciseCard({
   const colors = useColors();
   const [open, setOpen] = useState<Record<Section, boolean>>(ALL_CLOSED);
   const [confirming, setConfirming] = useState(false);
+  const reduceMotion = useReduceMotion();
 
   // Only the named key moves; the other two are carried through untouched.
   const toggle = (section: Section) =>
@@ -104,154 +110,227 @@ export function ExerciseCard({
   const blocked = apps.filter(app => exercise.selectedAppIds.includes(app.id));
   const anyOpen = open.name || open.sets || open.rest || open.apps;
 
-  return (
-    <Card style={[styles.card, anyOpen && styles.cardOpen]}>
-      <View style={styles.head}>
-        <View style={styles.headText}>
-          <View style={styles.eyebrowRow}>
-            <Icon name="dumbbell" color={colors.accentText} size={15} />
-            <Text style={styles.eyebrow}>EXERCISE</Text>
-          </View>
-          <View style={styles.titleRow}>
-            <Text style={styles.name} numberOfLines={2}>
-              {exercise.name}
-            </Text>
-            <RenameButton
-              name={exercise.name}
-              open={open.name}
-              onPress={() => toggle('name')}
-            />
-          </View>
-        </View>
+  // Swipe left to reveal a delete action behind the card — the trash icon in
+  // the header stays too, since a swipe can't be discovered by a screen
+  // reader. `revealed` tracks where the card is settled between gestures, so
+  // a second swipe starts from wherever the first one left it rather than
+  // always from closed.
+  const translateX = useRef(new Animated.Value(0)).current;
+  const revealed = useRef(0);
 
-        {/* Top-right, and reachable without opening anything. Deleting used to
+  const settle = (to: number) => {
+    revealed.current = to;
+    Animated.spring(translateX, {
+      toValue: to,
+      useNativeDriver: true,
+      bounciness: 6,
+    }).start();
+  };
+
+  // A section opened mid-swipe (unlikely, but the chips stay reachable while
+  // shifted left) snaps the card back so its controls sit under the finger
+  // again rather than offset.
+  useEffect(() => {
+    if (anyOpen && revealed.current !== 0) {
+      settle(0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anyOpen]);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_evt, gesture) =>
+        !reduceMotion &&
+        !anyOpen &&
+        Math.abs(gesture.dx) > 10 &&
+        Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.5,
+      onPanResponderMove: (_evt, gesture) => {
+        const next = Math.max(
+          -REVEAL_WIDTH,
+          Math.min(0, gesture.dx + revealed.current),
+        );
+        translateX.setValue(next);
+      },
+      onPanResponderRelease: (_evt, gesture) => {
+        const next = gesture.dx + revealed.current;
+        settle(next < -REVEAL_WIDTH / 2 ? -REVEAL_WIDTH : 0);
+      },
+      onPanResponderTerminate: () =>
+        settle(revealed.current < -REVEAL_WIDTH / 2 ? -REVEAL_WIDTH : 0),
+    }),
+  ).current;
+
+  const closeSwipe = () => settle(0);
+
+  return (
+    <View style={styles.swipeWrap}>
+      {/* Not in the accessibility tree, same reasoning as the confirm
+          dialog's own tap-outside backdrop: it would announce as a second
+          "Delete" button indistinguishable from the real one in the header,
+          which anyone navigating by label already has. */}
+      <Pressable
+        accessible={false}
+        onPress={() => setConfirming(true)}
+        style={styles.swipeBackdrop}
+      >
+        <Icon name="trash" color={colors.danger} size={22} />
+      </Pressable>
+
+      <Animated.View
+        {...panResponder.panHandlers}
+        style={{ transform: [{ translateX }] }}
+      >
+        <Card style={[styles.card, anyOpen && styles.cardOpen]}>
+          <View style={styles.head}>
+            <View style={styles.headText}>
+              <View style={styles.eyebrowRow}>
+                <Icon name="dumbbell" color={colors.accentText} size={15} />
+                <Text style={styles.eyebrow}>EXERCISE</Text>
+              </View>
+              <View style={styles.titleRow}>
+                <Text style={styles.name} numberOfLines={2}>
+                  {exercise.name}
+                </Text>
+                <RenameButton
+                  name={exercise.name}
+                  open={open.name}
+                  onPress={() => toggle('name')}
+                />
+              </View>
+            </View>
+
+            {/* Top-right, and reachable without opening anything. Deleting used to
             live behind an expanded section, which meant the way to remove an
             exercise was to first go and edit it. */}
-        <DeleteButton
-          name={exercise.name}
-          onPress={() => setConfirming(true)}
-        />
-      </View>
+            <DeleteButton
+              name={exercise.name}
+              onPress={() => setConfirming(true)}
+            />
+          </View>
 
-      {/* One ungapped block: a flex `gap` on the card would hold space open
+          {/* One ungapped block: a flex `gap` on the card would hold space open
           for every closed Collapsible, since `gap` doesn't know a hidden
           sibling measures zero. Spacing between an open panel and its
           neighbours lives inside `Panel` instead, so it collapses with it. */}
-      <View style={styles.body}>
-        <Collapsible open={open.name}>
-          <Panel label="RENAME">
-            <NameEditor
-              name={exercise.name}
-              open={open.name}
-              nameTaken={nameTaken}
-              onRename={onRename}
-              onDone={() => toggle('name')}
-            />
-          </Panel>
-        </Collapsible>
+          <View style={styles.body}>
+            <Collapsible open={open.name}>
+              <Panel label="RENAME">
+                <NameEditor
+                  name={exercise.name}
+                  open={open.name}
+                  nameTaken={nameTaken}
+                  onRename={onRename}
+                  onDone={() => toggle('name')}
+                />
+              </Panel>
+            </Collapsible>
 
-        {/* Glanceable rather than a form to read: three stats side by side
+            {/* Glanceable rather than a form to read: three stats side by side
             instead of three stacked list rows. Each still opens its own
             editor beneath the strip, independently of the other two. */}
-        <View style={styles.chipRow}>
-          <StatChip
-            icon="reps"
-            tag="SETS"
-            value={String(exercise.totalSets)}
-            accessibilityLabel={`Sets for ${exercise.name}, ${
-              exercise.totalSets
-            }. ${open.sets ? 'Close' : 'Edit'}`}
-            open={open.sets}
-            onPress={() => toggle('sets')}
-          />
-          <StatChip
-            icon="timer"
-            tag="REST"
-            value={`${exercise.restSeconds}s`}
-            accessibilityLabel={`Rest time for ${exercise.name}, ${
-              exercise.restSeconds
-            }s. ${open.rest ? 'Close' : 'Edit'}`}
-            open={open.rest}
-            onPress={() => toggle('rest')}
-          />
-          <StatChip
-            icon="lock"
-            tag="APPS"
-            value={String(blocked.length)}
-            accessibilityLabel={`Blocked apps for ${exercise.name}, ${
-              blocked.length ? blocked.map(app => app.name).join(', ') : 'None'
-            }. ${open.apps ? 'Close' : 'Edit'}`}
-            open={open.apps}
-            onPress={() => toggle('apps')}
-          />
-        </View>
-
-        <Collapsible open={open.sets}>
-          <Panel label="SETS">
-            <Stepper
-              label={`sets for ${exercise.name}`}
-              value={exercise.totalSets}
-              onChange={onSets}
-              min={MIN_SETS}
-              max={MAX_SETS}
-            />
-          </Panel>
-        </Collapsible>
-
-        <Collapsible open={open.rest}>
-          <Panel label="REST TIME">
-            <Stepper
-              label={`rest for ${exercise.name}`}
-              value={exercise.restSeconds}
-              onChange={onRest}
-              step={5}
-              min={MIN_REST_SECONDS}
-              max={MAX_REST_SECONDS}
-              unit="SECONDS"
-            />
-            <Segmented
-              label={`rest for ${exercise.name}`}
-              options={REST_PRESETS}
-              value={exercise.restSeconds}
-              onChange={onRest}
-              format={n => `${n}s`}
-            />
-          </Panel>
-        </Collapsible>
-
-        <Collapsible open={open.apps}>
-          <Panel label="BLOCKED APPS">
-            <View style={styles.apps}>
-              {apps.map(app => (
-                <AppPill
-                  key={app.id}
-                  app={app}
-                  checked={exercise.selectedAppIds.includes(app.id)}
-                  label={`${app.name} during ${exercise.name}`}
-                  onPress={() => onToggleApp(app.id)}
-                />
-              ))}
+            <View style={styles.chipRow}>
+              <StatChip
+                icon="reps"
+                tag="SETS"
+                value={String(exercise.totalSets)}
+                accessibilityLabel={`Sets for ${exercise.name}, ${
+                  exercise.totalSets
+                }. ${open.sets ? 'Close' : 'Edit'}`}
+                open={open.sets}
+                onPress={() => toggle('sets')}
+              />
+              <StatChip
+                icon="timer"
+                tag="REST"
+                value={`${exercise.restSeconds}s`}
+                accessibilityLabel={`Rest time for ${exercise.name}, ${
+                  exercise.restSeconds
+                }s. ${open.rest ? 'Close' : 'Edit'}`}
+                open={open.rest}
+                onPress={() => toggle('rest')}
+              />
+              <StatChip
+                icon="lock"
+                tag="APPS"
+                value={String(blocked.length)}
+                accessibilityLabel={`Blocked apps for ${exercise.name}, ${
+                  blocked.length
+                    ? blocked.map(app => app.name).join(', ')
+                    : 'None'
+                }. ${open.apps ? 'Close' : 'Edit'}`}
+                open={open.apps}
+                onPress={() => toggle('apps')}
+              />
             </View>
-          </Panel>
-        </Collapsible>
-      </View>
 
-      {/* Just the estimate now. Delete moved to the card header, where it does
+            <Collapsible open={open.sets}>
+              <Panel label="SETS">
+                <Stepper
+                  label={`sets for ${exercise.name}`}
+                  value={exercise.totalSets}
+                  onChange={onSets}
+                  min={MIN_SETS}
+                  max={MAX_SETS}
+                />
+              </Panel>
+            </Collapsible>
+
+            <Collapsible open={open.rest}>
+              <Panel label="REST TIME">
+                <Stepper
+                  label={`rest for ${exercise.name}`}
+                  value={exercise.restSeconds}
+                  onChange={onRest}
+                  step={5}
+                  min={MIN_REST_SECONDS}
+                  max={MAX_REST_SECONDS}
+                  unit="SECONDS"
+                />
+                <Segmented
+                  label={`rest for ${exercise.name}`}
+                  options={REST_PRESETS}
+                  value={exercise.restSeconds}
+                  onChange={onRest}
+                  format={n => `${n}s`}
+                />
+              </Panel>
+            </Collapsible>
+
+            <Collapsible open={open.apps}>
+              <Panel label="BLOCKED APPS">
+                <View style={styles.apps}>
+                  {apps.map(app => (
+                    <AppPill
+                      key={app.id}
+                      app={app}
+                      checked={exercise.selectedAppIds.includes(app.id)}
+                      label={`${app.name} during ${exercise.name}`}
+                      onPress={() => onToggleApp(app.id)}
+                    />
+                  ))}
+                </View>
+              </Panel>
+            </Collapsible>
+          </View>
+
+          {/* Just the estimate now. Delete moved to the card header, where it does
           not require opening a section first. */}
-      {anyOpen ? (
-        <View style={styles.footer}>
-          <Text style={styles.estimate}>
-            {estimate(exercise.totalSets, exercise.restSeconds)}
-          </Text>
-        </View>
-      ) : null}
+          {anyOpen ? (
+            <View style={styles.footer}>
+              <Text style={styles.estimate}>
+                {estimate(exercise.totalSets, exercise.restSeconds)}
+              </Text>
+            </View>
+          ) : null}
 
-      <GradientButton
-        label={`Start ${exercise.name}`}
-        text="Start rest timer"
-        icon="play"
-        onPress={onStart}
-      />
+          <GradientButton
+            label={`Start ${exercise.name}`}
+            text="Start rest timer"
+            icon="play"
+            onPress={onStart}
+          />
+        </Card>
+      </Animated.View>
 
       <ConfirmDialog
         visible={confirming}
@@ -263,9 +342,12 @@ export function ExerciseCard({
           setConfirming(false);
           onDelete();
         }}
-        onCancel={() => setConfirming(false)}
+        onCancel={() => {
+          setConfirming(false);
+          closeSwipe();
+        }}
       />
-    </Card>
+    </View>
   );
 }
 
@@ -488,6 +570,31 @@ function NameEditor({
 
 const useStyles = themed(colors =>
   StyleSheet.create({
+    /** No overflow:hidden here — the card's own shadow needs room to fall
+     * outside its box, and the backdrop's right corners are rounded to
+     * match, so nothing needs clipping to look right. */
+    swipeWrap: {},
+    /**
+     * Recessed fill with a danger-coloured icon, not a solid danger fill —
+     * the same pairing `DeleteButton` already uses, and the only one that
+     * clears contrast in both themes. `danger` was tuned as a small red
+     * against a dark or light *ground*, not as a large fill with white on
+     * top of it: it's light enough in dark mode that white-on-danger there
+     * measures 2.74:1, under the 3.0 WCAG wants for a non-text icon.
+     */
+    swipeBackdrop: {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      right: 0,
+      width: REVEAL_WIDTH,
+      backgroundColor: colors.raised,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderTopRightRadius: radius.lg,
+      borderBottomRightRadius: radius.lg,
+    },
+
     card: {
       padding: spacing.md,
       gap: spacing.md,
@@ -505,7 +612,11 @@ const useStyles = themed(colors =>
     headText: { flex: 1, gap: spacing.xs },
     eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     eyebrow: { ...type.tag, color: colors.accentText },
-    titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xs },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: spacing.xs,
+    },
     name: { ...sized(type.title, 28), color: colors.white, flex: 1 },
     renameBtn: {
       width: 30,

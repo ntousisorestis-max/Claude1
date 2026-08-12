@@ -184,6 +184,27 @@ export function personalBestLine(days: number): string {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Workout                                                                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The Workout tab's greeting, split the same way `WELCOME.name` is: a plain
+ * lead and a violet accent, `Let’s lift.` — the same line as the welcome
+ * screen's own button, because it's the app's one recurring phrase.
+ *
+ * Time-of-day rather than a fixed line, because this is the screen open at
+ * the start of every single session — the one place worth noticing what time
+ * it actually is.
+ */
+export function workoutGreeting(hour: number): {
+  lead: string;
+  accent: string;
+} {
+  const lead = hour < 12 ? 'Morning.' : hour < 18 ? 'Afternoon.' : 'Evening.';
+  return { lead, accent: 'Let’s lift.' };
+}
+
+/* -------------------------------------------------------------------------- */
 /* The welcome                                                                */
 /* -------------------------------------------------------------------------- */
 
